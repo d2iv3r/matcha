@@ -9,13 +9,28 @@ FLASK_ENV = os.environ.get("FLASK_ENV", "dev")
 
 if FLASK_ENV == "prod":
     from app.config import ProdConfig
-    app = create_app(config_class=ProdConfig)
+    try:
+        app = create_app(config_class=ProdConfig)
+    except Exception as e:
+        print("Failed to create app in production mode:", e)
+        app = None
 elif FLASK_ENV == "test":
     from app.config import TestConfig
-    app = create_app(config_class=TestConfig)
+    try:
+        app = create_app(config_class=TestConfig)
+    except Exception as e:
+        print("Failed to create app in test mode:", e)
+        app = None
 else:
     from app.config import DevConfig
-    app = create_app(config_class=DevConfig)
+    try:
+        app = create_app(config_class=DevConfig)
+    except Exception as e:
+        print("Failed to create app in development mode:", e)
+        app = None
 
 if __name__ == "__main__":
+    if app is not None:
+        print("Error: App failed to initialize.")
+        exit(1)
     app.run(host="0.0.0.0", port=5000)
