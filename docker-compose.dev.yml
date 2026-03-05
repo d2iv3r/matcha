@@ -28,8 +28,11 @@ services:
       - db
     networks:
       - app-network
-    command: ["flask", "run", "--host=0.0.0.0", "--reload"]
-
+    command: >
+      sh -c "
+        alembic upgrade head &&
+        flask run --host=0.0.0.0 --reload
+      "
   adminer:
     image: adminer
     restart: unless-stopped
@@ -37,6 +40,22 @@ services:
       - "8080:8080"
     networks:
       - app-network
+
+  frontend:
+    image: node:20-alpine
+    container_name: nextjs_app_dev
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - NODE_ENV=development
 
 volumes:
   postgres_data_dev:

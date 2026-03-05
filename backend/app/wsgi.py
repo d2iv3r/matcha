@@ -1,7 +1,7 @@
+"""WSGI entry point for the application."""
+
 import os
-
 from app import create_app
-
 
 
 FLASK_ENV = os.environ.get("FLASK_ENV", "dev")
@@ -30,7 +30,7 @@ else:
         app = None
 
 if __name__ == "__main__":
-    if app is not None:
+    if app is None:
         print("Error: App failed to initialize.")
         exit(1)
     app.run(host="0.0.0.0", port=5000)

@@ -13,6 +13,8 @@ class DevConfig(BaseConfig):
     DB_POOL_MIN_CONN = 2
     DB_POOL_MAX_CONN = 5
     DATABASE_URL = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class ProdConfig(BaseConfig):
@@ -20,9 +22,13 @@ class ProdConfig(BaseConfig):
     DB_POOL_MIN_CONN = 10
     DB_POOL_MAX_CONN = 50
     DATABASE_URL = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class TestConfig(BaseConfig):
     TESTING = True
     DB_POOL_MIN = 5
     DB_POOL_MAX = 15
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///:memory:")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
