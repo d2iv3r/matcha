@@ -6,10 +6,12 @@ from app.shared.utils import (
     generate_token,
     format_datetime
 )
+from app.shared.mail import MailService
 
 __all__ = [
     'hash_password',
     'verify_password', 
     'generate_token',
-    'format_datetime'
+    'format_datetime',
+    'MailService'
 ]

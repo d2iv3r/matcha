@@ -1,24 +1,24 @@
 """User model."""
-
-from orm.core.model import Model
-from orm import fields
+from ftorm import Model, fields
 
 
 class User(Model):
     """User model representing application users."""
-
+    
     _table_name = "users"
-
+    
     id = fields.IntegerField(primary_key=True, auto_increment=True)
     username = fields.StringField(max_length=150, unique=True, null=False)
+    first_name = fields.StringField(max_length=150, null=True)
+    last_name = fields.StringField(max_length=150, null=True)
     email = fields.StringField(max_length=255, unique=True, null=False)
     password_hash = fields.StringField(max_length=255, null=False)
-    is_active = fields.BooleanField(default=True)
-    created_at = fields.DateTimeField(auto_now_add=True)
-    updated_at = fields.DateTimeField(auto_now=True)
+    is_active = fields.BooleanField(default=False)
+    # created_at = fields.DateTimeField(auto_now_add=True)
+    # updated_at = fields.DateTimeField(auto_now=True)
 
     def __repr__(self) -> str:
-        return f"<User id={self.id} username={self.username} email={self.email}>"
+        return f"<User id={self.id} username={self.username}>"
     
     def to_dict(self, exclude_password: bool = True) -> dict:
         """

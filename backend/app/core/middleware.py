@@ -1,6 +1,6 @@
 """Application middleware."""
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, g, request
 
 
 def register_middleware(app: Flask) -> None:
@@ -14,8 +14,11 @@ def register_middleware(app: Flask) -> None:
     @app.before_request
     def before_request():
         """Execute before each request."""
-        # Add request ID, logging, authentication check, etc.
-        pass
+        # Parse JSON safely so requests without application/json do not raise 415.
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            g.json_payload = request.get_json(silent=True)
+        else:
+            g.json_payload = None
     
     @app.after_request
     def after_request(response):
@@ -51,6 +54,14 @@ def register_middleware(app: Flask) -> None:
     def method_not_allowed(error):
         """Handle 405 errors."""
         return jsonify({'error': 'Method not allowed'}), 405
+
+    @app.errorhandler(415)
+    def unsupported_media_type(error):
+        """Handle unsupported media type errors raised by strict JSON parsing."""
+        return jsonify({
+            'error': 'Unsupported media type',
+            'message': 'Send JSON with Content-Type: application/json'
+        }), 415
     
     @app.errorhandler(500)
     def internal_error(error):

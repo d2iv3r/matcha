@@ -1,34 +1,71 @@
 """User business logic."""
 
-from typing import Optional, Dict, Any, List
-from app.api.v1.users.models import User
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING, Optional, Dict, Any, List
+
+from flask import current_app
+
+if TYPE_CHECKING:
+    from app.api.v1.auth.schemas import RegistrationSchema
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
     """Service class for user-related operations."""
+
+    @staticmethod
+    def _db_manager():
+        db_manager = getattr(current_app, 'db_manager', None)
+        if db_manager is None:
+            raise RuntimeError("Database is not initialized")
+        return db_manager
+
+    @staticmethod
+    def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by email.
+
+        Args:
+            email: User's email
+
+        Returns:
+            User data or None
+        """
+        db_manager = UserService._db_manager()
+        return db_manager.fetch_one(
+            """
+            SELECT id, username, email, password_hash, is_active
+            FROM users
+            WHERE email = %s
+            LIMIT 1
+            """,
+            (email,),
+        )
     
     @staticmethod
-    def create_user(username: str, email: str, password_hash: str) -> Optional[Dict[str, Any]]:
+    def create_user(user_data: RegistrationSchema) -> Optional[Dict[str, Any]]:
         """
         Create a new user.
-        
+
         Args:
-            username: User's username
-            email: User's email
-            password_hash: Hashed password
-            
+            user_data: Dictionary containing user information
+
         Returns:
             Created user data or None
         """
-        # TODO: Implement with ORM
-        # user = User(username=username, email=email, password_hash=password_hash)
-        # user.save()
-        return {
-            'id': 1,
-            'username': username,
-            'email': email,
-            'is_active': True
-        }
+        db_manager = UserService._db_manager()
+        return db_manager.execute_returning(
+            """
+            INSERT INTO users (username, first_name, last_name, email, password_hash, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id, username, email, is_active
+            """,
+            (user_data.username, user_data.first_name, user_data.last_name, user_data.email, user_data.password, False),
+        )
     
     @staticmethod
     def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
@@ -41,24 +78,16 @@ class UserService:
         Returns:
             User data or None
         """
-        # TODO: Implement with ORM
-        # user = User.objects.get(id=user_id)
-        return None
-    
-    @staticmethod
-    def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
-        """
-        Get user by email.
-        
-        Args:
-            email: User's email
-            
-        Returns:
-            User data or None
-        """
-        # TODO: Implement with ORM
-        # user = User.objects.filter(email=email).first()
-        return None
+        db_manager = UserService._db_manager()
+        return db_manager.fetch_one(
+            """
+            SELECT id, username, email, password_hash, is_active
+            FROM users
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (user_id,),
+        )
     
     @staticmethod
     def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
@@ -71,9 +100,16 @@ class UserService:
         Returns:
             User data or None
         """
-        # TODO: Implement with ORM
-        # user = User.objects.filter(username=username).first()
-        return None
+        db_manager = UserService._db_manager()
+        return db_manager.fetch_one(
+            """
+            SELECT id, username, email, password_hash, is_active
+            FROM users
+            WHERE username = %s
+            LIMIT 1
+            """,
+            (username,),
+        )
     
     @staticmethod
     def get_all_users(limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
@@ -87,8 +123,6 @@ class UserService:
         Returns:
             List of user data
         """
-        # TODO: Implement with ORM
-        # users = User.objects.all().limit(limit).offset(offset)
         return []
     
     @staticmethod
@@ -103,13 +137,6 @@ class UserService:
         Returns:
             Updated user data or None
         """
-        # TODO: Implement with ORM
-        # user = User.objects.get(id=user_id)
-        # if user:
-        #     for key, value in kwargs.items():
-        #         setattr(user, key, value)
-        #     user.save()
-        #     return user.to_dict()
         return None
     
     @staticmethod
@@ -123,12 +150,6 @@ class UserService:
         Returns:
             True if deleted, False otherwise
         """
-        # TODO: Implement with ORM
-        # user = User.objects.get(id=user_id)
-        # if user:
-        #     user.is_active = False
-        #     user.save()
-        #     return True
         return False
     
     @staticmethod
@@ -143,10 +164,4 @@ class UserService:
         Returns:
             List of matching users
         """
-        # TODO: Implement with ORM
-        # users = User.objects.filter(
-        #     username__icontains=query
-        # ).or_filter(
-        #     email__icontains=query
-        # ).limit(limit)
         return []
