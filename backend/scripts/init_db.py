@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app
-from backend.app.config import DevConfig
+from app.config import DevConfig
 
 
 def init_database():
@@ -18,7 +18,6 @@ def init_database():
     app = create_app(config_class=DevConfig)
     
     with app.app_context():
-        # TODO: Add sample data creation logic
         print("Database initialized successfully!")
 
 

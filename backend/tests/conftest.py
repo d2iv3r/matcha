@@ -2,7 +2,7 @@
 
 import pytest
 from app import create_app
-from backend.app.config import TestConfig
+from app.config import TestConfig
 
 
 @pytest.fixture

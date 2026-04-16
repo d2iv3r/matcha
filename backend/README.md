@@ -6,9 +6,6 @@ A well-organized Flask application with custom ORM, following industry best prac
 
 ```
 backend/
-├── alembic/                  # Database migrations
-│   ├── versions/             # Migration scripts
-│   └── env.py               # Alembic environment configuration
 ├── app/                      # Main application package
 │   ├── __init__.py          # App factory
 │   ├── config.py            # Configuration classes
@@ -55,7 +52,6 @@ backend/
 ├── docker/                   # Docker configuration
 │   └── Dockerfile.dev       # Development Dockerfile
 ├── wsgi.py                   # WSGI entry point
-├── alembic.ini              # Alembic configuration
 ├── requirements.txt         # Production dependencies
 ├── requirements-dev.txt     # Development dependencies
 └── .env.example             # Environment variables template
@@ -94,9 +90,6 @@ make clean
 ```bash
 # Install dependencies
 pip install -r requirements-dev.txt
-
-# Run migrations
-alembic upgrade head
 
 # Start development server
 flask run --reload
@@ -151,6 +144,7 @@ Configurations are in `app/config.py`:
 - `DevConfig`: Development settings
 - `ProdConfig`: Production settings
 - `TestConfig`: Testing settings
+- Database access is handled directly through `psycopg2` and the custom raw SQL migration runner.
 
 ## 🧪 Testing
 
@@ -167,18 +161,15 @@ pytest tests/test_user.py
 
 ## 📝 Database Migrations
 
+This backend uses raw SQL migration scripts stored in [app/core/sql_migrations](app/core/sql_migrations).
+Migrations are applied automatically when the Flask app initializes and the database is reachable.
+
 ```bash
-# Create a new migration
-alembic revision -m "description"
+# Add a new SQL file to app/db/sql_migrations
+# Use the naming format: YYYYMMDD_HHMMSS_description.sql
 
-# Apply migrations
-alembic upgrade head
-
-# Rollback one version
-alembic downgrade -1
-
-# Show current version
-alembic current
+# Start the app to apply pending migrations automatically
+flask run --reload
 ```
 
 ## 🔌 API Endpoints
@@ -186,10 +177,24 @@ alembic current
 ### Health Check
 - `GET /api/health` - Check API status
 
+### API Documentation
+- `GET /api/docs/` - Swagger UI
+- `GET /api/openapi.json` - OpenAPI 3 specification
+
 ### Authentication
 - `POST /api/auth/register` - Register new user
+- `POST /api/auth/signup` - Register new user (alias)
 - `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
+- `POST /api/auth/refresh` - Issue a new access token from refresh token
+- `POST /api/auth/logout` - Clear refresh cookie and log out
+- `GET /api/auth/me` - Get current authenticated user
+
+Hybrid JWT flow:
+- send the short-lived access token in `Authorization: Bearer <access_token>` for API requests
+- keep the refresh token in the secure HttpOnly cookie set by login
+- send the browser’s CSRF header when calling refresh/logout endpoints
+
+Use `Authorization: Bearer <access_token>` for protected endpoints.
 
 ## 🛠️ Development Tools
 

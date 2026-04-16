@@ -1,0 +1,28 @@
+"""SQL query constants grouped by domain."""
+
+from .profile_queries import GET_PROFILE_BY_USER_ID, UPSERT_PROFILE
+from .users_queries import (
+    CREATE_USER,
+    DELETE_USER_SOFT,
+    GET_ALL_USERS,
+    GET_USER_BY_EMAIL,
+    GET_USER_BY_ID,
+    GET_USER_BY_USERNAME,
+    GET_USER_WITH_PROFILE_BY_ID,
+    MARK_PROFILE_COMPLETE,
+    SEARCH_USERS,
+)
+
+__all__ = [
+    "CREATE_USER",
+    "DELETE_USER_SOFT",
+    "GET_ALL_USERS",
+    "GET_PROFILE_BY_USER_ID",
+    "GET_USER_BY_EMAIL",
+    "GET_USER_BY_ID",
+    "GET_USER_BY_USERNAME",
+    "GET_USER_WITH_PROFILE_BY_ID",
+    "MARK_PROFILE_COMPLETE",
+    "SEARCH_USERS",
+    "UPSERT_PROFILE",
+]
