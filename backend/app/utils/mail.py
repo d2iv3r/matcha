@@ -68,7 +68,7 @@ class MailService:
     @staticmethod
     def send_verification_email(recipient: str, username: str, token: str) -> bool:
         config = MailService._mail_config()
-        verification_url = f"{config['backend_url'].rstrip('/')}/api/auth/verify-email?token={token}"
+        verification_url = f"{config.get('frontend_url')}/complete-profile?token={token}"
 
         subject = "Verify your account"
         text_body = (
