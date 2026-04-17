@@ -188,6 +188,7 @@ flask run --reload
 - `POST /api/auth/refresh` - Issue a new access token from refresh token
 - `POST /api/auth/logout` - Clear refresh cookie and log out
 - `GET /api/auth/me` - Get current authenticated user
+- `GET /api/auth/verify-email?token=...` - Verify signup email and activate account
 - `POST /api/auth/reset-password/request` - Send password reset email
 - `POST /api/auth/reset-password/confirm` - Validate reset token and update password
 

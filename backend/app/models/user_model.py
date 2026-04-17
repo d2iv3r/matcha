@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from app.db.queries.users_queries import (
+    ACTIVATE_USER_BY_ID,
     CREATE_USER,
     DELETE_USER_SOFT,
     GET_ALL_USERS,
@@ -60,6 +61,10 @@ class UserModel(BaseModel):
     def delete_soft(cls, user_id: int) -> bool:
         affected_rows = cls.db_manager().execute(DELETE_USER_SOFT, (user_id,))
         return affected_rows > 0
+
+    @classmethod
+    def activate(cls, user_id: int) -> Optional[Dict[str, Any]]:
+        return cls.db_manager().execute_returning(ACTIVATE_USER_BY_ID, (user_id,))
 
     @classmethod
     def search(cls, query: str, limit: int = 20) -> List[Dict[str, Any]]:

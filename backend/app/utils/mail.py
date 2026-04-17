@@ -25,6 +25,7 @@ class MailService:
             "use_ssl": current_app.config.get("MAIL_USE_SSL", False),
             "default_sender": current_app.config.get("MAIL_DEFAULT_SENDER"),
             "frontend_url": current_app.config.get("FRONTEND_URL", "http://localhost:3000"),
+            "backend_url": current_app.config.get("BACKEND_URL", "http://localhost:5000"),
         }
 
     @staticmethod
@@ -67,7 +68,7 @@ class MailService:
     @staticmethod
     def send_verification_email(recipient: str, username: str, token: str) -> bool:
         config = MailService._mail_config()
-        verification_url = f"{config['frontend_url'].rstrip('/')}/verify-email?token={token}"
+        verification_url = f"{config['backend_url'].rstrip('/')}/api/auth/verify-email?token={token}"
 
         subject = "Verify your account"
         text_body = (

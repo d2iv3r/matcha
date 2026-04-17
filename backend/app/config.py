@@ -20,6 +20,7 @@ class BaseConfig:
     JWT_ACCESS_COOKIE_PATH = "/"
     SQL_MIGRATIONS_DIR = os.environ.get("SQL_MIGRATIONS_DIR", "db/migrations")
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5000")
     PASSWORD_RESET_TOKEN_MAX_AGE = int(os.environ.get("PASSWORD_RESET_TOKEN_MAX_AGE", 3600))
     MAIL_HOST = os.environ.get("MAIL_HOST")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))

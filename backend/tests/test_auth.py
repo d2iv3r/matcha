@@ -40,6 +40,26 @@ def test_signup_success(client, monkeypatch):
     assert data["user"]["email"] == "alice@example.com"
 
 
+def test_verify_email_success(client, monkeypatch):
+    token = "-".join(["verify", "token", "value"])
+
+    monkeypatch.setattr(
+        AuthService,
+        "verify_email_token",
+        lambda _token: {
+            "success": True,
+            "message": "Email verified successfully",
+            "user": {"id": 1, "username": "alice", "email": "alice@example.com"},
+        },
+    )
+
+    response = client.get(f"/api/auth/verify-email?token={token}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+
+
 def test_signup_validation_error(client):
     payload = {
         "username": "al",

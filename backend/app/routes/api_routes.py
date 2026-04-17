@@ -29,6 +29,7 @@ def api_root():
                         "refresh": "/api/auth/refresh",
                         "logout": "/api/auth/logout",
                         "me": "/api/auth/me",
+                        "verify_email": "/api/auth/verify-email",
                         "reset_password_request": "/api/auth/reset-password/request",
                         "reset_password_confirm": "/api/auth/reset-password/confirm",
                     },

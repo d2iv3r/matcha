@@ -48,6 +48,13 @@ SET is_active = FALSE
 WHERE id = %s
 """
 
+ACTIVATE_USER_BY_ID = """
+UPDATE users
+SET is_active = TRUE
+WHERE id = %s
+RETURNING id, username, email, is_active, is_profile_complete
+"""
+
 MARK_PROFILE_COMPLETE = """
 UPDATE users
 SET is_profile_complete = TRUE

@@ -1,10 +1,13 @@
 """Authentication business logic."""
 
+import hashlib
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
 from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
+from app.models.email_verification_token_model import EmailVerificationTokenModel
 from app.services.user_service import UserService
 from app.utils.mail import MailService
 from app.utils.utils import hash_password, verify_password, generate_token
@@ -46,6 +49,49 @@ class AuthService:
     @staticmethod
     def issue_refresh_token(user: Dict[str, Any]) -> str:
         return create_refresh_token(identity=str(user.get('id')))
+
+    @staticmethod
+    def _email_verification_token_hash(token: str) -> str:
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def generate_email_verification_token(user_id: int) -> tuple[str, datetime]:
+        token = generate_token(48)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        token_hash = AuthService._email_verification_token_hash(token)
+        EmailVerificationTokenModel.store_token(user_id, token_hash, expires_at)
+        return token, expires_at
+
+    @staticmethod
+    def verify_email_token(token: str) -> Dict[str, Any]:
+        token_hash = AuthService._email_verification_token_hash(token)
+        record = EmailVerificationTokenModel.get_by_token_hash(token_hash)
+
+        if not record:
+            return {"success": False, "error": "Invalid verification token"}
+
+        if record.get("verified_at") is not None:
+            return {"success": False, "error": "Verification token has already been used"}
+
+        expires_at = record.get("expires_at")
+        if expires_at and expires_at < datetime.now(timezone.utc):
+            return {"success": False, "error": "Verification token has expired"}
+
+        user = UserService.get_user_by_id(int(record["user_id"]))
+        if not user:
+            return {"success": False, "error": "User not found"}
+
+        activated_user = UserService.activate_user(int(user["id"]))
+        if not activated_user:
+            raise BadRequestError("Failed to verify account")
+
+        EmailVerificationTokenModel.mark_used(int(record["id"]))
+
+        return {
+            "success": True,
+            "message": "Email verified successfully",
+            "user": AuthService.serialize_user(activated_user),
+        }
 
     @staticmethod
     def _password_reset_serializer() -> URLSafeTimedSerializer:
@@ -146,7 +192,7 @@ class AuthService:
         if not created_user:
             raise BadRequestError("Failed to create user")
 
-        verification_token = generate_token(48)
+        verification_token, _expires_at = AuthService.generate_email_verification_token(int(created_user["id"]))
         verification_email_sent = MailService.send_verification_email(
             recipient=user_data.email,
             username=user_data.username,

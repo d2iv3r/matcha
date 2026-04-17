@@ -42,6 +42,10 @@ class UserService:
         return UserModel.update_password(user_id, password_hash)
 
     @staticmethod
+    def activate_user(user_id: int) -> Optional[Dict[str, Any]]:
+        return UserModel.activate(user_id)
+
+    @staticmethod
     def delete_user(user_id: int) -> bool:
         return UserModel.delete_soft(user_id)
 

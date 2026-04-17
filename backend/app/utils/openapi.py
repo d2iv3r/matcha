@@ -149,21 +149,6 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/auth/register": {
-                "post": {
-                    "tags": ["Auth"],
-                    "summary": "Register user (alias)",
-                    "requestBody": {
-                        "required": True,
-                        "content": {
-                            APP_JSON: {
-                                "schema": {"$ref": "#/components/schemas/RegistrationRequest"}
-                            }
-                        },
-                    },
-                    "responses": {"201": {"description": "User registered"}, "400": {"description": "Bad request"}},
-                }
-            },
             "/api/auth/login": {
                 "post": {
                     "tags": ["Auth"],

@@ -37,6 +37,26 @@ class AuthController:
             return {"success": False, "errors": [e.message]}, 400
         except Exception as e:
             return {"success": False, "errors": [str(e)]}, 500
+
+    @staticmethod
+    def verify_email():
+        """Verify an email token and activate the user."""
+        try:
+            token = request.args.get("token", "")
+            if not token:
+                return {"success": False, "error": "Verification token is required"}, 400
+
+            result = AuthService.verify_email_token(token)
+            if result.get("success"):
+                return result, 200
+            return result, 400
+        except AppError as e:
+            payload = {"success": False, "error": e.message}
+            if getattr(e, "details", None) is not None:
+                payload["errors"] = e.details
+            return payload, e.status_code
+        except Exception as e:
+            return {"success": False, "errors": [str(e)]}, 500
         
     @staticmethod
     def login():
