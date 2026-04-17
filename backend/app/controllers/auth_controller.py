@@ -4,7 +4,12 @@ from flask import jsonify, make_response, request
 from flask_jwt_extended import jwt_required, get_jwt_identity, set_refresh_cookies, unset_jwt_cookies
 from pydantic import ValidationError
 
-from app.schemas.auth_schemas import RegistrationSchema, LoginSchema
+from app.schemas.auth_schemas import (
+    LoginSchema,
+    PasswordResetConfirmSchema,
+    PasswordResetSchema,
+    RegistrationSchema,
+)
 
 from app.utils.app_error import AppError, BadRequestError
 from app.services.auth_service import AuthService
@@ -115,5 +120,49 @@ class AuthController:
             unset_jwt_cookies(response)
             return response
 
+        except Exception as e:
+            return {"success": False, "errors": [str(e)]}, 500
+
+    @staticmethod
+    def request_password_reset():
+        """Send a password reset email with a verification token link."""
+        try:
+            data = PasswordResetSchema.model_validate(request.get_json())
+            result = AuthService.request_password_reset(data.email)
+
+            if result.get("success"):
+                return result, 200
+            return result, 400
+        except AppError as e:
+            payload = {"success": False, "error": e.message}
+            if getattr(e, "details", None) is not None:
+                payload["errors"] = e.details
+            return payload, e.status_code
+        except ValidationError as e:
+            return {"success": False, "errors": e.errors()}, 400
+        except BadRequestError as e:
+            return {"success": False, "errors": [e.message]}, 400
+        except Exception as e:
+            return {"success": False, "errors": [str(e)]}, 500
+
+    @staticmethod
+    def reset_password():
+        """Reset the user's password using a valid reset token."""
+        try:
+            data = PasswordResetConfirmSchema.model_validate(request.get_json())
+            result = AuthService.reset_password(data.token, data.new_password)
+
+            if result.get("success"):
+                return result, 200
+            return result, 400
+        except AppError as e:
+            payload = {"success": False, "error": e.message}
+            if getattr(e, "details", None) is not None:
+                payload["errors"] = e.details
+            return payload, e.status_code
+        except ValidationError as e:
+            return {"success": False, "errors": e.errors()}, 400
+        except BadRequestError as e:
+            return {"success": False, "errors": [e.message]}, 400
         except Exception as e:
             return {"success": False, "errors": [str(e)]}, 500

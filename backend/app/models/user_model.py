@@ -14,6 +14,7 @@ from app.db.queries.users_queries import (
     GET_USER_WITH_PROFILE_BY_ID,
     MARK_PROFILE_COMPLETE,
     SEARCH_USERS,
+    UPDATE_USER_PASSWORD_BY_ID,
 )
 from app.models.base_model import BaseModel
 
@@ -73,3 +74,7 @@ class UserModel(BaseModel):
     @classmethod
     def get_with_profile_by_id(cls, user_id: int) -> Optional[Dict[str, Any]]:
         return cls.db_manager().fetch_one(GET_USER_WITH_PROFILE_BY_ID, (user_id,))
+
+    @classmethod
+    def update_password(cls, user_id: int, password_hash: str) -> Optional[Dict[str, Any]]:
+        return cls.db_manager().execute_returning(UPDATE_USER_PASSWORD_BY_ID, (password_hash, user_id))

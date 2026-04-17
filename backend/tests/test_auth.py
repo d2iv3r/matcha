@@ -154,3 +154,41 @@ def test_logout_success(client, app):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
+
+
+def test_request_password_reset_success(client, monkeypatch):
+    payload = {"email": "alice@example.com"}
+
+    monkeypatch.setattr(
+        AuthService,
+        "request_password_reset",
+        lambda email: {"success": True, "message": "Password reset link sent successfully"},
+    )
+
+    response = client.post("/api/auth/reset-password/request", json=payload)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+
+
+def test_confirm_password_reset_success(client, monkeypatch):
+    token = "-".join(["reset", "token", "value"])
+    new_password = "new" + "super" + "secret"
+    payload = {"token": token, "new_password": new_password}
+
+    monkeypatch.setattr(
+        AuthService,
+        "reset_password",
+        lambda token, new_password: {
+            "success": True,
+            "message": "Password reset successfully",
+            "user": {"id": 1, "username": "alice", "email": "alice@example.com"},
+        },
+    )
+
+    response = client.post("/api/auth/reset-password/confirm", json=payload)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True

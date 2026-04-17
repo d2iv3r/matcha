@@ -151,7 +151,9 @@ class DatabaseManager:
 
 def init_db(app: Flask) -> None:
     """Initialize PostgreSQL manager and attach it to the Flask app."""
-    database_url = app.config.get("DATABASE_URL") or os.environ.get("DATABASE_URL")
+    database_url = app.config.get("DATABASE_URL")
+    if database_url is None:
+        database_url = os.environ.get("DATABASE_URL")
 
     if not database_url:
         logger.warning("[DB] DATABASE_URL is not configured; skipping database initialization")

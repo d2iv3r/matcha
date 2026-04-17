@@ -74,3 +74,10 @@ LEFT JOIN profiles p ON p.user_id = u.id
 WHERE u.id = %s
 LIMIT 1
 """
+
+UPDATE_USER_PASSWORD_BY_ID = """
+UPDATE users
+SET password_hash = %s
+WHERE id = %s
+RETURNING id, username, email, is_active, is_profile_complete
+"""

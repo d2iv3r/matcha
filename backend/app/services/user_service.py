@@ -38,6 +38,10 @@ class UserService:
         return None
 
     @staticmethod
+    def update_password(user_id: int, password_hash: str) -> Optional[Dict[str, Any]]:
+        return UserModel.update_password(user_id, password_hash)
+
+    @staticmethod
     def delete_user(user_id: int) -> bool:
         return UserModel.delete_soft(user_id)
 

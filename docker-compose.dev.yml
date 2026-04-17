@@ -30,17 +30,8 @@ services:
       - app-network
     command: >
       sh -c "
-        alembic upgrade head &&
         flask run --host=0.0.0.0 --reload
       "
-  adminer:
-    image: adminer
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
-
   frontend:
     image: node:20-alpine
     container_name: nextjs_app_dev

@@ -87,3 +87,28 @@ class MailService:
         """
 
         return MailService.send_email(subject, recipient, text_body, html_body)
+
+    @staticmethod
+    def send_password_reset_email(recipient: str, username: str, token: str) -> bool:
+        config = MailService._mail_config()
+        reset_url = f"{config['frontend_url'].rstrip('/')}/reset-password?token={token}"
+
+        subject = "Reset your password"
+        text_body = (
+            f"Hi {username},\n\n"
+            "We received a request to reset your password. Use this link to continue:\n"
+            f"{reset_url}\n\n"
+            "If you did not request a password reset, you can ignore this email."
+        )
+        html_body = f"""
+        <html>
+          <body>
+            <p>Hi {username},</p>
+            <p>We received a request to reset your password. Click the link below to continue:</p>
+            <p><a href=\"{reset_url}\">Reset my password</a></p>
+            <p>If you did not request a password reset, you can ignore this email.</p>
+          </body>
+        </html>
+        """
+
+        return MailService.send_email(subject, recipient, text_body, html_body)

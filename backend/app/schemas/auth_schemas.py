@@ -28,6 +28,13 @@ class PasswordResetSchema(BaseModel):
     email: str = Field(..., pattern=EMAIL_PATTERN)
 
 
+class PasswordResetConfirmSchema(BaseModel):
+    """Schema for password reset confirmation data."""
+
+    token: str = Field(..., min_length=16)
+    new_password: str = Field(..., min_length=8)
+
+
 class PasswordChangeSchema(BaseModel):
     """Schema for password change data."""
 

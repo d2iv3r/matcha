@@ -1,7 +1,9 @@
 """Authentication business logic."""
 
 from typing import Dict, Any
+from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app.services.user_service import UserService
 from app.utils.mail import MailService
@@ -12,6 +14,8 @@ from app.utils.app_error import BadRequestError, ConflictError
 
 class AuthService:
     """Service class for authentication operations."""
+
+    PASSWORD_RESET_SALT = "password-reset"
 
     @staticmethod
     def serialize_user(user: Dict[str, Any]) -> Dict[str, Any]:
@@ -42,6 +46,82 @@ class AuthService:
     @staticmethod
     def issue_refresh_token(user: Dict[str, Any]) -> str:
         return create_refresh_token(identity=str(user.get('id')))
+
+    @staticmethod
+    def _password_reset_serializer() -> URLSafeTimedSerializer:
+        return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt=AuthService.PASSWORD_RESET_SALT)
+
+    @staticmethod
+    def generate_password_reset_token(user: Dict[str, Any]) -> str:
+        payload = {
+            "user_id": user.get("id"),
+            "email": user.get("email"),
+        }
+        return AuthService._password_reset_serializer().dumps(payload)
+
+    @staticmethod
+    def verify_password_reset_token(token: str) -> Dict[str, Any]:
+        try:
+            payload = AuthService._password_reset_serializer().loads(
+                token,
+                max_age=current_app.config.get("PASSWORD_RESET_TOKEN_MAX_AGE", 3600),
+            )
+        except SignatureExpired:
+            return {"success": False, "error": "Reset token has expired"}
+        except BadSignature:
+            return {"success": False, "error": "Invalid reset token"}
+
+        if not payload.get("user_id") or not payload.get("email"):
+            return {"success": False, "error": "Invalid reset token"}
+
+        return {"success": True, "payload": payload}
+
+    @staticmethod
+    def request_password_reset(email: str) -> Dict[str, Any]:
+        user = UserService.get_user_by_email(email)
+
+        if not user:
+            return {
+                "success": True,
+                "message": "If an account exists for that email, a reset link has been sent.",
+            }
+
+        token = AuthService.generate_password_reset_token(user)
+        verification_email_sent = MailService.send_password_reset_email(
+            recipient=user.get("email"),
+            username=user.get("username"),
+            token=token,
+        )
+        if not verification_email_sent:
+            raise BadRequestError("Failed to send password reset email")
+
+        return {
+            "success": True,
+            "message": "Password reset link sent successfully",
+            "verification_email_sent": verification_email_sent,
+        }
+
+    @staticmethod
+    def reset_password(token: str, new_password: str) -> Dict[str, Any]:
+        token_result = AuthService.verify_password_reset_token(token)
+        if not token_result.get("success"):
+            return token_result
+
+        payload = token_result["payload"]
+        user = UserService.get_user_by_id(int(payload["user_id"]))
+        if not user:
+            return {"success": False, "error": "User not found"}
+
+        password_hash = hash_password(new_password)
+        updated_user = UserService.update_password(int(user["id"]), password_hash)
+        if not updated_user:
+            raise BadRequestError("Failed to reset password")
+
+        return {
+            "success": True,
+            "message": "Password reset successfully",
+            "user": AuthService.serialize_user(updated_user),
+        }
     
     @staticmethod
     def register_user(user_data: RegistrationSchema) -> Dict[str, Any]:
