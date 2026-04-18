@@ -26,9 +26,20 @@ class ProfileModel(BaseModel):
         location: str,
         bio: str,
         interests,
-        avatar_url: str,
+        avatar: str,
+        pictures,
     ) -> Optional[Dict[str, Any]]:
         return cls.db_manager().execute_returning(
             UPSERT_PROFILE,
-            (user_id, gender, age, date_of_birth, location, bio, json.dumps(interests), avatar_url),
+            (
+                user_id,
+                gender,
+                age,
+                date_of_birth,
+                location,
+                bio,
+                json.dumps(interests),
+                avatar,
+                json.dumps(pictures),
+            ),
         )

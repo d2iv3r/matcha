@@ -1,6 +1,6 @@
 """Controller for authentication-related operations."""
 
-from flask import jsonify, make_response, request
+from flask import jsonify, make_response, request, g
 from flask_jwt_extended import jwt_required, get_jwt_identity, set_refresh_cookies, unset_jwt_cookies
 from pydantic import ValidationError
 
@@ -69,11 +69,18 @@ class AuthController:
                 response = make_response(jsonify({
                     "success": True,
                     "message": "Login successful",
-                    "user": result.get("user"),
-                    "access_token": result.get("access_token"),
-                    "token_type": "Bearer"
+                    "user": result.get("user")
                 }), 200)
+                # Set both access and refresh tokens in HTTP-only cookies
                 set_refresh_cookies(response, result.get("refresh_token"))
+                response.set_cookie(
+                    key="access_token_cookie",
+                    value=result.get("access_token"),
+                    httponly=True,
+                    secure=request.environ.get("wsgi.url_scheme") == "https",
+                    samesite="Lax",
+                    path="/"
+                )
                 return response
             else:
                 return {"success": False, "error": result.get("error")}, 401
@@ -94,14 +101,19 @@ class AuthController:
     def me():
         """Get details of the currently authenticated user."""
         try:
-            user_id = get_jwt_identity()
-            user = AuthService.get_user_by_identity(user_id)
+            # User is already in context from middleware if available
+            if hasattr(g, 'current_user') and g.current_user:
+                user = AuthService.get_user_by_identity(g.current_user['id'])
+            else:
+                # Fallback to JWT for cases where middleware wasn't applied
+                user_id = get_jwt_identity()
+                user = AuthService.get_user_by_identity(user_id)
+            
             if not user:
                 return {"success": False, "error": "User not found"}, 404
 
             return {
                 "success": True,
-                "user_id": int(user_id),
                 "user": AuthService.serialize_user(user)
             }, 200
         except Exception as e:
@@ -118,14 +130,19 @@ class AuthController:
                 return {"success": False, "error": "User not found"}, 404
 
             access_token = AuthService.issue_access_token(user)
-            refresh_token = AuthService.issue_refresh_token(user)
 
             response = make_response(jsonify({
                 "success": True,
-                "access_token": access_token,
-                "token_type": "Bearer"
+                "message": "Token refreshed successfully"
             }), 200)
-            set_refresh_cookies(response, refresh_token)
+            response.set_cookie(
+                key="access_token_cookie",
+                value=access_token,
+                httponly=True,
+                secure=request.environ.get("wsgi.url_scheme") == "https",
+                samesite="Lax",
+                path="/"
+            )
             return response
 
         except Exception as e:

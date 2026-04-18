@@ -149,5 +149,8 @@ cython_debug/
 postgres_data_dev/
 docker-compose.override.yml
 
+# User-generated uploads
+backend/static/uploads/
+
 # VS Code
 .vscode/

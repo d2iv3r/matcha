@@ -18,7 +18,7 @@ class RegistrationSchema(BaseModel):
 class LoginSchema(BaseModel):
     """Schema for user login data."""
 
-    email: str = Field(..., pattern=EMAIL_PATTERN)
+    username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
     password: str = Field(..., min_length=8)
 
 

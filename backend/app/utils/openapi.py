@@ -42,9 +42,9 @@ def get_openapi_spec() -> dict:
                 },
                 "LoginRequest": {
                     "type": "object",
-                    "required": ["email", "password"],
+                    "required": ["username", "password"],
                     "properties": {
-                        "email": {"type": "string", "format": "email"},
+                        "username": {"type": "string", "minLength": 3, "maxLength": 50},
                         "password": {"type": "string", "minLength": 8},
                     },
                 },
@@ -63,25 +63,25 @@ def get_openapi_spec() -> dict:
                     "properties": {
                         "user_id": {"type": "integer"},
                         "gender": {"type": "string", "enum": ["male", "female"]},
-                        "age": {"type": "integer"},
                         "date_of_birth": {"type": "string", "format": "date"},
                         "location": {"type": "string"},
                         "bio": {"type": "string"},
                         "interests": {"type": "array", "items": {"type": "string"}},
-                        "avatar_url": {"type": "string"},
+                        "avatar": {"type": "string"},
+                        "pictures": {"type": "array", "items": {"type": "string"}},
                     },
                 },
                 "UpdateProfileRequest": {
                     "type": "object",
-                    "required": ["gender", "age", "date_of_birth", "location", "interests", "avatar_url"],
+                    "required": ["gender", "date_of_birth", "location", "interests", "avatar"],
                     "properties": {
                         "gender": {"type": "string", "enum": ["male", "female"]},
-                        "age": {"type": "integer", "minimum": 0, "maximum": 120},
                         "date_of_birth": {"type": "string", "format": "date"},
                         "location": {"type": "string", "minLength": 1, "maxLength": 255},
                         "bio": {"type": "string", "maxLength": 500},
                         "interests": {"type": "array", "items": {"type": "string"}, "minItems": 1},
-                        "avatar_url": {"type": "string", "minLength": 1, "maxLength": 255},
+                        "avatar": {"type": "string", "format": "binary"},
+                        "pictures": {"type": "array", "items": {"type": "string", "format": "binary"}},
                     },
                 },
                 "ErrorResponse": {
@@ -90,6 +90,21 @@ def get_openapi_spec() -> dict:
                         "success": {"type": "boolean"},
                         "error": {"type": "string"},
                         "errors": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+                "PasswordResetRequest": {
+                    "type": "object",
+                    "required": ["email"],
+                    "properties": {
+                        "email": {"type": "string", "format": "email"},
+                    },
+                },
+                "PasswordResetConfirm": {
+                    "type": "object",
+                    "required": ["token", "new_password"],
+                    "properties": {
+                        "token": {"type": "string"},
+                        "new_password": {"type": "string", "minLength": 8},
                     },
                 },
             },
@@ -149,10 +164,48 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
+            "/api/auth/verify-email": {
+                "get": {
+                    "tags": ["Auth"],
+                    "summary": "Verify email address",
+                    "parameters": [
+                        {
+                            "name": "token",
+                            "in": "query",
+                            "required": True,
+                            "description": "Email verification token",
+                            "schema": {"type": "string"}
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Email verified successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "user": {"$ref": "#/components/schemas/User"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {
+                            "description": "Invalid or expired token",
+                            "content": {
+                                APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}
+                            },
+                        },
+                    },
+                }
+            },
             "/api/auth/login": {
                 "post": {
                     "tags": ["Auth"],
-                    "summary": "Login",
+                    "summary": "Login with HTTP-only cookies",
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -161,7 +214,7 @@ def get_openapi_spec() -> dict:
                     },
                     "responses": {
                         "200": {
-                            "description": "Logged in successfully",
+                            "description": "Logged in successfully with HTTP-only cookie tokens",
                             "content": {
                                 APP_JSON: {
                                     "schema": {
@@ -169,8 +222,6 @@ def get_openapi_spec() -> dict:
                                         "properties": {
                                             "success": {"type": "boolean"},
                                             "message": {"type": "string"},
-                                            "access_token": {"type": "string"},
-                                            "token_type": {"type": "string"},
                                             "user": {"$ref": "#/components/schemas/User"},
                                         },
                                     }
@@ -178,17 +229,6 @@ def get_openapi_spec() -> dict:
                             },
                         },
                         "401": {"description": "Invalid credentials"},
-                    },
-                }
-            },
-            "/api/auth/refresh": {
-                "post": {
-                    "tags": ["Auth"],
-                    "summary": "Refresh access token",
-                    "security": [{"refreshCookie": [], "csrfHeader": []}],
-                    "responses": {
-                        "200": {"description": "Token refreshed"},
-                        "401": {"description": "Unauthorized"},
                     },
                 }
             },
@@ -206,6 +246,75 @@ def get_openapi_spec() -> dict:
                     "summary": "Get current user",
                     "security": [{"bearerAuth": []}],
                     "responses": {"200": {"description": "Current user"}, "401": {"description": "Unauthorized"}},
+                }
+            },
+            "/api/auth/reset-password/request": {
+                "post": {
+                    "tags": ["Auth"],
+                    "summary": "Request password reset",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {"schema": {"$ref": "#/components/schemas/PasswordResetRequest"}}
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Password reset email sent",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {
+                            "description": "Bad request",
+                            "content": {
+                                APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}
+                            },
+                        },
+                    },
+                }
+            },
+            "/api/auth/reset-password/confirm": {
+                "post": {
+                    "tags": ["Auth"],
+                    "summary": "Confirm password reset",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {"schema": {"$ref": "#/components/schemas/PasswordResetConfirm"}}
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Password reset successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "user": {"$ref": "#/components/schemas/User"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {
+                            "description": "Invalid or expired token",
+                            "content": {
+                                APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}
+                            },
+                        },
+                    },
                 }
             },
             "/api/v1/users/": {
@@ -253,7 +362,40 @@ def get_openapi_spec() -> dict:
                     "requestBody": {
                         "required": True,
                         "content": {
-                            APP_JSON: {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}}
+                            APP_JSON: {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}},
+                            "multipart/form-data": {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}},
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Profile updated successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "profile": {"$ref": PROFILE_SCHEMA_REF},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Forbidden"},
+                    },
+                },
+                "put": {
+                    "tags": ["Account"],
+                    "summary": "Update authenticated user profile",
+                    "security": [{"bearerAuth": []}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}},
+                            "multipart/form-data": {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}},
                         },
                     },
                     "responses": {

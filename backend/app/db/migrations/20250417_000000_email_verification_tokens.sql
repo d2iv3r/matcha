@@ -1,8 +1,0 @@
-CREATE TABLE IF NOT EXISTS email_verification_tokens (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash VARCHAR(64) UNIQUE NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    verified_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);

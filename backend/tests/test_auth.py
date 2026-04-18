@@ -76,7 +76,7 @@ def test_signup_validation_error(client):
 
 
 def test_login_success_sets_refresh_cookie(client, app, monkeypatch):
-    payload = {"email": "alice@example.com", PASSWORD_KEY: "supersecret"}
+    payload = {"username": "alice", PASSWORD_KEY: "supersecret"}
 
     with app.app_context():
         refresh_token = create_refresh_token(identity="1")
@@ -96,12 +96,15 @@ def test_login_success_sets_refresh_cookie(client, app, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert "access_token" in data
-    assert "refresh_token_cookie=" in response.headers.get("Set-Cookie", "")
+    
+    # Check for both cookies in response headers
+    set_cookie_headers = response.headers.getlist("Set-Cookie")
+    assert any("access_token_cookie=" in cookie for cookie in set_cookie_headers)
+    assert any("refresh_token_cookie=" in cookie for cookie in set_cookie_headers)
 
 
 def test_login_invalid_credentials(client, monkeypatch):
-    payload = {"email": "alice@example.com", PASSWORD_KEY: "wrongpassword"}
+    payload = {"username": "alice", PASSWORD_KEY: "wrongpassword"}
 
     def fake_authenticate(_data):
         return {"success": False, "error": "Invalid credentials"}
@@ -113,6 +116,44 @@ def test_login_invalid_credentials(client, monkeypatch):
     assert response.status_code == 401
     data = response.get_json()
     assert data["success"] is False
+
+
+def test_login_validation_error_requires_username(client):
+    payload = {"email": "alice@example.com", PASSWORD_KEY: "supersecret"}
+
+    response = client.post("/api/auth/login", json=payload)
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "errors" in data
+
+
+def test_authenticate_uses_username_lookup(client, app, monkeypatch):
+    with app.app_context():
+        data = {
+            "username": "alice",
+            PASSWORD_KEY: "supersecret",
+        }
+
+    monkeypatch.setattr(
+        "app.services.auth_service.UserService.get_user_by_username",
+        lambda username: {
+            "id": 1,
+            "username": username,
+            "email": "alice@example.com",
+            "password_hash": "salt" + "$" + "hash",
+            "is_active": True,
+            "is_profile_complete": False,
+        },
+    )
+    monkeypatch.setattr("app.services.auth_service.verify_password", lambda _pwd, _hash: True)
+
+    with app.app_context():
+        result = AuthService.authenticate(type("LoginData", (), data))
+
+    assert result["success"] is True
+    assert result["user"]["username"] == "alice"
 
 
 def test_me_requires_auth(client):
@@ -162,7 +203,10 @@ def test_refresh_success(client, app, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["access_token"] == "new.access.token"
+    
+    # Check that access token is in cookie
+    set_cookie_headers = response.headers.getlist("Set-Cookie")
+    assert any("access_token_cookie=new.access.token" in cookie for cookie in set_cookie_headers)
 
 
 def test_logout_success(client, app):

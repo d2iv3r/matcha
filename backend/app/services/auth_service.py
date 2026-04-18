@@ -3,11 +3,12 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
+
 from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app.models.email_verification_token_model import EmailVerificationTokenModel
+from app.models.password_reset_token_model import PasswordResetTokenModel
 from app.services.user_service import UserService
 from app.utils.mail import MailService
 from app.utils.utils import hash_password, verify_password, generate_token
@@ -17,8 +18,6 @@ from app.utils.app_error import BadRequestError, ConflictError
 
 class AuthService:
     """Service class for authentication operations."""
-
-    PASSWORD_RESET_SALT = "password-reset"
 
     @staticmethod
     def serialize_user(user: Dict[str, Any]) -> Dict[str, Any]:
@@ -94,33 +93,31 @@ class AuthService:
         }
 
     @staticmethod
-    def _password_reset_serializer() -> URLSafeTimedSerializer:
-        return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt=AuthService.PASSWORD_RESET_SALT)
-
-    @staticmethod
     def generate_password_reset_token(user: Dict[str, Any]) -> str:
-        payload = {
-            "user_id": user.get("id"),
-            "email": user.get("email"),
-        }
-        return AuthService._password_reset_serializer().dumps(payload)
+        token = generate_token(48)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            seconds=int(current_app.config.get("PASSWORD_RESET_TOKEN_MAX_AGE", 3600))
+        )
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        PasswordResetTokenModel.store_token(int(user.get("id")), token_hash, expires_at)
+        return token
 
     @staticmethod
     def verify_password_reset_token(token: str) -> Dict[str, Any]:
-        try:
-            payload = AuthService._password_reset_serializer().loads(
-                token,
-                max_age=current_app.config.get("PASSWORD_RESET_TOKEN_MAX_AGE", 3600),
-            )
-        except SignatureExpired:
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        record = PasswordResetTokenModel.get_by_token_hash(token_hash)
+
+        if not record:
+            return {"success": False, "error": "Invalid reset token"}
+
+        if record.get("used_at") is not None:
+            return {"success": False, "error": "Reset token has already been used"}
+
+        expires_at = record.get("expires_at")
+        if expires_at and expires_at < datetime.now(timezone.utc):
             return {"success": False, "error": "Reset token has expired"}
-        except BadSignature:
-            return {"success": False, "error": "Invalid reset token"}
 
-        if not payload.get("user_id") or not payload.get("email"):
-            return {"success": False, "error": "Invalid reset token"}
-
-        return {"success": True, "payload": payload}
+        return {"success": True, "payload": {"user_id": record.get("user_id")}, "record_id": record.get("id")}
 
     @staticmethod
     def request_password_reset(email: str) -> Dict[str, Any]:
@@ -162,6 +159,8 @@ class AuthService:
         updated_user = UserService.update_password(int(user["id"]), password_hash)
         if not updated_user:
             raise BadRequestError("Failed to reset password")
+
+        PasswordResetTokenModel.mark_used(int(token_result["record_id"]))
 
         return {
             "success": True,
@@ -219,14 +218,14 @@ class AuthService:
         Authenticate a user.
         
         Args:
-            email: User's email
+            username: User's username
             password: User's plain text password
             
         Returns:
             Dict with success status and user data/token or error
         """
         try:
-            user = UserService.get_user_by_email(data.email)
+            user = UserService.get_user_by_username(data.username)
             
             if not user:
                 return {
