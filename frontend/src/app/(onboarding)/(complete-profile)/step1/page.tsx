@@ -5,9 +5,10 @@ import man from "@/public/men-icone.svg";
 import woman from "@/public/women-icone.svg";
 import { Mars, Venus, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+    const router = useRouter();
     const [gender, setGender] = useState<"man" | "woman" | "">("");
     const [lookingFor, setLookingFor] = useState<"man" | "woman" | "">("");
     const [day, setDay] = useState("");
@@ -84,7 +85,8 @@ export default function Page() {
                                 alt="man"
                                 width={60}
                                 height={60}
-                                className={`${gender === "man" ? "" : "opacity-50 grayscale"}`}
+                                priority
+                                className={`w-auto h-auto ${gender === "man" ? "" : "opacity-50 grayscale"}`}
                             />
                             <p
                                 className={`font-medium ${gender === "man" ? "text-black" : "text-black/50"}`}
@@ -105,7 +107,8 @@ export default function Page() {
                                 alt="woman"
                                 width={60}
                                 height={60}
-                                className={`${gender === "woman" ? "" : "opacity-50 grayscale"}`}
+                                priority
+                                className={`w-auto h-auto ${gender === "woman" ? "" : "opacity-50 grayscale"}`}
                             />
                             <p
                                 className={`font-medium ${gender === "woman" ? "text-black" : "text-black/50"}`}
@@ -276,7 +279,28 @@ export default function Page() {
                     checkIsUnder18()
                 }
                 onClick={() => {
-                    redirect("/step2");
+                    const mappedGender = gender === "man" ? "male" : "female";
+                    const formattedMonth = month.padStart(2, '0');
+                    const formattedDay = day.padStart(2, '0');
+                    const date_of_birth = `${year}-${formattedMonth}-${formattedDay}`;
+
+                    const birthDateDate = new Date(Number(year), Number(month) - 1, Number(day));
+                    const today = new Date();
+                    let computedAge = today.getFullYear() - birthDateDate.getFullYear();
+                    const m = today.getMonth() - birthDateDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDateDate.getDate())) {
+                        computedAge--;
+                    }
+
+                    const existingData = JSON.parse(localStorage.getItem("profile_data") || "{}");
+                    localStorage.setItem("profile_data", JSON.stringify({
+                        ...existingData,
+                        gender: mappedGender,
+                        date_of_birth: date_of_birth,
+                        age: computedAge
+                    }));
+
+                    router.push("/step2");
                 }}
                 className={`w-full flex flex-col items-center justify-center p-3 rounded-2xl transition-colors duration-300 ${
                     gender &&

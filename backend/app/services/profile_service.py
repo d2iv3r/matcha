@@ -156,8 +156,8 @@ class ProfileService:
             "location": user_with_profile.get("location"),
             "bio": user_with_profile.get("bio"),
             "interests": user_with_profile.get("interests"),
-            "avatar_url": user_with_profile.get("avatar_url"),
-            "profile_pictures": user_with_profile.get("profile_pictures"),
+            "avatar_url": user_with_profile.get("avatar"),
+            "profile_pictures": user_with_profile.get("pictures"),
         }
 
         return {"user": user_payload, "profile": ProfileService._serialize_profile(profile_payload)}

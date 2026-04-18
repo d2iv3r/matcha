@@ -1,10 +1,13 @@
 "use client";
-import { redirect } from "next/navigation";
-import { Check, Wallpaper, X, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, Wallpaper, X, Plus, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 
 export default function Page() {
+    const router = useRouter();
     const [images, setImages] = useState<{file: File, url: string}[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +43,69 @@ export default function Page() {
     const removeImage = (index: number) => {
         setImages(prev => prev.filter((_, i) => i !== index));
     };
+    const handleFinish = async () => {
+        setIsSubmitting(true);
+        setErrorMsg("");
+
+        try {
+            const dataStr = localStorage.getItem("profile_data");
+            const existingData = JSON.parse(dataStr || "{}");
+
+            const formData = new FormData();
+            if (existingData.gender) formData.append("gender", existingData.gender);
+            if (existingData.date_of_birth) formData.append("date_of_birth", existingData.date_of_birth);
+            if (existingData.location) formData.append("location", existingData.location);
+            if (existingData.bio) formData.append("bio", existingData.bio);
+            if (existingData.interests) {
+                formData.append("interests", JSON.stringify(existingData.interests));
+            }
+
+            if (images.length > 0) {
+                formData.append("avatar", images[0].file);
+            }
+            for (let i = 1; i < images.length; i++) {
+                formData.append("pictures", images[i].file);
+            }
+
+            const res = await fetch("http://localhost:5001/api/v1/account/complete-profile", {
+                method: "POST",
+                credentials: "include",
+                body: formData,
+            });
+
+            const responseData = await res.json();
+
+            if (!res.ok) {
+                const errMsg =
+                    responseData.error ||
+                    responseData.message ||
+                    (responseData.errors
+                        ? JSON.stringify(responseData.errors)
+                        : "Failed to complete profile.");
+                throw new Error(errMsg);
+            }
+
+            localStorage.removeItem("profile_data");
+            router.push("/step6");
+        } catch (err: any) {
+            console.error(err);
+            setErrorMsg(err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (isSubmitting) {
+        return (
+            <div className="h-full w-full flex flex-col items-center justify-center p-6 gap-4">
+                <Loader2 className="animate-spin text-[#6367FF]" size={48} />
+                <p className="font-medium text-[#4B4B4B]">
+                    Setting up your profile...
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full w-full flex flex-col gap-4 items-center justify-between p-6">
             <div className="relative w-full flex flex-row gap-4 justify-between items-center mb-2">
@@ -71,6 +137,13 @@ export default function Page() {
                     A picture is worth a thousand words. Upload up to 5 photos
                     to show your personality.
                 </p>
+
+                {errorMsg && (
+                    <div className="w-full p-3 bg-red-100 text-red-600 rounded-lg text-sm mb-2 text-center">
+                        {errorMsg}
+                    </div>
+                )}
+
                 <div className="w-full flex items-center flex-col gap-3 bg-[#E2DCFF] rounded-2xl p-4">
                     <input 
                         type="file" 
@@ -159,17 +232,16 @@ export default function Page() {
             <div className="w-full flex flex-row gap-7">
                 <button
                     onClick={() => {
-                        redirect("/step4");
+                        router.push("/step4");
                     }}
                     className="w-full flex-1 flex flex-col items-center justify-center p-3 border rounded-2xl"
                 >
                     <p className="font-semibold text-black/50">Back</p>
                 </button>
                 <button
-                    onClick={() => {
-                        redirect("/step6");
-                    }}
-                    className="w-full flex-2 flex flex-col items-center justify-center p-3 bg-[#6367FF] rounded-2xl"
+                    disabled={images.length === 0}
+                    onClick={handleFinish}
+                    className="w-full flex-2 flex flex-col items-center justify-center p-3 bg-[#6367FF] rounded-2xl disabled:opacity-50"
                 >
                     <p className="font-semibold text-white">Finish</p>
                 </button>

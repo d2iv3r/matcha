@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, ChevronDown } from "lucide-react";
 import { users, status } from "@/core/components/fake-data";
 
@@ -15,6 +15,8 @@ interface User {
 
 function UserCard({ user, statusColor }: { user: User; statusColor: string }) {
     const [isLiked, setIsLiked] = useState(false);
+
+
 
     return (
         <div className="group flex flex-col h-full bg-[#F5F3FF] p-2 shadow-xl rounded-2xl w-full cursor-pointer">
@@ -71,6 +73,32 @@ export default function HomePage() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
     const [selectedAges, setSelectedAges] = useState<string[]>([]);
+    const [data, setData] = useState<any>(null);
+    
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch("http://localhost:5001/api/v1/account/profile", {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        // "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+                const jsonData = await res.json();
+                console.log("Profile Result Data (fetch):", jsonData);
+                setData(jsonData);
+            } catch (err) {
+                console.error("Error fetching profile:", err);
+            }
+        };
+
+        fetchProfile();
+    }, []);
+
+    // console.log("Profile Result Data (state):", data);
+
     
     const [userList, setUserList] = useState<User[]>(users);
 

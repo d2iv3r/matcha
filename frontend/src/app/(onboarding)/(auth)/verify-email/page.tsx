@@ -17,7 +17,7 @@ export default async function VerifyEmail({ searchParams }: { searchParams: Prom
         <div className="w-full h-screen flex items-center justify-center p-3 bg-transparent">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
-                    <a href="/">
+                    <div className="flex justify-center lg:justify-start">
                         <Image
                             src={logo}
                             alt="Logo"
@@ -26,7 +26,7 @@ export default async function VerifyEmail({ searchParams }: { searchParams: Prom
                             height={140}
                             className="w-35 h-10"
                         />
-                    </a>
+                    </div>
                     <div className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm">
                         <h1 className="pl-3 text-2xl font-bold">
                             Verify your email address
@@ -47,7 +47,7 @@ export default async function VerifyEmail({ searchParams }: { searchParams: Prom
                         </div>
                     </div>
                 </div>
-                <div className="flex-1/4 w-full h-full flex flex-col bg-[url('/signup-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
+                <div className="hidden lg:flex flex-1/4 w-full h-full  flex-col bg-[url('/signup-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
                     <div className="flex flex-row items-center gap-4 text-sm">
                         <a href="/login" className="font-medium">
                             LOGIN

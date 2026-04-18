@@ -1,16 +1,62 @@
 "use client";
 import Image from "next/image";
 import logo from "@/public/logomatchvibe.svg";
-import bg from "@/public/login-image.png";
-import { User, LockKeyhole, Mail } from "lucide-react";
+import { User, LockKeyhole, Mail, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+    const router = useRouter();
+    const [showPassword, setShowPassword] = useState(false);
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [errorMsg, setErrorMsg] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async () => {
+        setErrorMsg("");
+        if (!username || !password) {
+            setErrorMsg("Username and password are required.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await fetch("http://localhost:5001/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ username, password}),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || data.error || "Login failed");
+            }
+
+            if (data.access_token) {
+                localStorage.setItem("access_token", data.access_token);
+            }
+
+            if (data.user && !data.user.is_profile_complete) {
+                router.push("/step1");
+                console.log( "sa", data);
+            } else {
+                router.push("/home");
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="w-full h-screen flex items-center justify-center p-3 bg-transparent">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
-                    <a href="/">
+                    <div className="flex justify-center lg:justify-start">
                         <Image
                             src={logo}
                             alt="Logo"
@@ -19,16 +65,33 @@ export default function Login() {
                             height={140}
                             className="w-35 h-10"
                         />
-                    </a>
+                    </div>
                     <div className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm">
                         <h1 className="pl-3 text-2xl font-bold">Login</h1>
                         <div className="flex flex-col gap-4">
+                            {/* <div className="flex flex-col gap-2">
+                                <h3 className="pl-4 text-black">Email</h3>
+                                <div className="flex flex-row items-center gap-4 p-3 bg-[#EDEDED] rounded-xl">
+                                    <Mail />
+                                    <input
+                                        type="email"
+                                        placeholder="Email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="bg-transparent outline-none w-full text-black placeholder-black/50"
+                                    />
+                                </div>
+                            </div> */}
                             <div className="flex flex-col gap-2">
                                 <h3 className="pl-4 text-black">Username</h3>
                                 <div className="flex flex-row items-center gap-4 p-3 bg-[#EDEDED] rounded-xl">
                                     <User />
                                     <input
                                         type="text"
+                                        name="username"
+                                        autoComplete="username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
                                         placeholder="Username"
                                         className="bg-transparent outline-none w-full text-black placeholder-black/50"
                                     />
@@ -39,10 +102,17 @@ export default function Login() {
                                 <div className="flex flex-row items-center gap-4 p-3 bg-[#EDEDED] rounded-xl">
                                     <LockKeyhole />
                                     <input
-                                        type="text"
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        autoComplete="current-password"
                                         placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="bg-transparent outline-none w-full text-black placeholder-black/50"
                                     />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="cursor-pointer">
+                                        {showPassword ? <EyeOff /> : <Eye />}
+                                    </button>
                                 </div>
                             </div>
                             <div className="flex flex-row items-center gap-2 ml-2">
@@ -51,12 +121,19 @@ export default function Login() {
                                     Remember me
                                 </p>
                             </div>
-                            <Link
-                                href="/home"
-                                className="w-full text-center bg-[#6367FF] text-white py-3 rounded-xl font-bold cursor-pointer"
+                            {errorMsg && (
+                                <p className="text-red-500 text-sm font-medium text-center">
+                                    {errorMsg}
+                                </p>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleLogin}
+                                disabled={loading}
+                                className="w-full text-center bg-[#6367FF] text-white py-3 rounded-xl font-bold cursor-pointer disabled:opacity-50 transition-opacity"
                             >
-                                Login
-                            </Link>
+                                {loading ? "Logging in..." : "Login"}
+                            </button>
                             <div className="flex flex-col gap-1 ml-2 text-xs">
                                 <div className="flex flex-row items-center gap-1">
                                     <p className="text-[#767676]">
@@ -98,7 +175,7 @@ export default function Login() {
                         </div>
                     </div>
                 </div>
-                <div className="flex-1/4 w-full h-full flex flex-col bg-[url('/login-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
+                <div className="hidden lg:flex flex-1/4 w-full h-full flex-col bg-[url('/login-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
                     <div className="flex flex-row items-center gap-4 text-sm">
                         <a
                             href="/login"

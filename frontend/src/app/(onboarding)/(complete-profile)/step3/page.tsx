@@ -1,5 +1,5 @@
 "use client";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
     Utensils,
@@ -53,6 +53,7 @@ const INTERESTS = [
 ];
 
 export default function Page() {
+    const router = useRouter();
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
     const toggleInterest = (id: string) => {
@@ -121,7 +122,7 @@ export default function Page() {
             <div className="w-full flex flex-row gap-7">
                 <button
                     onClick={() => {
-                        redirect("/step2");
+                        router.push("/step2");
                     }}
                     className="w-full flex-1 flex flex-col items-center justify-center p-3 border rounded-2xl cursor-pointer"
                 >
@@ -130,7 +131,12 @@ export default function Page() {
                 <button
                     disabled={selectedInterests.length < 5}
                     onClick={() => {
-                        redirect("/step4");
+                        const existingData = JSON.parse(localStorage.getItem("profile_data") || "{}");
+                        localStorage.setItem("profile_data", JSON.stringify({
+                            ...existingData,
+                            interests: selectedInterests
+                        }));
+                        router.push("/step4");
                     }}
                     className={`w-full flex-2 flex flex-col items-center justify-center p-3 rounded-2xl transition-colors duration-300 ${
                         selectedInterests.length >= 5 ? "bg-[#6367FF] text-white cursor-pointer" : "bg-[#E2DCFF] text-black/50 cursor-not-allowed"

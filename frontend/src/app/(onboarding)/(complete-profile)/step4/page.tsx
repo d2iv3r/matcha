@@ -1,9 +1,10 @@
 "use client";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
 export default function Page() {
+    const router = useRouter();
     const [locationAccess, setLocationAccess] = useState<boolean | null>(null);
 
     return (
@@ -69,7 +70,7 @@ export default function Page() {
             <div className="w-full flex flex-row gap-7">
                 <button
                     onClick={() => {
-                        redirect("/step3");
+                        router.push("/step3");
                     }}
                     className="w-full flex-1 flex flex-col items-center justify-center p-3 border rounded-2xl cursor-pointer"
                 >
@@ -78,7 +79,12 @@ export default function Page() {
                 <button
                     disabled={locationAccess === null}
                     onClick={() => {
-                        redirect("/step5");
+                        const existingData = JSON.parse(localStorage.getItem("profile_data") || "{}");
+                        localStorage.setItem("profile_data", JSON.stringify({
+                            ...existingData,
+                            location: locationAccess ? "true" : "false"
+                        }));
+                        router.push("/step5");
                     }}
                     className={`w-full flex-2 flex flex-col items-center justify-center p-3 rounded-2xl transition-colors duration-300 ${
                         locationAccess !== null ? "bg-[#6367FF] text-white cursor-pointer" : "bg-[#E2DCFF] text-black/50 cursor-not-allowed"

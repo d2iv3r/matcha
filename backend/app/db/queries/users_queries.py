@@ -74,9 +74,10 @@ SELECT
 	p.age,
 	p.date_of_birth,
 	p.location,
+	p.bio,
 	p.interests,
-	p.avatar_url,
-	p.profile_pictures
+	p.avatar,
+	p.pictures
 FROM users u
 LEFT JOIN profiles p ON p.user_id = u.id
 WHERE u.id = %s

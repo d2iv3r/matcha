@@ -49,7 +49,7 @@ export default function CompleteProfile() {
         <div className="w-full h-screen flex items-center justify-center p-3 bg-white">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
-                    <a href="/">
+                    <div className="flex justify-center lg:justify-start">
                         <Image
                             src={logo}
                             alt="Logo"
@@ -58,7 +58,7 @@ export default function CompleteProfile() {
                             height={140}
                             className="w-35 h-10"
                         />
-                    </a>
+                    </div>
                     <div className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm">
                         {status === "loading" && (
                             <div className="flex flex-col items-center justify-center py-10 gap-4">
@@ -110,7 +110,7 @@ export default function CompleteProfile() {
                         )}
                     </div>
                 </div>
-                <div className="flex-1/4 w-full h-full flex flex-col bg-[url('/signup-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
+                <div className="hidden lg:flex flex-1/4 w-full h-full flex-col bg-[url('/signup-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
                     <div className="flex flex-row items-center gap-4 text-sm">
                         <a href="/login" className="font-medium">
                             LOGIN

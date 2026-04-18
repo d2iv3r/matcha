@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import logo from "@/public/logomatchvibe.svg";
-import { User, LockKeyhole, Mail } from "lucide-react";
+import { User, LockKeyhole, Mail, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -14,6 +14,7 @@ export default function SignUp() {
     const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const getPasswordScore = (pass: string) => {
         let score = 0;
@@ -53,7 +54,7 @@ export default function SignUp() {
             setErrorMsg("Please choose a stronger password.");
             return;
         }
-        
+
         setLoading(true);
         try {
             const res = await fetch("http://localhost:5001/api/auth/signup", {
@@ -64,11 +65,11 @@ export default function SignUp() {
                     first_name: firstName,
                     last_name: lastName,
                     password: password,
-                    username: username
-                })
+                    username: username,
+                }),
             });
             const data = await res.json();
-            
+
             if (!res.ok) {
                 throw new Error(data.error || data.message || "Sign up failed");
             }
@@ -83,20 +84,20 @@ export default function SignUp() {
         <div className="w-full h-screen flex items-center justify-center p-3 bg-transparent">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
-                    <div className="flex flex-row items-center justify-center lg:justify-start gap-4 text-sm">
-                        <a href="/">
-                            <Image
-                                src={logo}
-                                alt="Logo"
-                                priority={true}
-                                width={140}
-                                height={140}
-                                className="w-35 h-10"
-                            />
-                        </a>
+                    <div className="flex justify-center lg:justify-start">
+                        <Image
+                            src={logo}
+                            alt="Logo"
+                            priority={true}
+                            width={140}
+                            height={140}
+                            className="w-35 h-10"
+                        />
                     </div>
                     <div className="flex w-full max-w-[450px] flex-col gap-4 self-center text-sm">
-                        <h1 className="pl-3 text-3xl font-bold text-center lg:text-left ">Sign Up</h1>
+                        <h1 className="pl-3 text-3xl font-bold text-center lg:text-left ">
+                            Sign Up
+                        </h1>
                         <div className="flex flex-col gap-3">
                             <div className="flex flex-col gap-2">
                                 <h3 className="pl-4 text-black">Username</h3>
@@ -106,7 +107,9 @@ export default function SignUp() {
                                         type="text"
                                         placeholder="Enter your username"
                                         value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
+                                        onChange={(e) =>
+                                            setUsername(e.target.value)
+                                        }
                                         className="bg-transparent outline-none w-full text-xs text-black placeholder-black/50"
                                     />
                                 </div>
@@ -122,7 +125,9 @@ export default function SignUp() {
                                             type="text"
                                             placeholder="Enter your first name"
                                             value={firstName}
-                                            onChange={(e) => setFirstName(e.target.value)}
+                                            onChange={(e) =>
+                                                setFirstName(e.target.value)
+                                            }
                                             className="bg-transparent outline-none w-full text-xs text-black placeholder-black/50"
                                         />
                                     </div>
@@ -137,7 +142,9 @@ export default function SignUp() {
                                             type="text"
                                             placeholder="Enter your last name"
                                             value={lastName}
-                                            onChange={(e) => setLastName(e.target.value)}
+                                            onChange={(e) =>
+                                                setLastName(e.target.value)
+                                            }
                                             className="bg-transparent outline-none w-full text-xs text-black placeholder-black/50"
                                         />
                                     </div>
@@ -151,7 +158,9 @@ export default function SignUp() {
                                         type="text"
                                         placeholder="Enter your email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         className="bg-transparent outline-none w-full text-xs text-black placeholder-black/50"
                                     />
                                 </div>
@@ -161,7 +170,7 @@ export default function SignUp() {
                                 <div className="flex flex-row items-center gap-4 px-3 py-2 bg-[#EDEDED] rounded-lg">
                                     <LockKeyhole />
                                     <input
-                                        type="text"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="Enter your password"
                                         value={password}
                                         onChange={(e) =>
@@ -169,6 +178,7 @@ export default function SignUp() {
                                         }
                                         className="bg-transparent outline-none w-full text-xs text-black placeholder-black/50"
                                     />
+                                    {showPassword ? <EyeOff onClick={() => setShowPassword(false)} /> : <Eye onClick={() => setShowPassword(true)} />}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 px-1">
@@ -204,7 +214,9 @@ export default function SignUp() {
 
                             {/* Error Message */}
                             {errorMsg && (
-                                <p className="text-red-500 text-sm font-medium text-center">{errorMsg}</p>
+                                <p className="text-red-500 text-sm font-medium text-center">
+                                    {errorMsg}
+                                </p>
                             )}
 
                             <button
