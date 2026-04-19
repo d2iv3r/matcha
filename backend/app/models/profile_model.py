@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Optional
 
-from app.db.queries.profile_queries import GET_PROFILE_BY_USER_ID, UPSERT_PROFILE
+from app.db.queries.profile_queries import GET_PROFILE_BY_USER_ID, GET_PROFILES_WITH_USERS, UPSERT_PROFILE
 from app.models.base_model import BaseModel
 
 
@@ -15,6 +15,10 @@ class ProfileModel(BaseModel):
     @classmethod
     def get_by_user_id(cls, user_id: int) -> Optional[Dict[str, Any]]:
         return cls.db_manager().fetch_one(GET_PROFILE_BY_USER_ID, (user_id,))
+    
+    @classmethod
+    def get_profiles_list(cls, limit: int = 20, offset: int = 0) -> list[Dict[str, Any]]:
+        return cls.db_manager().fetch_all(GET_PROFILES_WITH_USERS, (limit, offset))
 
     @classmethod
     def upsert(

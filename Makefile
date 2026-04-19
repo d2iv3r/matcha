@@ -16,3 +16,12 @@ clean:
 
 fclean:
 	docker compose -f $(DOCKER_COMPOSE_NAME) --env-file .env down --volumes --rmi all
+
+seed:
+	FLASK_APP=wsgi.py FLASK_ENV=dev flask seed
+
+seed-clear:
+	FLASK_APP=wsgi.py FLASK_ENV=dev flask seed-clear
+
+seed-info:
+	FLASK_APP=wsgi.py FLASK_ENV=dev flask seed-info

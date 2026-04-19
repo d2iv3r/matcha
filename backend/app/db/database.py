@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, Generator, Iterable, Optional
 
 from flask import Flask
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, execute_values
 from psycopg2.pool import SimpleConnectionPool
 
 from app.db.migrations import migrate_database
@@ -79,6 +79,47 @@ class DatabaseManager:
             if commit:
                 connection.commit()
             return affected_rows
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            self._release_connection(connection)
+
+    def execute_many(
+        self,
+        query: str,
+        params_list: Iterable[Iterable[Any]],
+        *,
+        commit: bool = True,
+    ) -> int:
+        """Execute a statement for multiple sets of parameters."""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.executemany(query, params_list)
+                affected_rows = cursor.rowcount
+            if commit:
+                connection.commit()
+            return affected_rows
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            self._release_connection(connection)
+
+    def execute_values_returning(
+        self,
+        query: str,
+        params_list: Iterable[Iterable[Any]],
+    ) -> list[Dict[str, Any]]:
+        """Fast bulk insert using execute_values, returning rows."""
+        connection = self._get_connection()
+        try:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                execute_values(cursor, query, params_list)
+                rows = cursor.fetchall()
+            connection.commit()
+            return [dict(row) for row in rows]
         except Exception:
             connection.rollback()
             raise
@@ -170,9 +211,3 @@ def init_db(app: Flask) -> None:
     manager.test_connection()
     app.db_manager = manager
     logger.info("[DB] Database connection pool initialized successfully")
-
-    try:
-        migrate_database(app, manager)
-    except Exception as exc:
-        logger.error("[DB] Failed to apply SQL migrations: %s", exc)
-        raise

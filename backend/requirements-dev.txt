@@ -11,3 +11,4 @@ ipython==8.14.0
 
 # Development utilities
 watchdog==3.0.0
+faker==19.6.1

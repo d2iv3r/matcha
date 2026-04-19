@@ -1,5 +1,12 @@
 """User-related SQL query constants."""
 
+SEED_USERS = """
+INSERT INTO users (username, first_name, last_name, email, password_hash, is_active, is_profile_complete)
+VALUES %s
+ON CONFLICT DO NOTHING
+RETURNING id;
+"""
+
 GET_USER_BY_EMAIL = """
 SELECT id, username, email, password_hash, is_active, is_profile_complete
 FROM users

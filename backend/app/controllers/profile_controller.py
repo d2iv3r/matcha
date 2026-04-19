@@ -8,11 +8,17 @@ from pydantic import ValidationError
 
 from app.schemas.profile_schemas import UpdateProfileSchema
 from app.services.profile_service import ProfileService
+from app.services.profile_views_service import ProfileViewsService
+from app.services.profile_likes_service import ProfileLikesService
 from app.utils.app_error import AppError
 
 
 class ProfileController:
     """Controller for profile endpoints."""
+
+    @staticmethod
+    def _normalize_rating(value):
+        return ProfileService._normalize_rating(value)
 
     @staticmethod
     def _parse_list_field(value):
@@ -96,6 +102,101 @@ class ProfileController:
                 user_id = int(get_jwt_identity())
             
             payload = ProfileService.get_profile_by_user_id(user_id)
+            
+            # Include view statistics for own profile
+            view_count = ProfileViewsService.get_profile_view_count(user_id)
+            recent_viewers = ProfileViewsService.get_profile_viewers(user_id, limit=5)
+            
+            payload["profile_views"] = {
+                "total_views": view_count,
+                "recent_viewers": recent_viewers,
+            }
+            
+            # Include like statistics for own profile
+            like_count = ProfileLikesService.get_profile_like_count(user_id)
+            recent_likers = ProfileLikesService.get_profile_likers(user_id, limit=5)
+            
+            payload["profile_likes"] = {
+                "total_likes": like_count,
+                "recent_likers": recent_likers,
+            }
+            
             return jsonify(payload), 200
+        except AppError as e:
+            return jsonify({"success": False, "error": e.message}), e.status_code
+
+    @staticmethod
+    def get_profile_by_username(username: str):
+        """Get a specific user's profile by username and record the view."""
+        try:
+            viewer_id = int(get_jwt_identity())
+            user = ProfileService.get_user_by_username(username)
+            if not user:
+                return jsonify({"success": False, "error": "User not found"}), 404
+            
+            user_id = user["id"]
+            if viewer_id != user_id:
+                ProfileViewsService.record_profile_view(user_id, viewer_id)
+            
+            payload = ProfileService.get_profile_by_user_id(user_id)
+            
+            # Format the output specifically as requested
+            user_data = payload.get("user", {})
+            profile_data = payload.get("profile", {}) or {}
+            
+            result = {
+                "username": user_data.get("username"),
+                "first_name": user_data.get("first_name"),
+                "last_name": user_data.get("last_name"),
+                "age": profile_data.get("age"),
+                "location": profile_data.get("location"),
+                "rating": ProfileController._normalize_rating(profile_data.get("rating")),
+                "bio": profile_data.get("bio"),
+                "interests": profile_data.get("interests"),
+                "avatar": profile_data.get("avatar"),
+                "pictures": profile_data.get("pictures")
+            }
+            return jsonify(result), 200
+        except AppError as e:
+            return jsonify({"success": False, "error": e.message}), e.status_code
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
+    def get_profile_by_user_id(user_id: int):
+        """Get a specific user's profile and record the view."""
+        try:
+            # Get viewer_id from JWT
+            viewer_id = int(get_jwt_identity())
+            
+            # Don't record self-views
+            if viewer_id != user_id:
+                ProfileViewsService.record_profile_view(user_id, viewer_id)
+            
+            payload = ProfileService.get_profile_by_user_id(user_id)
+            return jsonify(payload), 200
+        except AppError as e:
+            return jsonify({"success": False, "error": e.message}), e.status_code
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
+    def get_profiles_list():
+        try:
+            limit = int(request.args.get("limit", 20))
+            offset = int(request.args.get("offset", 0))
+            profiles = ProfileService.get_profiles_list(limit=limit, offset=offset)
+            
+            # Filter profiles to match the requested format {username, age, location, rating}
+            filtered_profiles = []
+            for p in profiles:
+                filtered_profiles.append({
+                    "username": p.get("username"),
+                    "age": p.get("age"),
+                    "location": p.get("location"),
+                    "rating": ProfileController._normalize_rating(p.get("rating"))
+                })
+                
+            return jsonify({"profiles": filtered_profiles, "count": len(filtered_profiles)}), 200
         except AppError as e:
             return jsonify({"success": False, "error": e.message}), e.status_code

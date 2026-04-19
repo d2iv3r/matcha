@@ -1,36 +1,48 @@
 """WSGI entry point for the application."""
 
 import os
-from app import create_app
-from venv import logger
+import sys
+import logging
 
+# Configure logging - reduce verbosity from noisy libraries
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Suppress verbose loggers from libraries
+logging.getLogger('watchdog').setLevel(logging.WARNING)
+logging.getLogger('asyncio').setLevel(logging.WARNING)
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
+
+try:
+    from app import create_app
+    from app.config import DevConfig, ProdConfig, TestConfig
+except ImportError as e:
+    logger.error(f"[WSGI] Failed to import app modules: {e}", exc_info=True)
+    sys.exit(1)
 
 FLASK_ENV = os.environ.get("FLASK_ENV", "dev")
 
-if FLASK_ENV == "prod":
-    from app.config import ProdConfig
-    try:
+try:
+    if FLASK_ENV == "prod":
         app = create_app(config_class=ProdConfig)
-    except Exception as e:
-        logger.error("[APP] Failed to create app in production mode:", e)
-        app = None
-elif FLASK_ENV == "test":
-    from app.config import TestConfig
-    try:
+        logger.info("[WSGI] App created in production mode")
+    elif FLASK_ENV == "test":
         app = create_app(config_class=TestConfig)
-    except Exception as e:
-        logger.error("[APP] Failed to create app in test mode:", e)
-        app = None
-else:
-    from app.config import DevConfig
-    try:
+        logger.info("[WSGI] App created in test mode")
+    else:
         app = create_app(config_class=DevConfig)
-    except Exception as e:
-        logger.error("[APP] Failed to create app in development mode:", e)
-        app = None
+        logger.info("[WSGI] App created in development mode")
+except Exception as e:
+    logger.error(f"[WSGI] Failed to create app: {e}", exc_info=True)
+    app = None
+    sys.exit(1)
 
 if __name__ == "__main__":
     if app is None:
-        logger.error("[APP] Failed to initialize app.")
-        exit(1)
+        logger.error("[WSGI] Failed to initialize app")
+        sys.exit(1)
     app.run(host="0.0.0.0", port=5000)

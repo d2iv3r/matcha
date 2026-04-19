@@ -1,7 +1,7 @@
 -- Consolidated raw SQL schema for Matcha backend
 
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     username VARCHAR(150) UNIQUE NOT NULL,
     first_name VARCHAR(150),
     last_name VARCHAR(150),
@@ -38,6 +38,29 @@ CREATE TABLE IF NOT EXISTS profiles (
     date_of_birth DATE,
     location VARCHAR(255),
     interests TEXT,
+    rating VARCHAR(50) DEFAULT 'Ghost' CHECK (rating IN ('Ghost', 'Rising', 'Popular', 'Elite', 'Iconic')),
     avatar VARCHAR(255),
     pictures JSONB NOT NULL DEFAULT '[]'::jsonb
 );
+
+CREATE TABLE IF NOT EXISTS profile_views (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    profile_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    viewer_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(profile_user_id, viewer_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_profile_views_profile_user ON profile_views(profile_user_id);
+CREATE INDEX IF NOT EXISTS idx_profile_views_viewer_user ON profile_views(viewer_user_id);
+
+CREATE TABLE IF NOT EXISTS profile_likes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    profile_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    liker_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    liked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(profile_user_id, liker_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_profile_likes_profile_user ON profile_likes(profile_user_id);
+CREATE INDEX IF NOT EXISTS idx_profile_likes_liker_user ON profile_likes(liker_user_id);

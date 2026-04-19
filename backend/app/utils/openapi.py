@@ -13,14 +13,14 @@ def get_openapi_spec() -> dict:
         "info": {
             "title": "Matcha API",
             "version": "1.0.0",
-            "description": "API documentation for authentication and user management endpoints.",
+            "description": "API documentation for authentication, accounts, and profile interaction endpoints.",
         },
         "servers": [{"url": "/", "description": "Current server"}],
         "tags": [
             {"name": "System", "description": "Health and root endpoints"},
             {"name": "Auth", "description": "Authentication endpoints"},
-            {"name": "Users", "description": "User management endpoints"},
             {"name": "Account", "description": "Authenticated account profile endpoints"},
+            {"name": "Profile", "description": "Profile views and likes endpoints"},
         ],
         "components": {
             "securitySchemes": {
@@ -66,6 +66,11 @@ def get_openapi_spec() -> dict:
                         "date_of_birth": {"type": "string", "format": "date"},
                         "location": {"type": "string"},
                         "bio": {"type": "string"},
+                        "rating": {
+                            "type": "string",
+                            "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
+                            "default": "Ghost",
+                        },
                         "interests": {"type": "array", "items": {"type": "string"}},
                         "avatar": {"type": "string"},
                         "pictures": {"type": "array", "items": {"type": "string"}},
@@ -317,44 +322,7 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/v1/users/": {
-                "get": {
-                    "tags": ["Users"],
-                    "summary": "List users",
-                    "security": [{"bearerAuth": []}],
-                    "responses": {"200": {"description": "User list"}, "401": {"description": "Unauthorized"}},
-                }
-            },
-            "/api/v1/users/{user_id}": {
-                "get": {
-                    "tags": ["Users"],
-                    "summary": "Get user by id",
-                    "security": [{"bearerAuth": []}],
-                    "parameters": [
-                        {"name": "user_id", "in": "path", "required": True, "schema": {"type": "integer"}}
-                    ],
-                    "responses": {"200": {"description": "User found"}, "404": {"description": NOT_FOUND}},
-                },
-                "put": {
-                    "tags": ["Users"],
-                    "summary": "Update user",
-                    "security": [{"bearerAuth": []}],
-                    "parameters": [
-                        {"name": "user_id", "in": "path", "required": True, "schema": {"type": "integer"}}
-                    ],
-                    "responses": {"200": {"description": "User updated"}, "400": {"description": "Bad request"}},
-                },
-                "delete": {
-                    "tags": ["Users"],
-                    "summary": "Delete user (soft)",
-                    "security": [{"bearerAuth": []}],
-                    "parameters": [
-                        {"name": "user_id", "in": "path", "required": True, "schema": {"type": "integer"}}
-                    ],
-                    "responses": {"200": {"description": "User deleted"}, "404": {"description": "Not found"}},
-                },
-            },
-            "/api/v1/account/complete-profile": {
+            "/api/v1/accounts/complete-profile": {
                 "post": {
                     "tags": ["Account"],
                     "summary": "Complete or update authenticated user profile",
@@ -420,7 +388,7 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/v1/account/profile": {
+            "/api/v1/accounts/profile": {
                 "get": {
                     "tags": ["Account"],
                     "summary": "Get authenticated user profile",
@@ -435,6 +403,8 @@ def get_openapi_spec() -> dict:
                                         "properties": {
                                             "user": {"$ref": "#/components/schemas/User"},
                                             "profile": {"anyOf": [{"$ref": "#/components/schemas/Profile"}, {"type": "null"}]},
+                                            "profile_views": {"type": "object"},
+                                            "profile_likes": {"type": "object"},
                                         },
                                     }
                                 }
@@ -443,6 +413,281 @@ def get_openapi_spec() -> dict:
                         "401": {"description": "Unauthorized"},
                         "403": {"description": "Profile completion required"},
                         "404": {"description": NOT_FOUND},
+                    },
+                }
+            },
+            "/api/v1/accounts/profiles": {
+                "get": {
+                    "tags": ["Account"],
+                    "summary": "Get profiles list",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 1, "default": 20},
+                        },
+                        {
+                            "name": "offset",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 0, "default": 0},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Profiles retrieved successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "profiles": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "username": {"type": "string"},
+                                                        "age": {"type": "integer", "nullable": True},
+                                                        "location": {"type": "string", "nullable": True},
+                                                        "rating": {
+                                                            "type": "string",
+                                                            "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
+                                                            "default": "Ghost",
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                            "count": {"type": "integer"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
+            "/api/v1/account/profiles": {
+                "get": {
+                    "tags": ["Account"],
+                    "summary": "Get profiles list (legacy path)",
+                    "security": [{"bearerAuth": []}],
+                    "responses": {
+                        "200": {"description": "Profiles retrieved successfully"},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
+            "/api/v1/accounts/profile/{username}": {
+                "get": {
+                    "tags": ["Account"],
+                    "summary": "Get a specific user's profile and record view",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "username",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Profile retrieved successfully and view recorded",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "username": {"type": "string"},
+                                            "first_name": {"type": "string", "nullable": True},
+                                            "last_name": {"type": "string", "nullable": True},
+                                            "age": {"type": "integer", "nullable": True},
+                                            "location": {"type": "string", "nullable": True},
+                                            "rating": {
+                                                "type": "string",
+                                                "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
+                                                "default": "Ghost",
+                                            },
+                                            "bio": {"type": "string", "nullable": True},
+                                            "interests": {"type": "array", "items": {"type": "string"}},
+                                            "avatar": {"type": "string", "nullable": True},
+                                            "pictures": {"type": "array", "items": {"type": "string"}},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                        "404": {"description": NOT_FOUND},
+                    },
+                }
+            },
+            "/api/v1/profile/{username}/view": {
+                "post": {
+                    "tags": ["Profile"],
+                    "summary": "Record a view of a user's profile",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {"name": "username", "in": "path", "required": True, "schema": {"type": "string"}}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Profile view recorded successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Bad request"},
+                        "404": {"description": NOT_FOUND},
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/profile/viewers": {
+                "get": {
+                    "tags": ["Profile"],
+                    "summary": "Get list of users who viewed your profile",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "default": 10, "minimum": 1, "maximum": 100},
+                            "description": "Maximum number of viewers to return",
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "List of viewers retrieved successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "viewers": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "username": {"type": "string"},
+                                                        "avatar": {"type": "string"},
+                                                        "viewed_at": {"type": "string", "format": "date-time"},
+                                                    },
+                                                },
+                                            },
+                                            "count": {"type": "integer"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Bad request"},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
+            "/api/v1/profile/views-count": {
+                "get": {
+                    "tags": ["Profile"],
+                    "summary": "Get total view count for your profile",
+                    "security": [{"bearerAuth": []}],
+                    "responses": {
+                        "200": {
+                            "description": "View count retrieved successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "view_count": {"type": "integer"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/profile/{username}/like": {
+                "post": {
+                    "tags": ["Profile"],
+                    "summary": "Record a like for a user's profile",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {"name": "username", "in": "path", "required": True, "schema": {"type": "string"}}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Profile like recorded successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Bad request"},
+                        "404": {"description": NOT_FOUND},
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/profile/likes": {
+                "get": {
+                    "tags": ["Profile"],
+                    "summary": "Get list of users who liked your profile",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "default": 10, "minimum": 1, "maximum": 100},
+                            "description": "Maximum number of likers to return",
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "List of likers retrieved successfully",
+                        },
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/profile/likes-count": {
+                "get": {
+                    "tags": ["Profile"],
+                    "summary": "Get total like count for your profile",
+                    "security": [{"bearerAuth": []}],
+                    "responses": {
+                        "200": {
+                            "description": "Like count retrieved successfully",
+                        },
+                        "401": {"description": "Unauthorized"},
                     },
                 }
             },
