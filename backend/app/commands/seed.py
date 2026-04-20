@@ -18,7 +18,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 fake = Faker()
 
-
 class DataSeeder:
     """Class responsible for seeding mock data into the database."""
 
@@ -26,18 +25,28 @@ class DataSeeder:
     GENDERS = ["male", "female"]
     TEMP_PASSWORD = hash_password("Password123!")
     INTERESTS = [
-        "photography",
-        "travel",
-        "cooking",
-        "reading",
-        "sports",
-        "music",
-        "art",
-        "gaming",
-        "fitness",
-        "movies",
-        "technology",
-        "nature",
+        "Food & Cooking",
+        "Coffee",
+        "Moroccan Tea",
+        "Nightlife",
+        "Gaming",
+        "Anime",
+        "Fitness",
+        "Football",
+        "Swimming",
+        "Camping",
+        "Music",
+        "Movies",
+        "Photography",
+        "Reading",
+        "Painting & Art",
+        "Karaoke",
+        "Theater",
+        "Travel",
+        "Adventure",
+        "Fashion",
+        "Learning",
+        "Romance",
     ]
     LOCATIONS = [
         "New York",
