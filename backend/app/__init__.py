@@ -8,6 +8,7 @@ from app.config import DevConfig, BaseConfig
 
 from app.middlewares.middleware import register_middleware
 from app.extensions import register_extensions
+from app.utils.app_error import register_error_handlers
 
 from app.routes import api_bp, auth_bp, docs_bp, profile_bp, accounts_bp
 
@@ -41,6 +42,9 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         register_middleware(app)
         logger.info("[APP] Middleware registered successfully.")
 
+        register_error_handlers(app)
+        logger.info("[APP] Error handlers registered successfully.")
+
         # Register CLI commands
         from app.commands import register_commands
         register_commands(app)
@@ -59,9 +63,9 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         app.register_blueprint(api_bp)
         app.register_blueprint(docs_bp)
         app.register_blueprint(auth_bp)
-        
-        app.register_blueprint(profile_bp)
         app.register_blueprint(accounts_bp)
+        
+        # app.register_blueprint(profile_bp)
         logger.info("[APP] App created successfully!")
     except Exception as e:
         logger.error(f"[APP] Failed to create app: {str(e)}")

@@ -19,11 +19,9 @@ WHERE token_hash = %s
 LIMIT 1
 """
 
-MARK_EMAIL_VERIFICATION_TOKEN_USED = """
-UPDATE email_verification_tokens
-SET verified_at = NOW()
+DELETE_EMAIL_VERIFICATION_TOKEN_BY_ID = """
+DELETE FROM email_verification_tokens
 WHERE id = %s
-RETURNING id, user_id, token_hash, expires_at, verified_at, created_at
 """
 
 STORE_PASSWORD_RESET_TOKEN = """
@@ -45,9 +43,7 @@ WHERE token_hash = %s
 LIMIT 1
 """
 
-MARK_PASSWORD_RESET_TOKEN_USED = """
-UPDATE password_reset_tokens
-SET used_at = NOW()
+DELETE_PASSWORD_RESET_TOKEN_BY_ID = """
+DELETE FROM password_reset_tokens
 WHERE id = %s
-RETURNING id, user_id, token_hash, expires_at, used_at, created_at
 """

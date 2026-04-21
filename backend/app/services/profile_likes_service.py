@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from app.models.profile_likes_model import ProfileLikesModel
 
 
@@ -32,24 +30,38 @@ class ProfileLikesService:
         """
         return ProfileLikesModel.get_likes_count(user_id)
 
-    @staticmethod
-    def get_profile_likers(user_id: int, limit: int = 10) -> list[Dict[str, Any]]:
-        """Get list of recent users who liked the profile.
+    # @staticmethod
+    # def get_profile_likers(user_id: int, limit: int = 10) -> list[ProfileLikerSchema]:
+    #     """Get list of recent users who liked the profile.
         
-        Args:
-            user_id: ID of the profile owner
-            limit: Maximum number of likers to return (default 10)
+    #     Args:
+    #         user_id: ID of the profile owner
+    #         limit: Maximum number of likers to return (default 10)
             
-        Returns:
-            List of liker dictionaries including username, age, location, and avatar
-        """
-        likers = ProfileLikesModel.get_recent_likes(user_id, limit=limit)
-        result = []
-        for liker in likers:
-            result.append({
-                "liker_username": liker.get("liker_username"),
-                "age": liker.get("age"),
-                "location": liker.get("location"),
-                "avatar": liker.get("avatar"),
-            })
-        return result
+    #     Returns:
+    #         List of liker dictionaries including username, age, location, and avatar
+    #     """
+    #     likers = ProfileLikesModel.get_recent_likes(user_id, limit=limit)
+    #     result: list[ProfileLikerSchema] = []
+    #     for liker in likers:
+    #         result.append(
+    #             ProfileLikerSchema(
+    #                 liker_username=liker.liker_username,
+    #                 age=liker.age,
+    #                 location=liker.location,
+    #                 avatar=liker.avatar,
+    #             )
+    #         )
+    #     return result
+
+    @staticmethod
+    def has_liked_profile(profile_user_id: int, liker_user_id: int) -> bool:
+        """Return True if liker_user_id has liked profile_user_id."""
+        return ProfileLikesModel.has_like(profile_user_id, liker_user_id)
+
+    @staticmethod
+    def is_mutual_like(user_id: int, other_user_id: int) -> bool:
+        """Return True if both users have liked each other's profile."""
+        user_liked_other = ProfileLikesService.has_liked_profile(other_user_id, user_id)
+        other_liked_user = ProfileLikesService.has_liked_profile(user_id, other_user_id)
+        return user_liked_other and other_liked_user

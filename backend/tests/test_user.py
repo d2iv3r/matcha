@@ -217,6 +217,7 @@ def test_get_profiles_list_success(client, app, monkeypatch):
         "get_profiles_list",
         lambda limit, offset: [
             {
+                "user_id": 2,
                 "username": "alice",
                 "first_name": "Alice",
                 "last_name": "Doe",
@@ -231,6 +232,11 @@ def test_get_profiles_list_success(client, app, monkeypatch):
         ],
     )
 
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
+        lambda viewer_id, profile_user_id: False,
+    )
+
     response = client.get(
         '/api/v1/accounts/profiles?limit=10&offset=0',
         headers={"Authorization": f"Bearer {access_token}"},
@@ -240,6 +246,56 @@ def test_get_profiles_list_success(client, app, monkeypatch):
     data = response.get_json()
     assert data["count"] == 1
     assert data["profiles"][0]["username"] == "alice"
+    assert data["profiles"][0]["is_match"] is False
+
+
+def test_get_profiles_list_includes_is_match(client, app, monkeypatch):
+    with app.app_context():
+        access_token = create_access_token(identity="1")
+
+    monkeypatch.setattr(
+        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        lambda _user_id: {"id": 1, "is_profile_complete": True},
+    )
+
+    monkeypatch.setattr(
+        ProfileService,
+        "get_profiles_list",
+        lambda limit, offset: [
+            {
+                "user_id": 2,
+                "username": "alice",
+                "age": 28,
+                "location": "Berlin",
+                "rating": "Popular",
+            },
+            {
+                "user_id": 1,
+                "username": "me",
+                "age": 29,
+                "location": "Paris",
+                "rating": "Elite",
+            },
+        ],
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
+        lambda viewer_id, profile_user_id: profile_user_id == 2,
+    )
+
+    response = client.get(
+        "/api/v1/accounts/profiles?limit=10&offset=0",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["count"] == 2
+    assert data["profiles"][0]["username"] == "alice"
+    assert data["profiles"][0]["is_match"] is True
+    assert data["profiles"][1]["username"] == "me"
+    assert data["profiles"][1]["is_match"] is False
 
 
 def test_openapi_includes_profiles_endpoint(client):
@@ -328,6 +384,11 @@ def test_get_profile_by_user_id_records_view(client, app, monkeypatch):
     )
 
     monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
+        lambda viewer_id, profile_user_id: False,
+    )
+
+    monkeypatch.setattr(
         ProfileService,
         "get_user_by_username",
         lambda username: {"id": 2, "username": username},
@@ -343,6 +404,59 @@ def test_get_profile_by_user_id_records_view(client, app, monkeypatch):
     assert view_recorded["called"] is True
     assert view_recorded["profile_user_id"] == 2
     assert view_recorded["viewer_user_id"] == 1
+
+
+def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch):
+    """Test that profile by username returns mutual-like match status."""
+    with app.app_context():
+        access_token = create_access_token(identity="1")
+
+    monkeypatch.setattr(
+        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        lambda _user_id: {"id": 1, "is_profile_complete": True},
+    )
+
+    monkeypatch.setattr(
+        ProfileService,
+        "get_user_by_username",
+        lambda username: {"id": 2, "username": username},
+        raising=False,
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileService.get_profile_by_user_id",
+        lambda user_id: {
+            "user": {
+                "id": user_id,
+                "username": "alice",
+                "first_name": "Alice",
+                "last_name": "Doe",
+            },
+            "profile": {
+                "age": 25,
+                "location": "Paris",
+                "rating": "Popular",
+                "bio": "hello",
+                "interests": ["music"],
+                "avatar": "https://example.com/a.jpg",
+                "pictures": ["https://example.com/p1.jpg"],
+            },
+        },
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
+        lambda viewer_id, profile_user_id: True,
+    )
+
+    response = client.get(
+        "/api/v1/accounts/profile/alice",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["is_match"] is True
 
 
 def test_get_own_profile_includes_view_statistics(client, app, monkeypatch):

@@ -2,15 +2,14 @@
 
 import json
 
-from flask import jsonify, request, g
+from flask import request, g
 from flask_jwt_extended import get_jwt_identity
-from pydantic import ValidationError
 
-from app.schemas.profile_schemas import UpdateProfileSchema
+from app.schemas.profile_schemas import CreateProfileSchema
 from app.services.profile_service import ProfileService
 from app.services.profile_views_service import ProfileViewsService
 from app.services.profile_likes_service import ProfileLikesService
-from app.utils.app_error import AppError
+from app.utils.response import success
 
 
 class ProfileController:
@@ -46,157 +45,137 @@ class ProfileController:
 
     @staticmethod
     def complete_profile():
-        """Update profile fields for authenticated verified user."""
-        try:
-            # Get user_id from context if available (set by middleware), otherwise from JWT
-            if hasattr(g, 'current_user') and g.current_user:
-                user_id = g.current_user['id']
-            else:
-                # Fallback to JWT for cases where middleware wasn't applied (e.g., tests)
-                user_id = int(get_jwt_identity())
-            
-            raw_payload = request.get_json(silent=True)
-            if raw_payload is None:
-                raw_payload = request.form.to_dict(flat=True)
+        """complete profile fields for authenticated verified user."""
+        if hasattr(g, 'current_user') and g.current_user:
+            user_id = g.current_user['id']
+        else:
+            user_id = int(get_jwt_identity())
 
-            if raw_payload.get("interests") is not None:
-                raw_payload["interests"] = ProfileController._parse_list_field(raw_payload.get("interests"))
+        raw_payload = request.get_json(silent=True)
+        if raw_payload is None:
+            raw_payload = request.form.to_dict(flat=True)
 
-            avatar = request.files.get("avatar")
-            pictures = request.files.getlist("pictures")
+        if raw_payload.get("interests") is not None:
+            raw_payload["interests"] = ProfileController._parse_list_field(raw_payload.get("interests"))
 
-            raw_payload["avatar"] = avatar
-            raw_payload["pictures"] = pictures
+        avatar = request.files.get("avatar")
+        pictures = request.files.getlist("pictures")
 
-            payload = UpdateProfileSchema.model_validate(raw_payload)
+        raw_payload["user_id"] = user_id
+        raw_payload["avatar"] = avatar
+        raw_payload["pictures"] = pictures
 
-            profile = ProfileService.update_profile(
-                user_id,
-                gender=payload.gender,
-                date_of_birth=payload.date_of_birth,
-                location=payload.location,
-                bio=payload.bio,
-                interests=payload.interests,
-                avatar=payload.avatar,
-                pictures=payload.pictures,
-            )
-            return jsonify({"success": True, "message": "Profile updated successfully", "profile": profile}), 200
-        except AppError as e:
-            error_payload = {"success": False, "error": e.message}
-            if getattr(e, "details", None) is not None:
-                error_payload["errors"] = e.details
-            return jsonify(error_payload), e.status_code
-        except ValidationError as e:
-            return jsonify({"success": False, "errors": e.errors()}), 400
-        except Exception as e:
-            return jsonify({"success": False, "errors": [str(e)]}), 500
+        payload = CreateProfileSchema.model_validate(raw_payload)
+        ProfileService.complete_profile(payload)
+
+        return success(
+            message="Profile Completed successfully",
+            data={}
+        )
 
     @staticmethod
-    def get_profile():
-        try:
-            # Get user_id from context if available (set by middleware), otherwise from JWT
-            if hasattr(g, 'current_user') and g.current_user:
-                user_id = g.current_user['id']
-            else:
-                # Fallback to JWT for cases where middleware wasn't applied (e.g., tests)
-                user_id = int(get_jwt_identity())
-            
-            payload = ProfileService.get_profile_by_user_id(user_id)
-            
-            # Include view statistics for own profile
-            view_count = ProfileViewsService.get_profile_view_count(user_id)
-            recent_viewers = ProfileViewsService.get_profile_viewers(user_id, limit=5)
-            
-            payload["profile_views"] = {
-                "total_views": view_count,
-                "recent_viewers": recent_viewers,
-            }
-            
-            # Include like statistics for own profile
-            like_count = ProfileLikesService.get_profile_like_count(user_id)
-            recent_likers = ProfileLikesService.get_profile_likers(user_id, limit=5)
-            
-            payload["profile_likes"] = {
-                "total_likes": like_count,
-                "recent_likers": recent_likers,
-            }
-            
-            return jsonify(payload), 200
-        except AppError as e:
-            return jsonify({"success": False, "error": e.message}), e.status_code
+    def get_my_profile():
+        if hasattr(g, 'current_user') and g.current_user:
+            user_id = g.current_user['id']
+        else:
+            user_id = int(get_jwt_identity())
+
+        profile = ProfileService.get_my_profile_by_user_id(user_id)
+        # view_count = ProfileViewsService.get_profile_view_count(user_id)
+        # recent_viewers = ProfileViewsService.get_profile_viewers(user_id, limit=5)
+        data = {}
+        data['profile'] = profile.to_dict()
+        # payload["profile_views"] = {
+        #     "total_views": view_count,
+        #     "recent_viewers": [viewer.model_dump(exclude_none=True) if hasattr(viewer, "model_dump") else viewer for viewer in recent_viewers],
+        # }
+
+        # like_count = ProfileLikesService.get_profile_like_count(user_id)
+        # recent_likers = ProfileLikesService.get_profile_likers(user_id, limit=5)
+
+        # payload["profile_likes"] = {
+        #     "total_likes": like_count,
+        #     "recent_likers": [liker.model_dump(exclude_none=True) if hasattr(liker, "model_dump") else liker for liker in recent_likers],
+        # }
+
+        return success(data=data)
 
     @staticmethod
     def get_profile_by_username(username: str):
         """Get a specific user's profile by username and record the view."""
-        try:
-            viewer_id = int(get_jwt_identity())
-            user = ProfileService.get_user_by_username(username)
-            if not user:
-                return jsonify({"success": False, "error": "User not found"}), 404
-            
-            user_id = user["id"]
-            if viewer_id != user_id:
-                ProfileViewsService.record_profile_view(user_id, viewer_id)
-            
-            payload = ProfileService.get_profile_by_user_id(user_id)
-            
-            # Format the output specifically as requested
-            user_data = payload.get("user", {})
-            profile_data = payload.get("profile", {}) or {}
-            
-            result = {
-                "username": user_data.get("username"),
-                "first_name": user_data.get("first_name"),
-                "last_name": user_data.get("last_name"),
-                "age": profile_data.get("age"),
-                "location": profile_data.get("location"),
-                "rating": ProfileController._normalize_rating(profile_data.get("rating")),
-                "bio": profile_data.get("bio"),
-                "interests": profile_data.get("interests"),
-                "avatar": profile_data.get("avatar"),
-                "pictures": profile_data.get("pictures")
-            }
-            return jsonify(result), 200
-        except AppError as e:
-            return jsonify({"success": False, "error": e.message}), e.status_code
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
+        # viewer_id = int(get_jwt_identity())
+        profile = ProfileService.get_profile_by_username(username)
+
+        data = {}
+        data["profile"] = profile.to_dict()
+        
+        # user_id = user["id"] if isinstance(user, dict) else user.id
+        # if viewer_id != user_id:
+        #     ProfileViewsService.record_profile_view(user_id, viewer_id)
+
+        # payload = ProfileService.get_profile_by_user_id(user_id)
+        # is_match = viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id)
+
+        # if isinstance(payload, dict):
+        #     profile_data = payload.get("profile") or {}
+        #     if not profile_data and payload.get("user"):
+        #         profile_data = payload.get("user") or {}
+        # else:
+        #     profile_data = payload.profile.model_dump(exclude_none=True)
+
+        return success(data)
 
     @staticmethod
     def get_profile_by_user_id(user_id: int):
         """Get a specific user's profile and record the view."""
-        try:
-            # Get viewer_id from JWT
-            viewer_id = int(get_jwt_identity())
-            
-            # Don't record self-views
-            if viewer_id != user_id:
-                ProfileViewsService.record_profile_view(user_id, viewer_id)
-            
-            payload = ProfileService.get_profile_by_user_id(user_id)
-            return jsonify(payload), 200
-        except AppError as e:
-            return jsonify({"success": False, "error": e.message}), e.status_code
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
+        viewer_id = int(get_jwt_identity())
+        if viewer_id != user_id:
+            ProfileViewsService.record_profile_view(user_id, viewer_id)
+
+        payload = ProfileService.get_profile_by_user_id(user_id)
+        if isinstance(payload, dict):
+            base_profile = payload.get("profile") or payload.get("user") or {}
+        else:
+            base_profile = payload.profile.model_dump(exclude_none=True)
+        response_payload = {
+            "user": base_profile,
+            "profile": base_profile,
+            "is_match": viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id),
+        }
+        return success(response_payload, 200)
 
     @staticmethod
     def get_profiles_list():
-        try:
-            limit = int(request.args.get("limit", 20))
-            offset = int(request.args.get("offset", 0))
-            profiles = ProfileService.get_profiles_list(limit=limit, offset=offset)
-            
-            # Filter profiles to match the requested format {username, age, location, rating}
-            filtered_profiles = []
-            for p in profiles:
-                filtered_profiles.append({
-                    "username": p.get("username"),
-                    "age": p.get("age"),
-                    "location": p.get("location"),
-                    "rating": ProfileController._normalize_rating(p.get("rating"))
-                })
-                
-            return jsonify({"profiles": filtered_profiles, "count": len(filtered_profiles)}), 200
-        except AppError as e:
-            return jsonify({"success": False, "error": e.message}), e.status_code
+        viewer_id = int(get_jwt_identity())
+        limit = int(request.args.get("limit", 20))
+        offset = int(request.args.get("offset", 0))
+        profiles = ProfileService.get_profiles_list(limit=limit, offset=offset)
+
+        filtered_profiles = []
+        for p in profiles:
+            if isinstance(p, dict):
+                profile_user_id = p.get("user_id")
+                username = p.get("username")
+                age = p.get("age")
+                location = p.get("location")
+                rating = p.get("rating")
+            else:
+                profile_user_id = p.user_id
+                username = p.username
+                age = p.age
+                location = p.location
+                rating = p.rating
+            is_match = (
+                profile_user_id is not None
+                and profile_user_id != viewer_id
+                and ProfileLikesService.is_mutual_like(viewer_id, profile_user_id)
+            )
+            filtered_profiles.append({
+                "username": username,
+                "age": age,
+                "location": location,
+                "rating": ProfileController._normalize_rating(rating),
+                "is_match": is_match,
+            })
+
+        return success({"profiles": filtered_profiles, "count": len(filtered_profiles)}, 200)

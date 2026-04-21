@@ -1,5 +1,7 @@
 """Base model helpers for data access operations."""
 
+from dataclasses import dataclass
+
 from flask import current_app
 
 
@@ -12,3 +14,4 @@ class BaseModel:
         if db_manager is None:
             raise RuntimeError("Database is not initialized")
         return db_manager
+    

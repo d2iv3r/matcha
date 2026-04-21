@@ -24,6 +24,9 @@ def verify_password(password: str, hashed_password: str) -> bool:
 def generate_token(length: int = 32) -> str:
     return secrets.token_urlsafe(length)
 
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
 
 def format_datetime(dt: Optional[datetime] = None) -> str:
     if dt is None:

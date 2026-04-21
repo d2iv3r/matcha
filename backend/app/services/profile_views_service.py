@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from app.models.profile_views_model import ProfileViewsModel
 
 
@@ -32,24 +30,26 @@ class ProfileViewsService:
         """
         return ProfileViewsModel.get_views_count(user_id)
 
-    @staticmethod
-    def get_profile_viewers(user_id: int, limit: int = 10) -> list[Dict[str, Any]]:
-        """Get list of recent users who viewed the profile.
+    # @staticmethod
+    # def get_profile_viewers(user_id: int, limit: int = 10) -> list[ProfileViewerSchema]:
+    #     """Get list of recent users who viewed the profile.
         
-        Args:
-            user_id: ID of the profile owner
-            limit: Maximum number of viewers to return (default 10)
+    #     Args:
+    #         user_id: ID of the profile owner
+    #         limit: Maximum number of viewers to return (default 10)
             
-        Returns:
-            List of viewer dictionaries with username, age, location, and avatar
-        """
-        viewers = ProfileViewsModel.get_recent_views(user_id, limit=limit)
-        result = []
-        for viewer in viewers:
-            result.append({
-                "viewer_username": viewer.get("viewer_username"),
-                "age": viewer.get("age"),
-                "location": viewer.get("location"),
-                "avatar": viewer.get("avatar"),
-            })
-        return result
+    #     Returns:
+    #         List of viewer dictionaries with username, age, location, and avatar
+    #     """
+    #     viewers = ProfileViewsModel.get_recent_views(user_id, limit=limit)
+    #     result: list[ProfileViewerSchema] = []
+    #     for viewer in viewers:
+    #         result.append(
+    #             ProfileViewerSchema(
+    #                 viewer_username=viewer.viewer_username,
+    #                 age=viewer.age,
+    #                 location=viewer.location,
+    #                 avatar=viewer.avatar,
+    #             )
+    #         )
+    #     return result

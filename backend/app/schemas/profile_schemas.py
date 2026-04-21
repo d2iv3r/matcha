@@ -3,18 +3,22 @@
 from datetime import date
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
-from pydantic import ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class UpdateProfileSchema(BaseModel):
-    """Schema for updating user profile info."""
+class CreateProfileSchema(BaseModel):
+    """Schema for creating a new user profile."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    user_id: int
     gender: str = Field(..., pattern=r"^(male|female)$")
     date_of_birth: date
-    location: str = Field(..., min_length=1, max_length=255)
+    city: Optional[str] = None
+    country: Optional[str] = None
+    ip_address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     bio: str = Field(default="", max_length=500)
     interests: List[str] = Field(..., min_length=1)
     avatar: Optional[Any] = None
@@ -46,9 +50,3 @@ class UpdateProfileSchema(BaseModel):
             if not getattr(file_item, "filename", ""):
                 raise ValueError("Each picture must be an uploaded image file")
         return value
-
-    @model_validator(mode="after")
-    def validate_avatar_required(self):
-        if self.avatar is None:
-            raise ValueError("avatar is required")
-        return self

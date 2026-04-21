@@ -12,6 +12,15 @@ FROM profile_likes
 WHERE profile_user_id = %s;
 """
 
+HAS_PROFILE_LIKE = """
+SELECT EXISTS (
+        SELECT 1
+        FROM profile_likes
+        WHERE profile_user_id = %s
+            AND liker_user_id = %s
+) AS has_like;
+"""
+
 GET_PROFILE_RECENT_LIKES = """
 SELECT 
     u.username as liker_username,

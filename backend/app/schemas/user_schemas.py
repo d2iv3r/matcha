@@ -1,6 +1,22 @@
 """User data validation schemas."""
 
+from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
+
+from pydantic import BaseModel
+
+
+class UserSchema(BaseModel):
+    id: int | None = None
+    username: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    password_hash: str | None = None
+    is_active: bool | None = None
+    is_profile_complete: bool | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 def _validate_email(data: Dict[str, Any]) -> Optional[str]:
     if "email" not in data:

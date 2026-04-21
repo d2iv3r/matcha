@@ -19,7 +19,7 @@ def get_openapi_spec() -> dict:
         "tags": [
             {"name": "System", "description": "Health and root endpoints"},
             {"name": "Auth", "description": "Authentication endpoints"},
-            {"name": "Account", "description": "Authenticated account profile endpoints"},
+            {"name": "Accounts", "description": "Authenticated account profile endpoints"},
             {"name": "Profile", "description": "Profile views and likes endpoints"},
         ],
         "components": {
@@ -253,7 +253,7 @@ def get_openapi_spec() -> dict:
                     "responses": {"200": {"description": "Current user"}, "401": {"description": "Unauthorized"}},
                 }
             },
-            "/api/auth/reset-password/request": {
+            "/api/auth/request-password-reset": {
                 "post": {
                     "tags": ["Auth"],
                     "summary": "Request password reset",
@@ -287,7 +287,7 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/auth/reset-password/confirm": {
+            "/api/auth/confirm-password-reset": {
                 "post": {
                     "tags": ["Auth"],
                     "summary": "Confirm password reset",
@@ -324,7 +324,7 @@ def get_openapi_spec() -> dict:
             },
             "/api/v1/accounts/complete-profile": {
                 "post": {
-                    "tags": ["Account"],
+                    "tags": ["Accounts"],
                     "summary": "Complete or update authenticated user profile",
                     "security": [{"bearerAuth": []}],
                     "requestBody": {
@@ -355,42 +355,10 @@ def get_openapi_spec() -> dict:
                         "403": {"description": "Forbidden"},
                     },
                 },
-                "put": {
-                    "tags": ["Account"],
-                    "summary": "Update authenticated user profile",
-                    "security": [{"bearerAuth": []}],
-                    "requestBody": {
-                        "required": True,
-                        "content": {
-                            APP_JSON: {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}},
-                            "multipart/form-data": {"schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}},
-                        },
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Profile updated successfully",
-                            "content": {
-                                APP_JSON: {
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "success": {"type": "boolean"},
-                                            "message": {"type": "string"},
-                                            "profile": {"$ref": PROFILE_SCHEMA_REF},
-                                        },
-                                    }
-                                }
-                            },
-                        },
-                        "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
-                        "401": {"description": "Unauthorized"},
-                        "403": {"description": "Forbidden"},
-                    },
-                }
             },
             "/api/v1/accounts/profile": {
                 "get": {
-                    "tags": ["Account"],
+                    "tags": ["Accounts"],
                     "summary": "Get authenticated user profile",
                     "security": [{"bearerAuth": []}],
                     "responses": {
@@ -418,7 +386,7 @@ def get_openapi_spec() -> dict:
             },
             "/api/v1/accounts/profiles": {
                 "get": {
-                    "tags": ["Account"],
+                    "tags": ["Accounts"],
                     "summary": "Get profiles list",
                     "security": [{"bearerAuth": []}],
                     "parameters": [
@@ -456,6 +424,7 @@ def get_openapi_spec() -> dict:
                                                             "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
                                                             "default": "Ghost",
                                                         },
+                                                        "is_match": {"type": "boolean"},
                                                     },
                                                 },
                                             },
@@ -470,21 +439,9 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/v1/account/profiles": {
-                "get": {
-                    "tags": ["Account"],
-                    "summary": "Get profiles list (legacy path)",
-                    "security": [{"bearerAuth": []}],
-                    "responses": {
-                        "200": {"description": "Profiles retrieved successfully"},
-                        "401": {"description": "Unauthorized"},
-                        "403": {"description": "Profile completion required"},
-                    },
-                }
-            },
             "/api/v1/accounts/profile/{username}": {
                 "get": {
-                    "tags": ["Account"],
+                    "tags": ["Accounts"],
                     "summary": "Get a specific user's profile and record view",
                     "security": [{"bearerAuth": []}],
                     "parameters": [
@@ -517,6 +474,7 @@ def get_openapi_spec() -> dict:
                                             "interests": {"type": "array", "items": {"type": "string"}},
                                             "avatar": {"type": "string", "nullable": True},
                                             "pictures": {"type": "array", "items": {"type": "string"}},
+                                            "is_match": {"type": "boolean"},
                                         },
                                     }
                                 }

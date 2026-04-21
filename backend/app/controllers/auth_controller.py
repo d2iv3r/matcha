@@ -1,18 +1,18 @@
 """Controller for authentication-related operations."""
 
-from flask import jsonify, make_response, request, g
-from flask_jwt_extended import jwt_required, get_jwt_identity, set_refresh_cookies, unset_jwt_cookies
-from pydantic import ValidationError
+from flask import make_response, request
+from flask_jwt_extended import create_access_token, create_refresh_token, create_refresh_token,set_refresh_cookies, set_access_cookies, unset_jwt_cookies
 
-from app.schemas.auth_schemas import (
+from app.schemas.auth_requests_schemas import (
     LoginSchema,
     PasswordResetConfirmSchema,
     PasswordResetSchema,
     RegistrationSchema,
 )
-
-from app.utils.app_error import AppError, BadRequestError
+from app.utils.app_error import BadRequestError
 from app.services.auth_service import AuthService
+from app.utils.mail import MailService
+from app.utils.response import created, error, success
 
 
 class AuthController:
@@ -21,185 +21,113 @@ class AuthController:
     @staticmethod
     def register_user():
         """Handle user registration."""
-        try:
-            user_data = RegistrationSchema.model_validate(request.get_json())
-            result = AuthService.register_user(user_data)
+        user_data = RegistrationSchema.model_validate(request.get_json())
+        created_user = AuthService.register_user(user_data)
 
-            return result, 201
-        except AppError as e:
-            payload = {"success": False, "error": e.message}
-            if getattr(e, "details", None) is not None:
-                payload["errors"] = e.details
-            return payload, e.status_code
-        except ValidationError as e:
-            return {"success": False, "errors": e.errors()}, 400
-        except BadRequestError as e:
-            return {"success": False, "errors": [e.message]}, 400
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
+        token, expire_at = AuthService.generate_email_verification_token(int(created_user.id))
+        verification_email_sent = MailService.send_verification_email(
+            recipient=created_user.email,
+            username=created_user.username,
+            token=token,
+        )
+        return created(
+            message="User registered successfully",
+            data={
+                "user": {
+                    "id": created_user.id,
+                    "username": created_user.username,
+                    "email": created_user.email,
+                    "is_active": created_user.is_active,
+                },
+                "verification_email_sent": verification_email_sent,
+                "verification_token_expires_at": expire_at.isoformat() if expire_at else None,
+            },
+        )
 
     @staticmethod
     def verify_email():
         """Verify an email token and activate the user."""
-        try:
-            token = request.args.get("token", "")
-            if not token:
-                return {"success": False, "error": "Verification token is required"}, 400
+        token = request.args.get("token", "")
+        if not token:
+            raise BadRequestError("Verification token is required")
 
-            result = AuthService.verify_email_token(token)
-            if result.get("success"):
-                return result, 200
-            return result, 400
-        except AppError as e:
-            payload = {"success": False, "error": e.message}
-            if getattr(e, "details", None) is not None:
-                payload["errors"] = e.details
-            return payload, e.status_code
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
+        AuthService.verify_email_token(token)
+        return success(message="Email verified successfully", data={})
         
     @staticmethod
     def login():
         """Handle user login."""
-        try:
-            data = LoginSchema.model_validate(request.get_json())
-            result = AuthService.authenticate(data)
+        data = LoginSchema.model_validate(request.get_json())
+        user = AuthService.authenticate(data)
 
-            if result.get("success"):
-                response = make_response(jsonify({
-                    "success": True,
-                    "message": "Login successful",
-                    "user": result.get("user")
-                }), 200)
-                # Set both access and refresh tokens in HTTP-only cookies
-                set_refresh_cookies(response, result.get("refresh_token"))
-                response.set_cookie(
-                    key="access_token_cookie",
-                    value=result.get("access_token"),
-                    httponly=True,
-                    secure=request.environ.get("wsgi.url_scheme") == "https",
-                    samesite="Lax",
-                    path="/"
-                )
-                return response
-            else:
-                return {"success": False, "error": result.get("error")}, 401
-        except AppError as e:
-            payload = {"success": False, "error": e.message}
-            if getattr(e, "details", None) is not None:
-                payload["errors"] = e.details
-            return payload, e.status_code
-        except ValidationError as e:
-            return {"success": False, "errors": e.errors()}, 400
-        except BadRequestError as e:
-            return {"success": False, "errors": [e.message]}, 400
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
+        if user is None:
+            raise BadRequestError("Invalid Credentials")
+        if user.is_active is False:
+            raise BadRequestError("Account is not active. Please verify your email.")
 
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        response, status = success(message="Login successful", data={'username': user.username})
+
+        set_refresh_cookies(response, refresh_token)
+        set_access_cookies(response, access_token)
+
+        return response, status
+    
     @staticmethod
-    @jwt_required()
-    def me():
-        """Get details of the currently authenticated user."""
-        try:
-            # User is already in context from middleware if available
-            if hasattr(g, 'current_user') and g.current_user:
-                user = AuthService.get_user_by_identity(g.current_user['id'])
-            else:
-                # Fallback to JWT for cases where middleware wasn't applied
-                user_id = get_jwt_identity()
-                user = AuthService.get_user_by_identity(user_id)
-            
-            if not user:
-                return {"success": False, "error": "User not found"}, 404
-
-            return {
-                "success": True,
-                "user": AuthService.serialize_user(user)
-            }, 200
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
-
-    @staticmethod
-    @jwt_required(refresh=True)
-    def refresh():
-        """Issue a new access token from a valid refresh token."""
-        try:
-            user_id = get_jwt_identity()
-            user = AuthService.get_user_by_identity(user_id)
-            if not user:
-                return {"success": False, "error": "User not found"}, 404
-
-            access_token = AuthService.issue_access_token(user)
-
-            response = make_response(jsonify({
-                "success": True,
-                "message": "Token refreshed successfully"
-            }), 200)
-            response.set_cookie(
-                key="access_token_cookie",
-                value=access_token,
-                httponly=True,
-                secure=request.environ.get("wsgi.url_scheme") == "https",
-                samesite="Lax",
-                path="/"
-            )
-            return response
-
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
-
-    @staticmethod
-    @jwt_required(refresh=True)
     def logout():
         """Clear refresh cookies and end the browser session."""
-        try:
-            response = make_response(jsonify({"success": True, "message": "Logout successful"}), 200)
-            unset_jwt_cookies(response)
-            return response
-
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
-
+        response, status = success(message="Logout successful", data={})
+        unset_jwt_cookies(response)
+        return response, status
+    
     @staticmethod
     def request_password_reset():
         """Send a password reset email with a verification token link."""
-        try:
-            data = PasswordResetSchema.model_validate(request.get_json())
-            result = AuthService.request_password_reset(data.email)
-
-            if result.get("success"):
-                return result, 200
-            return result, 400
-        except AppError as e:
-            payload = {"success": False, "error": e.message}
-            if getattr(e, "details", None) is not None:
-                payload["errors"] = e.details
-            return payload, e.status_code
-        except ValidationError as e:
-            return {"success": False, "errors": e.errors()}, 400
-        except BadRequestError as e:
-            return {"success": False, "errors": [e.message]}, 400
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
+        data = PasswordResetSchema.model_validate(request.get_json())
+        AuthService.request_password_reset(data.email)
+        return success(message="Password reset email sent", data={})
 
     @staticmethod
     def reset_password():
         """Reset the user's password using a valid reset token."""
-        try:
-            data = PasswordResetConfirmSchema.model_validate(request.get_json())
-            result = AuthService.reset_password(data.token, data.new_password)
+        token = request.args.get("token", "")
+        print(f"Received password reset request with token: {token}")
+        if not token:
+            raise BadRequestError("Password reset token is required")
+        data = PasswordResetConfirmSchema.model_validate(request.get_json())
+        print(f"New password received: {data.new_password}")
+        AuthService.reset_password(token, data.new_password)
+        return success(message="Password reset successful", data={})
 
-            if result.get("success"):
-                return result, 200
-            return result, 400
-        except AppError as e:
-            payload = {"success": False, "error": e.message}
-            if getattr(e, "details", None) is not None:
-                payload["errors"] = e.details
-            return payload, e.status_code
-        except ValidationError as e:
-            return {"success": False, "errors": e.errors()}, 400
-        except BadRequestError as e:
-            return {"success": False, "errors": [e.message]}, 400
-        except Exception as e:
-            return {"success": False, "errors": [str(e)]}, 500
+    # @staticmethod
+    # @jwt_required()
+    # def me():
+    #     """Get details of the currently authenticated user."""
+    #     user_id = get_jwt_identity()
+    #     user = AuthService.get_user_by_identity(user_id)
+    #     if not user:
+    #         return error("User not found", 404)
+    #     return success({"user": AuthService.serialize_user(user)}, 200)
+
+    # @staticmethod
+    # @jwt_required(refresh=True)
+    # def refresh():
+    #     """Issue a new access token from a valid refresh token."""
+    #     user_id = get_jwt_identity()
+    #     user = AuthService.get_user_by_identity(user_id)
+    #     if not user:
+    #         return error("User not found", 404)
+
+    #     access_token = AuthService.issue_access_token(user)
+    #     response, status = success({"message": "Token refreshed successfully"}, 200)
+    #     response.set_cookie(
+    #         key="access_token_cookie",
+    #         value=access_token,
+    #         httponly=True,
+    #         secure=request.environ.get("wsgi.url_scheme") == "https",
+    #         samesite="Lax",
+    #         path="/",
+    #     )
+    #     return response, status

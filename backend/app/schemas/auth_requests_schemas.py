@@ -31,7 +31,6 @@ class PasswordResetSchema(BaseModel):
 class PasswordResetConfirmSchema(BaseModel):
     """Schema for password reset confirmation data."""
 
-    token: str = Field(..., min_length=16)
     new_password: str = Field(..., min_length=8)
 
 
