@@ -120,10 +120,14 @@ class DataSeeder:
         else:
             avatar_url = f"https://randomuser.me/api/portraits/{gender_path}/{random.randint(1, 99)}.jpg"
         interests = random.sample(self.INTERESTS, k=random.randint(3, 8))
-        formatted_interests = "{" + ",".join(
-            f'"{item.replace("\"", "\\\"")}"' if (" " in item or "," in item) else item
-            for item in interests
-        ) + "}"
+        formatted_items: list[str] = []
+        for item in interests:
+            escaped = item.replace("\"", "\\\"")
+            if " " in escaped or "," in escaped:
+                formatted_items.append(f'"{escaped}"')
+            else:
+                formatted_items.append(escaped)
+        formatted_interests = "{" + ",".join(formatted_items) + "}"
 
         return (
             user_id,
