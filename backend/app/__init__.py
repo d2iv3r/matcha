@@ -2,6 +2,7 @@
 
 import atexit
 import logging
+import os
 
 from flask import Flask
 from app.config import DevConfig, BaseConfig
@@ -28,8 +29,10 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
     logger.info("[APP] Creating Flask application...")
 
     try:
-        app = Flask(__name__)
+        static_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
+        app = Flask(__name__, static_folder=static_root, static_url_path="/static")
         app.config.from_object(config_class)
+        app.config["MEDIA_PATH"] = os.path.join(app.static_folder, "media")
 
         # Extensions registration
         register_extensions(app)

@@ -32,10 +32,10 @@ class BaseConfig:
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
     MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 8 * 1024 * 1024))
-    PROFILE_AVATARS_UPLOAD_SUBDIR = os.environ.get(
-        "PROFILE_AVATARS_UPLOAD_SUBDIR",
-        os.path.join("uploads", "avatars"),
-    )
+    MEDIA_PATH = os.environ.get("MEDIA_PATH", "static/media")
+    AVATARS_UPLOAD_PATH = os.environ.get("AVATARS_UPLOAD_PATH", os.path.join(MEDIA_PATH, "avatars"))
+    PICTURES_UPLOAD_PATH = os.environ.get("PICTURES_UPLOAD_PATH", os.path.join(MEDIA_PATH, "pictures"))
+    ALLOWED_PICTURE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
     PROFILE_PICTURES_UPLOAD_SUBDIR = os.environ.get(
         "PROFILE_PICTURES_UPLOAD_SUBDIR",
         os.path.join("uploads", "pictures"),

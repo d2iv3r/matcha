@@ -5,9 +5,6 @@ from __future__ import annotations
 from app.models.profile_model import ProfileModel
 from app.models.user_model import UserModel
 from app.utils.app_error import ForbiddenError, NotFoundError
-from app.utils.profile_media import save_profile_picture
-from app.schemas import CompleteProfileSchema
-from datetime import datetime
 
 
 class ProfileService:
@@ -16,11 +13,11 @@ class ProfileService:
     RATING_LEVELS = ["Ghost", "Rising", "Popular", "Elite", "Iconic"]
 
     @staticmethod
-    def complete_profile(profile_data: CompleteProfileSchema) -> ProfileModel:
+    def complete_profile(profile_data: dict) -> ProfileModel:
         """
         complete a user's profile with the provided data. This includes validating the user, processing profile pictures, calculating age, and saving the profile information.
         Args:
-            profile_data: An instance of CompleteProfileSchema containing the profile information to update
+            profile_data: Dict containing the profile information to update
         Returns:
             The updated ProfileModel instance after saving the profile information
         Raises:
@@ -28,46 +25,22 @@ class ProfileService:
             ForbiddenError: If the user is not active and therefore cannot complete their profile
             BadRequestError: If the avatar is missing or if saving the profile information fails
         """
-        user = UserModel.get_by_id(profile_data.user_id)
+        user = UserModel.get_user_by_id(profile_data.get("user_id"))
         if not user:
-            raise NotFoundError("User", profile_data.user_id)
+            raise NotFoundError("User", profile_data.get("user_id"))
 
+        print(f"Completing profile for user_id: {profile_data.get('user_id')}, username: {user.username}")
         if user.is_active is False:
             raise ForbiddenError("Only verified users can update profile")
 
-        resolved_pictures: list[str] = []
-        for picture in profile_data.pictures or []:
-            if picture is not None and getattr(picture, "filename", ""):
-                saved_url = save_profile_picture(picture, user_id=user.id, picture_type="picture")
-                resolved_pictures.append(saved_url)
-            elif isinstance(picture, str) and picture.strip():
-                resolved_pictures.append(picture.strip())
-
-        resolved_avatar_url = ProfileService._resolve_avatar_url(user.id, profile_data.avatar, resolved_pictures)
-
-        if profile_data.date_of_birth:
-            today = datetime.now().date()
-            age = today.year - profile_data.date_of_birth.year - (
-                (today.month, today.day) < (profile_data.date_of_birth.month, profile_data.date_of_birth.day)
-            )
-        profile = ProfileModel(
-            user_id=profile_data.user_id,
-            gender=profile_data.gender,
-            age=age,
-            date_of_birth=profile_data.date_of_birth,
-            city=profile_data.city,
-            country=profile_data.country,
-            ip_address=profile_data.ip_address,
-            latitude=profile_data.latitude,
-            longitude=profile_data.longitude,
-            bio=profile_data.bio,
-            interests=profile_data.interests,
-            avatar=resolved_avatar_url,
-            pictures=resolved_pictures,
-        ).create()
+        print(f"Resolved avatar URL: {profile_data.get('avatar')}")
+        print(f"Resolved pictures URLs: {profile_data.get('pictures')}")
+        print("creating profile ------------:")
+        profile = ProfileModel(**profile_data).create()
         if not profile:
             raise RuntimeError("Failed to complete profile")
-        UserModel.mark_profile_complete(profile_data.user_id)
+        print(f"Profile completed successfully for user_id: {profile_data.get('user_id')}")
+        UserModel.mark_profile_complete(profile_data.get("user_id"))
         return profile
     
     @staticmethod

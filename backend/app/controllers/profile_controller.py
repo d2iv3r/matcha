@@ -16,34 +16,6 @@ class ProfileController:
     """Controller for profile endpoints."""
 
     @staticmethod
-    def _normalize_rating(value):
-        return ProfileService._normalize_rating(value)
-
-    @staticmethod
-    def _parse_list_field(value):
-        if value is None:
-            return None
-
-        if isinstance(value, list):
-            return value
-
-        if isinstance(value, str):
-            text = value.strip()
-            if not text:
-                return []
-
-            try:
-                parsed = json.loads(text)
-                if isinstance(parsed, list):
-                    return parsed
-            except json.JSONDecodeError:
-                pass
-
-            return [item.strip() for item in text.split(",") if item.strip()]
-
-        return [value]
-
-    @staticmethod
     def complete_profile():
         """complete profile fields for authenticated verified user."""
         if hasattr(g, 'current_user') and g.current_user:
@@ -54,19 +26,16 @@ class ProfileController:
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
             raw_payload = request.form.to_dict(flat=True)
-
-        if raw_payload.get("interests") is not None:
-            raw_payload["interests"] = ProfileController._parse_list_field(raw_payload.get("interests"))
-
         avatar = request.files.get("avatar")
         pictures = request.files.getlist("pictures")
-
         raw_payload["user_id"] = user_id
         raw_payload["avatar"] = avatar
         raw_payload["pictures"] = pictures
-
+        raw_payload["interersts"] = request.form.getlist("interests")
         payload = CreateProfileSchema.model_validate(raw_payload)
-        ProfileService.complete_profile(payload)
+        data = payload.model_dump()
+        print(f"Received profile completion request with payload: {data}")
+        profile = ProfileService.complete_profile(data)
 
         return success(
             message="Profile Completed successfully",
@@ -103,8 +72,10 @@ class ProfileController:
     @staticmethod
     def get_profile_by_username(username: str):
         """Get a specific user's profile by username and record the view."""
+        print(f"Received request to get profile for username: {username}")
         # viewer_id = int(get_jwt_identity())
         profile = ProfileService.get_profile_by_username(username)
+        print(f"Retrieved profile for username: {username}")
 
         data = {}
         data["profile"] = profile.to_dict()

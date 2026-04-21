@@ -2,50 +2,28 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from uuid import uuid4
+import os
+import uuid
 
 from flask import current_app
-from werkzeug.utils import secure_filename
-
-from app.utils.app_error import BadRequestError
-
-ALLOWED_PROFILE_PICTURE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 
-def _static_root() -> Path:
-    return Path(current_app.static_folder or (Path(current_app.root_path) / "static"))
+def save_image(file, subfolder: str = "avatars") -> str:
+    """Save an image file and return its public URL."""
 
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex}.{ext}"
 
-def _upload_directory(user_id: int, picture_type: str = "avatar") -> Path:
-    if picture_type == "avatar":
-        subdir = current_app.config.get("PROFILE_AVATARS_UPLOAD_SUBDIR", Path("uploads") / "avatars")
-    elif picture_type == "picture":
-        subdir = current_app.config.get("PROFILE_PICTURES_UPLOAD_SUBDIR", Path("uploads") / "pictures")
-    else:
-        raise ValueError(f"Invalid picture_type: {picture_type}. Must be 'avatar' or 'picture'.")
-    return _static_root() / Path(subdir) / str(user_id)
+    media_root = current_app.config.get("MEDIA_PATH") or os.path.join(current_app.static_folder, "media")
+    folder_path = os.path.join(media_root, subfolder)
+    os.makedirs(folder_path, exist_ok=True)
 
+    # Save the file
+    file_path = os.path.join(folder_path, unique_filename)
+    file.save(file_path)
 
-def save_profile_picture(file_storage, *, user_id: int, picture_type: str = "avatar") -> str:
-    """Persist an uploaded image and return its public static URL."""
-    filename = secure_filename(getattr(file_storage, "filename", ""))
-    if not filename:
-        raise BadRequestError("avatar_file is required")
-
-    if getattr(file_storage, "mimetype", "") and not file_storage.mimetype.startswith("image/"):
-        raise BadRequestError("avatar_file must be an image")
-
-    suffix = Path(filename).suffix.lower()
-    if suffix not in ALLOWED_PROFILE_PICTURE_EXTENSIONS:
-        raise BadRequestError("Unsupported avatar_file format")
-
-    upload_dir = _upload_directory(user_id, picture_type)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-
-    stored_name = f"{uuid4().hex}{suffix}"
-    file_path = upload_dir / stored_name
-    file_storage.save(file_path)
-
-    relative_path = file_path.relative_to(_static_root())
-    return f"/static/{relative_path.as_posix()}"
+    static_url = current_app.static_url_path or "/static"
+    backend_url = (current_app.config.get("BACKEND_URL") or "").rstrip("/")
+    url_path = f"{static_url}/media/{subfolder}/{unique_filename}"
+    url = f"{backend_url}{url_path}" if backend_url else url_path
+    return url

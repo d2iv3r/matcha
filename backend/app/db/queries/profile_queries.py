@@ -1,8 +1,23 @@
 """Profile-related SQL query constants."""
 
 SEED_PROFILES = """
-INSERT INTO profiles (user_id, gender, age, date_of_birth, location, bio, interests, avatar, pictures, rating)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+INSERT INTO profiles (
+	user_id,
+	gender,
+	age,
+	date_of_birth,
+	city,
+	country,
+	ip_address,
+	latitude,
+	longitude,
+	bio,
+	interests,
+	avatar,
+	pictures,
+	rating
+)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT DO NOTHING;
 """
 
@@ -24,7 +39,7 @@ LIMIT 1
 
 GET_PROFILE_BY_USERNAME = """
 SELECT u.id, u.username, u.first_name, u.last_name,
-	p.gender, p.age, p.date_of_birth, p.location, p.bio, p.interests, p.avatar, p.pictures, p.rating
+	p.gender, p.age, p.date_of_birth, p.city, p.country, p.bio, p.interests, p.avatar, p.pictures, p.rating
 FROM users u
 JOIN profiles p ON p.user_id = u.id
 WHERE u.username = %s

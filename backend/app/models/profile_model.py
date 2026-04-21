@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from psycopg2.extras import Json
+
 from app.db.queries import (
     CREATE_PROFILE,
     GET_MY_PROFILE_BY_USER_ID,
@@ -35,41 +37,35 @@ class ProfileModel(BaseModel):
     pictures: Any | None = None
     rating: str | None = None
 
-    def __init__(self, **kwargs):
-        for field_name in self.__class__.__annotations__:
-            setattr(self, field_name, kwargs.get(field_name))
 
-    @classmethod
-    def _from_row(cls, row: Optional[Dict[str, Any]]) -> Optional["ProfileModel"]:
-        if not row:
-            return None
-        return cls(**row)
-
-    @classmethod
-    def _from_rows(cls, rows: list[Dict[str, Any]]) -> list["ProfileModel"]:
-        return [cls(**row) for row in rows]
-    
     def create(self) -> Optional["ProfileModel"]:
-        return self._from_row(
-            self.db_manager().execute_returning(
+        interests = self.interests
+        pictures = Json(self.pictures) if isinstance(self.pictures, (list, dict)) else self.pictures
+        row = self.db_manager().execute_returning(
                 CREATE_PROFILE,
                 (
                     self.user_id,
                     self.gender,
                     self.age,
                     self.date_of_birth,
-                    self.location,
+                    self.city,
+                    self.country,
+                    self.ip_address,
+                    self.latitude,
+                    self.longitude,
                     self.bio,
-                    self.interests,
+                    interests,
                     self.avatar,
-                    self.pictures
+                    pictures,
                 ),
             )
-        )
+        if row is None:
+            return None
+        return self.from_row(row)
     
     @classmethod
     def get_my_profile_by_user_id(cls, user_id: int) -> Optional["ProfileModel"]:
-        return cls._from_row(cls.db_manager().fetch_one(GET_MY_PROFILE_BY_USER_ID, (user_id,)))
+        return cls.from_row(cls.db_manager().fetch_one(GET_MY_PROFILE_BY_USER_ID, (user_id,)))
 
 
     def to_dict(self) -> Dict[str, Any]:
@@ -82,7 +78,11 @@ class ProfileModel(BaseModel):
             "gender": self.gender,
             "age": self.age,
             "date_of_birth": self.date_of_birth,
-            "location": self.location,
+            "city": self.city,
+            "country": self.country,
+            # "ip_address": self.ip_address,
+            # "latitude": self.latitude,
+            # "longitude": self.longitude,
             "bio": self.bio,
             "interests": self.interests,
             "avatar": self.avatar,
@@ -92,7 +92,7 @@ class ProfileModel(BaseModel):
 
     @classmethod
     def get_profile_by_username(cls, username: str) -> Optional["ProfileModel"]:
-        return cls._from_row(cls.db_manager().fetch_one(GET_PROFILE_BY_USERNAME, (username,)))
+        return cls.from_row(cls.db_manager().fetch_one(GET_PROFILE_BY_USERNAME, (username,)))
     
     # @classmethod
     # def get_profiles_list(cls, limit: int = 20, offset: int = 0) -> list[UserProfileProjectionModel]:

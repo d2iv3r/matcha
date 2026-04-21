@@ -12,6 +12,7 @@ class CompleteProfileSchema(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    user_id: int
     gender: str = Field(..., pattern=r"^(male|female)$")
     date_of_birth: date
     location: str = Field(..., min_length=1, max_length=255)

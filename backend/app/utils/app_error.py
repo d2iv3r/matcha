@@ -60,7 +60,14 @@ def register_error_handlers(app) -> None:
 
     @app.errorhandler(PydanticValidationError)
     def handle_pydantic_validation_error(exc: PydanticValidationError):
-        return error("Validation failed", 400, exc.errors())
+        sanitized = []
+        for item in exc.errors():
+            if isinstance(item, dict):
+                cleaned = {key: value for key, value in item.items() if key != "input"}
+                sanitized.append(cleaned)
+            else:
+                sanitized.append(item)
+        return error("Validation failed", 400, sanitized)
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(exc: HTTPException):

@@ -1,5 +1,6 @@
 """Mock data seeding logic for the application."""
 
+from calendar import c
 import logging
 from re import L
 from typing import Dict, Any, List, Optional
@@ -48,18 +49,6 @@ class DataSeeder:
         "Learning",
         "Romance",
     ]
-    LOCATIONS = [
-        "New York",
-        "Los Angeles",
-        "Chicago",
-        "Houston",
-        "Phoenix",
-        "Philadelphia",
-        "San Antonio",
-        "San Diego",
-        "Dallas",
-        "San Jose",
-    ]
     RATING = ["Ghost", "Rising", "Popular", "Elite", "Iconic"]
 
     def __init__(self, count: int = 10):
@@ -101,26 +90,56 @@ class DataSeeder:
 
         Returns:
             Tuple containing profile data
-            (user_id, gender, age, date_of_birth, location, bio, interests, avatar_url, pictures, rating)
+            (
+                user_id,
+                gender,
+                age,
+                date_of_birth,
+                city,
+                country,
+                ip_address,
+                latitude,
+                longitude,
+                bio,
+                interests,
+                avatar_url,
+                pictures,
+                rating,
+            )
         """
         import datetime
         date_of_birth = fake.date_of_birth(minimum_age=18, maximum_age=70)
         age = (datetime.date.today() - date_of_birth).days // 365
         gender = random.choice(self.GENDERS)
+        from flask import current_app
+
         gender_path = "men" if gender == "male" else "women"
-        avatar_url = f"https://randomuser.me/api/portraits/{gender_path}/{random.randint(1, 99)}.jpg"
+        backend_url = current_app.config.get("BACKEND_URL", "").rstrip("/")
+        if backend_url:
+            avatar_url = f"{backend_url}/static/media/avatars/seed_{user_id}.jpg"
+        else:
+            avatar_url = f"https://randomuser.me/api/portraits/{gender_path}/{random.randint(1, 99)}.jpg"
+        interests = random.sample(self.INTERESTS, k=random.randint(3, 8))
+        formatted_interests = "{" + ",".join(
+            f'"{item.replace("\"", "\\\"")}"' if (" " in item or "," in item) else item
+            for item in interests
+        ) + "}"
 
         return (
             user_id,
             gender,
             age,
             date_of_birth.isoformat(),
-            random.choice(self.LOCATIONS),
+            fake.city(),
+            fake.country(),
+            fake.ipv4(),
+            float(fake.latitude()),
+            float(fake.longitude()),
             fake.text(max_nb_chars=200),
-            random.sample(self.INTERESTS, k=random.randint(3, 8)),
+            formatted_interests,
             avatar_url,
             [],  # pictures
-            random.choice(self.RATING)
+            random.choice(self.RATING),
         )
 
     def generate_users(self) -> List[tuple]:

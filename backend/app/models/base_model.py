@@ -1,12 +1,25 @@
 """Base model helpers for data access operations."""
 
-from dataclasses import dataclass
 
 from flask import current_app
 
 
 class BaseModel:
     """Common model helpers for DB access."""
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    @classmethod
+    def from_row(cls, row):
+        if row is None:
+            return None
+        return cls(**dict(row))
+    
+    @classmethod
+    def from_rows(cls, rows):
+        return [cls.from_row(r) for r in rows]
 
     @staticmethod
     def db_manager():
