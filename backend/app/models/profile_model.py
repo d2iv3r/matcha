@@ -18,7 +18,7 @@ from app.models.base_model import BaseModel
 class ProfileModel(BaseModel):
     """Model for `profiles` table operations."""
 
-    user_id: int | None = None
+    id: int | None = None
     username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
@@ -44,7 +44,7 @@ class ProfileModel(BaseModel):
         row = self.db_manager().execute_returning(
                 CREATE_PROFILE,
                 (
-                    self.user_id,
+                    self.id,
                     self.gender,
                     self.age,
                     self.date_of_birth,
@@ -70,7 +70,7 @@ class ProfileModel(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "user_id": self.user_id,
+            "user_id": self.id,
             "username": self.username,
             "first_name": self.first_name,
             "last_name": self.last_name,

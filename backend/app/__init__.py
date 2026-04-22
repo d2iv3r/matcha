@@ -67,8 +67,8 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         app.register_blueprint(docs_bp)
         app.register_blueprint(auth_bp)
         app.register_blueprint(accounts_bp)
+        app.register_blueprint(profile_bp)
         
-        # app.register_blueprint(profile_bp)
         logger.info("[APP] App created successfully!")
     except Exception as e:
         logger.error(f"[APP] Failed to create app: {str(e)}")

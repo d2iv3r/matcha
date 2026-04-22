@@ -16,27 +16,17 @@ from app.models.base_model import BaseModel
 class ProfileLikesModel(BaseModel):
     """Model for `profile_likes` table operations."""
 
-    profile_user_id: int | None = None
-    liker_user_id: int | None = None
-    liker_username: str | None = None
-    age: int | None = None
-    location: str | None = None
-    avatar: str | None = None
-    has_like: bool | None = None
+    liker_id: int | None = None
+    liker_first_name: str | None = None
+    liker_last_name: str | None = None
+    liker_age: int | None = None
+    liker_city: str | None = None
+    liker_country: str | None = None
+    liker_avatar: str | None = None
 
     def __init__(self, **kwargs):
         for field_name in self.__class__.__annotations__:
             setattr(self, field_name, kwargs.get(field_name))
-
-    @classmethod
-    def _from_row(cls, row: Dict[str, Any] | None) -> "ProfileLikesModel" | None:
-        if not row:
-            return None
-        return cls(**row)
-
-    @classmethod
-    def _from_rows(cls, rows: list[Dict[str, Any]]) -> list["ProfileLikesModel"]:
-        return [cls(**row) for row in rows]
 
     @classmethod
     def record_like(cls, profile_user_id: int, liker_user_id: int) -> bool:
@@ -59,10 +49,22 @@ class ProfileLikesModel(BaseModel):
     @classmethod
     def get_recent_likes(cls, profile_user_id: int, limit: int = 10) -> list["ProfileLikesModel"]:
         """Get recent profile likers with information."""
-        return cls._from_rows(cls.db_manager().fetch_all(GET_PROFILE_RECENT_LIKES, (profile_user_id, limit)))
+        return cls.from_rows(cls.db_manager().fetch_all(GET_PROFILE_RECENT_LIKES, (profile_user_id, limit)))
 
     @classmethod
     def has_like(cls, profile_user_id: int, liker_user_id: int) -> bool:
         """Return True if liker_user_id already liked profile_user_id."""
         result = cls.db_manager().fetch_one(HAS_PROFILE_LIKE, (profile_user_id, liker_user_id))
         return bool(result and result.get("has_like", False))
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the model instance to a dictionary."""
+        return {
+            "liker_id": self.liker_id,
+            "liker_first_name": self.liker_first_name,
+            "liker_last_name": self.liker_last_name,
+            "liker_age": self.liker_age,
+            "liker_city": self.liker_city,
+            "liker_country": self.liker_country,
+            "liker_avatar": self.liker_avatar,
+        }

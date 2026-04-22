@@ -72,27 +72,15 @@ class ProfileController:
     @staticmethod
     def get_profile_by_username(username: str):
         """Get a specific user's profile by username and record the view."""
-        print(f"Received request to get profile for username: {username}")
-        # viewer_id = int(get_jwt_identity())
+        viewer_id = int(get_jwt_identity())
         profile = ProfileService.get_profile_by_username(username)
-        print(f"Retrieved profile for username: {username}")
-
+        is_match = False
+        if viewer_id != profile.id:
+            ProfileViewsService.record_profile_view(profile.id, viewer_id)
+            is_match = ProfileLikesService.is_mutual_like(viewer_id, profile.id)
         data = {}
         data["profile"] = profile.to_dict()
-        
-        # user_id = user["id"] if isinstance(user, dict) else user.id
-        # if viewer_id != user_id:
-        #     ProfileViewsService.record_profile_view(user_id, viewer_id)
-
-        # payload = ProfileService.get_profile_by_user_id(user_id)
-        # is_match = viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id)
-
-        # if isinstance(payload, dict):
-        #     profile_data = payload.get("profile") or {}
-        #     if not profile_data and payload.get("user"):
-        #         profile_data = payload.get("user") or {}
-        # else:
-        #     profile_data = payload.profile.model_dump(exclude_none=True)
+        data["is_match"] = is_match
 
         return success(data)
 

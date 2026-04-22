@@ -30,26 +30,22 @@ class ProfileViewsService:
         """
         return ProfileViewsModel.get_views_count(user_id)
 
-    # @staticmethod
-    # def get_profile_viewers(user_id: int, limit: int = 10) -> list[ProfileViewerSchema]:
-    #     """Get list of recent users who viewed the profile.
+    @staticmethod
+    def get_profile_viewers(user_id: int, limit: int = 10) -> list[dict]:
+        """Get list of recent users who viewed the profile.
         
-    #     Args:
-    #         user_id: ID of the profile owner
-    #         limit: Maximum number of viewers to return (default 10)
+        Args:
+            user_id: ID of the profile owner
+            limit: Maximum number of viewers to return (default 10)
             
-    #     Returns:
-    #         List of viewer dictionaries with username, age, location, and avatar
-    #     """
-    #     viewers = ProfileViewsModel.get_recent_views(user_id, limit=limit)
-    #     result: list[ProfileViewerSchema] = []
-    #     for viewer in viewers:
-    #         result.append(
-    #             ProfileViewerSchema(
-    #                 viewer_username=viewer.viewer_username,
-    #                 age=viewer.age,
-    #                 location=viewer.location,
-    #                 avatar=viewer.avatar,
-    #             )
-    #         )
-    #     return result
+        Returns:
+            List of viewer dictionaries with username, age, location, and avatar
+        """
+        viewers = ProfileViewsModel.get_recent_views(user_id, limit=limit)
+        if not viewers:
+            return []
+        data = []
+        for viewer in viewers:
+            print("Viewer model instance:", viewer)  # Debug log
+            data.append(viewer.to_dict())
+        return data

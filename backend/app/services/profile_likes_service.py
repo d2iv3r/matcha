@@ -30,29 +30,24 @@ class ProfileLikesService:
         """
         return ProfileLikesModel.get_likes_count(user_id)
 
-    # @staticmethod
-    # def get_profile_likers(user_id: int, limit: int = 10) -> list[ProfileLikerSchema]:
-    #     """Get list of recent users who liked the profile.
+    @staticmethod
+    def get_profile_likers(user_id: int, limit: int = 10) -> list[dict]:
+        """Get list of recent users who liked the profile.
         
-    #     Args:
-    #         user_id: ID of the profile owner
-    #         limit: Maximum number of likers to return (default 10)
+        Args:
+            user_id: ID of the profile owner
+            limit: Maximum number of likers to return (default 10)
             
-    #     Returns:
-    #         List of liker dictionaries including username, age, location, and avatar
-    #     """
-    #     likers = ProfileLikesModel.get_recent_likes(user_id, limit=limit)
-    #     result: list[ProfileLikerSchema] = []
-    #     for liker in likers:
-    #         result.append(
-    #             ProfileLikerSchema(
-    #                 liker_username=liker.liker_username,
-    #                 age=liker.age,
-    #                 location=liker.location,
-    #                 avatar=liker.avatar,
-    #             )
-    #         )
-    #     return result
+        Returns:
+            List of liker dictionaries including username, age, location, and avatar
+        """
+        likers = ProfileLikesModel.get_recent_likes(user_id, limit=limit)
+        if not likers:
+            return []
+        data = []
+        for liker in likers:
+            data.append(liker.to_dict())
+        return data
 
     @staticmethod
     def has_liked_profile(profile_user_id: int, liker_user_id: int) -> bool:
