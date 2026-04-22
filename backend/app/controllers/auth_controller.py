@@ -1,5 +1,7 @@
 """Controller for authentication-related operations."""
 
+from operator import is_
+
 from flask import make_response, request
 from flask_jwt_extended import create_access_token, create_refresh_token, create_refresh_token,set_refresh_cookies, set_access_cookies, unset_jwt_cookies
 
@@ -68,7 +70,14 @@ class AuthController:
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
 
-        response, status = success(message="Login successful", data={'username': user.username})
+        response, status = success(
+            message="Login successful",
+            data = {
+                'username': user.username,
+                'user_id': user.id,
+                'is_active': user.is_active,
+                'is_profile_complete': user.is_profile_complete
+            })
 
         set_refresh_cookies(response, refresh_token)
         set_access_cookies(response, access_token)
