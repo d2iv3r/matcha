@@ -111,19 +111,22 @@ class ProfileController:
         viewer_id = int(get_jwt_identity())
         limit = int(request.args.get("limit", 20))
         offset = int(request.args.get("offset", 0))
-
+        print("----->before calling get_profiles_list")
         profiles = ProfileService.get_profiles_list(user_id=viewer_id, limit=limit, offset=offset)
-
+        print("----->after calling get_profiles_list")
         result = []
         for p in profiles:
             entry = p.to_dict()
+            print(f"+++entry == {entry}")
             entry["is_match"] = (
-                p.id is not None
-                and ProfileLikesService.is_mutual_like(viewer_id, p.id)
+                p.user_id is not None
+                and ProfileLikesService.is_mutual_like(viewer_id, p.user_id)
             )
+            print(f"++++=== after is_match == {entry}")
             distance_km = getattr(p, "distance_km", None)
             if distance_km is not None:
                 entry["distance_km"] = round(float(distance_km), 1)
+            print(f"++++=== final entry == {entry}")
             result.append(entry)
 
         return success({"profiles": result, "count": len(result)}, 200)

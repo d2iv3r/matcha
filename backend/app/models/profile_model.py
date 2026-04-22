@@ -32,6 +32,7 @@ class ProfileModel(BaseModel):
     ip_address: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    distance_km: float | None = None
     bio: str | None = None
     interests: Any | None = None
     avatar: str | None = None
@@ -83,6 +84,7 @@ class ProfileModel(BaseModel):
             # "ip_address": self.ip_address,
             # "latitude": self.latitude,
             # "longitude": self.longitude,
+            "distance_km": getattr(self, "distance_km", None),
             "bio": self.bio,
             "interests": self.interests,
             "avatar": self.avatar,
