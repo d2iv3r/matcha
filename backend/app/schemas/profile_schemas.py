@@ -76,7 +76,7 @@ class CreateProfileSchema(BaseModel):
     latitude: float
     longitude: float
     bio: str = Field(..., max_length=500)
-    interests: str = Field(
+    interests: List[str] = Field(
         ...,
         min_length=1,
         validation_alias=AliasChoices("interests", "interersts"),
@@ -121,23 +121,13 @@ class CreateProfileSchema(BaseModel):
         elif isinstance(value, str):
             text = value.strip()
             if text.startswith("{") and text.endswith("}"):
-                return text
+                text = text[1:-1]
             if text:
-                items = [item.strip() for item in text.split(",") if item.strip()]
+                items = [item.strip().strip('"').strip("'") for item in text.split(",") if item.strip()]
         else:
             items = [str(value).strip()]
 
-        if not items:
-            return "{}"
-
-        formatted_items: list[str] = []
-        for item in items:
-            escaped = item.replace('"', '\\"')
-            if any(char.isspace() for char in escaped) or "," in escaped:
-                formatted_items.append(f'"{escaped}"')
-            else:
-                formatted_items.append(escaped)
-        return "{" + ",".join(formatted_items) + "}"
+        return items
 
     @model_validator(mode="after")
     def resolve_media(self):

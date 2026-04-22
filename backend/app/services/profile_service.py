@@ -37,10 +37,9 @@ class ProfileService:
         print(f"Resolved pictures URLs: {profile_data.get('pictures')}")
         print("creating profile ------------:")
         profile = ProfileModel(**profile_data).create()
-        if not profile:
-            raise RuntimeError("Failed to complete profile")
-        print(f"Profile completed successfully for user_id: {profile_data.get('user_id')}")
+        print(f"Profile created successfully for user_id: {profile_data.get('user_id')}")
         UserModel.mark_profile_complete(profile_data.get("user_id"))
+        print(f"Profile marked as complete for user_id: {profile_data.get('user_id')}")
         return profile
     
     @staticmethod
@@ -74,6 +73,39 @@ class ProfileService:
         if not profile:
             raise NotFoundError("User", username)
         return profile
+
+    @staticmethod
+    def get_profiles_list(user_id: int, limit: int = 20, offset: int = 0) -> list[ProfileModel]:
+        """
+        Return a list of profiles filtered by the opposite gender of the caller and ordered
+        by geographical proximity using latitude/longitude.
+        Args:
+            user_id: The ID of the currently authenticated user (the getter)
+            limit:   Maximum number of profiles to return
+            offset:  Pagination offset
+        Returns:
+            List of ProfileModel instances sorted by ascending distance
+        Raises:
+            NotFoundError: If the caller has no profile (cannot determine gender/location)
+        """
+        caller_profile = ProfileModel.get_my_profile_by_user_id(user_id)
+        if not caller_profile:
+            raise NotFoundError("Profile", user_id)
+
+        gender_map = {"male": "female", "female": "male"}
+        opposite_gender = gender_map.get((caller_profile.gender or "").lower(), "female")
+
+        latitude = caller_profile.latitude or 0.0
+        longitude = caller_profile.longitude or 0.0
+
+        return ProfileModel.get_profiles_list(
+            user_id=user_id,
+            gender=opposite_gender,
+            latitude=latitude,
+            longitude=longitude,
+            limit=limit,
+            offset=offset,
+        )
 
 
     # @staticmethod

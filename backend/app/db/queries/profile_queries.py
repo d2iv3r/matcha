@@ -17,20 +17,20 @@ INSERT INTO profiles (
 	pictures,
 	rating
 )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::TEXT[], %s, %s::TEXT[], %s)
 ON CONFLICT DO NOTHING;
 """
 
 CREATE_PROFILE = """
 INSERT INTO profiles (user_id, gender, age, date_of_birth, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::TEXT[], %s, %s::TEXT[])
 ON CONFLICT (user_id) DO NOTHING
 RETURNING user_id, gender, age, date_of_birth, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures
 """
 
 GET_MY_PROFILE_BY_USER_ID = """
-SELECT u.id, u.username, u.first_name, u.last_name, u.email,
-	p.gender, p.age, p.date_of_birth, p.city, p.country, p.ip_address, p.latitude, p.longitude, p.bio, p.interests, p.avatar, p.pictures, p.rating
+SELECT u.username, u.first_name, u.last_name, u.email,
+	p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country, p.ip_address, p.latitude, p.longitude, p.bio, p.interests, p.avatar, p.pictures, p.rating
 FROM users u
 JOIN profiles p ON p.user_id = u.id
 WHERE u.id = %s
@@ -38,22 +38,48 @@ LIMIT 1
 """
 
 GET_PROFILE_BY_USERNAME = """
-SELECT u.id, u.username, u.first_name, u.last_name,
-	p.gender, p.age, p.date_of_birth, p.city, p.country, p.bio, p.interests, p.avatar, p.pictures, p.rating
+SELECT u.username, u.first_name, u.last_name,
+	p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country, p.bio, p.interests, p.avatar, p.pictures, p.rating
 FROM users u
 JOIN profiles p ON p.user_id = u.id
 WHERE u.username = %s
 LIMIT 1
 """
 
-# GET_PROFILES_WITH_USERS = """
-# SELECT u.id, u.username, u.first_name, u.last_name,
-# 	p.gender, p.age, p.date_of_birth, p.location, p.interests, p.avatar, p.pictures, p.rating
-# FROM users u
-# JOIN profiles p ON p.user_id = u.id
-# ORDER BY u.id ASC
-# LIMIT %s OFFSET %s
-# """
+GET_PROFILES_LIST = """
+SELECT
+    u.username,
+    u.first_name,
+    u.last_name,
+    p.user_id,
+    p.gender,
+    p.age,
+    p.date_of_birth,
+    p.city,
+    p.country,
+    p.bio,
+    p.interests,
+    p.avatar,
+    p.pictures,
+    p.rating,
+    p.latitude,
+    p.longitude,
+    (6371 * acos(
+        GREATEST(-1, LEAST(1,
+            cos(radians(%s)) * cos(radians(p.latitude)) *
+            cos(radians(p.longitude) - radians(%s)) +
+            sin(radians(%s)) * sin(radians(p.latitude))
+        ))
+    )) AS distance_km
+FROM users u
+JOIN profiles p ON p.user_id = u.id
+WHERE u.id != %s
+  AND p.gender = %s
+  AND p.latitude IS NOT NULL
+  AND p.longitude IS NOT NULL
+ORDER BY distance_km ASC
+LIMIT %s OFFSET %s
+"""
 
 
 # UPSERT_PROFILE = """

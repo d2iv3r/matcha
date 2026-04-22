@@ -74,7 +74,6 @@ class AuthController:
             message="Login successful",
             data = {
                 'username': user.username,
-                'user_id': user.id,
                 'is_active': user.is_active,
                 'is_profile_complete': user.is_profile_complete
             })

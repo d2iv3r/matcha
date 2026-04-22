@@ -18,11 +18,8 @@ class ProfileController:
     @staticmethod
     def complete_profile():
         """complete profile fields for authenticated verified user."""
-        if hasattr(g, 'current_user') and g.current_user:
-            user_id = g.current_user['id']
-        else:
-            user_id = int(get_jwt_identity())
 
+        user_id = int(get_jwt_identity())
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
             raw_payload = request.form.to_dict(flat=True)
@@ -31,15 +28,20 @@ class ProfileController:
         raw_payload["user_id"] = user_id
         raw_payload["avatar"] = avatar
         raw_payload["pictures"] = pictures
-        raw_payload["interersts"] = request.form.getlist("interests")
+        raw_payload["interests"] = request.form.getlist("interests")
+        print(f"-->> data before validation == {raw_payload}")
         payload = CreateProfileSchema.model_validate(raw_payload)
         data = payload.model_dump()
-        print(f"Received profile completion request with payload: {data}")
+        print(f"-->> data after validation == {data}")
         profile = ProfileService.complete_profile(data)
+        print('-------------')
+        if not profile:
+            return {"status": "error", "message": "Profile already exists or could not be created."}, 400
 
+        data = profile.to_dict()
         return success(
             message="Profile Completed successfully",
-            data={}
+            data={"profile": data}
         )
 
     @staticmethod
@@ -105,36 +107,23 @@ class ProfileController:
 
     @staticmethod
     def get_profiles_list():
+        """Return opposite-gender profiles ordered by proximity to the authenticated user."""
         viewer_id = int(get_jwt_identity())
         limit = int(request.args.get("limit", 20))
         offset = int(request.args.get("offset", 0))
-        profiles = ProfileService.get_profiles_list(limit=limit, offset=offset)
 
-        filtered_profiles = []
+        profiles = ProfileService.get_profiles_list(user_id=viewer_id, limit=limit, offset=offset)
+
+        result = []
         for p in profiles:
-            if isinstance(p, dict):
-                profile_user_id = p.get("user_id")
-                username = p.get("username")
-                age = p.get("age")
-                location = p.get("location")
-                rating = p.get("rating")
-            else:
-                profile_user_id = p.user_id
-                username = p.username
-                age = p.age
-                location = p.location
-                rating = p.rating
-            is_match = (
-                profile_user_id is not None
-                and profile_user_id != viewer_id
-                and ProfileLikesService.is_mutual_like(viewer_id, profile_user_id)
+            entry = p.to_dict()
+            entry["is_match"] = (
+                p.id is not None
+                and ProfileLikesService.is_mutual_like(viewer_id, p.id)
             )
-            filtered_profiles.append({
-                "username": username,
-                "age": age,
-                "location": location,
-                "rating": ProfileController._normalize_rating(rating),
-                "is_match": is_match,
-            })
+            distance_km = getattr(p, "distance_km", None)
+            if distance_km is not None:
+                entry["distance_km"] = round(float(distance_km), 1)
+            result.append(entry)
 
-        return success({"profiles": filtered_profiles, "count": len(filtered_profiles)}, 200)
+        return success({"profiles": result, "count": len(result)}, 200)

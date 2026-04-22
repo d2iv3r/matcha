@@ -31,7 +31,8 @@ from .profile_queries import (
     SEED_PROFILES,
     CREATE_PROFILE,
     GET_MY_PROFILE_BY_USER_ID,
-    GET_PROFILE_BY_USERNAME
+    GET_PROFILE_BY_USERNAME,
+    GET_PROFILES_LIST,
 )
 
 __all__ = [
@@ -57,5 +58,6 @@ __all__ = [
     "SEED_PROFILES",
     "CREATE_PROFILE",
     "GET_MY_PROFILE_BY_USER_ID",
-    "GET_PROFILE_BY_USERNAME"
+    "GET_PROFILE_BY_USERNAME",
+    "GET_PROFILES_LIST",
 ]

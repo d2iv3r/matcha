@@ -41,10 +41,10 @@ CREATE TABLE IF NOT EXISTS profiles (
     ip_address INET,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
-    interests TEXT,
+    interests TEXT[] DEFAULT '{}',
     rating VARCHAR(50) DEFAULT 'Ghost' CHECK (rating IN ('Ghost', 'Rising', 'Popular', 'Elite', 'Iconic')),
     avatar VARCHAR(255),
-    pictures JSONB NOT NULL DEFAULT '[]'::jsonb
+    pictures TEXT[] DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS profile_views (
