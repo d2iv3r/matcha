@@ -114,11 +114,7 @@ class DataSeeder:
         from flask import current_app
 
         gender_path = "men" if gender == "male" else "women"
-        backend_url = current_app.config.get("BACKEND_URL", "").rstrip("/")
-        if backend_url:
-            avatar_url = f"{backend_url}/static/media/avatars/seed_{user_id}.jpg"
-        else:
-            avatar_url = f"https://randomuser.me/api/portraits/{gender_path}/{random.randint(1, 99)}.jpg"
+        avatar_url = f"https://randomuser.me/api/portraits/{gender_path}/{random.randint(1, 99)}.jpg"
         interests = random.sample(self.INTERESTS, k=random.randint(3, 8))
         formatted_items: list[str] = []
         for item in interests:

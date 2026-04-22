@@ -54,10 +54,19 @@ export default function Page() {
             const formData = new FormData();
             if (existingData.gender) formData.append("gender", existingData.gender);
             if (existingData.date_of_birth) formData.append("date_of_birth", existingData.date_of_birth);
-            if (existingData.location) formData.append("location", existingData.location);
             if (existingData.bio) formData.append("bio", existingData.bio);
-            if (existingData.interests) {
-                formData.append("interests", JSON.stringify(existingData.interests));
+            
+            // Location fields
+            if (existingData.city) formData.append("city", existingData.city);
+            if (existingData.country) formData.append("country", existingData.country);
+            if (existingData.ip_address) formData.append("ip_address", existingData.ip_address);
+            if (existingData.latitude !== undefined) formData.append("latitude", String(existingData.latitude));
+            if (existingData.longitude !== undefined) formData.append("longitude", String(existingData.longitude));
+
+            if (existingData.interests && Array.isArray(existingData.interests)) {
+                existingData.interests.forEach((interest: string) => {
+                    formData.append("interests", interest);
+                });
             }
 
             if (images.length > 0) {
@@ -67,7 +76,7 @@ export default function Page() {
                 formData.append("pictures", images[i].file);
             }
 
-            const res = await fetch("http://localhost:5001/api/v1/account/complete-profile", {
+            const res = await fetch("http://localhost:5001/api/v1/accounts/complete-profile", {
                 method: "POST",
                 credentials: "include",
                 body: formData,
@@ -195,7 +204,7 @@ export default function Page() {
                     )}
 
                     {/* Secondary files grid */}
-                    <div className="w-full flex flex-row gap-3 mt-1 h-[150px]">
+                    <div className="w-full flex flex-col md:flex-row gap-3 mt-1 h-[300px] md:h-[150px]">
                         {[1, 2, 3, 4].map((index) => {
                             const image = images[index];
                             if (image) {

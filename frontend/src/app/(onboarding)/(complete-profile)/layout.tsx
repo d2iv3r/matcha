@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     // }
 
     return (
-        <div className="w-full h-screen flex flex-col gap-4 items-center justify-center p-3 bg-[url('/image-pending-profile.png')] bg-cover bg-center relative -z-10s0">
+        <div className="w-full min-h-screen flex flex-col gap-4 items-center justify-center p-3 bg-[url('/image-pending-profile.png')] bg-cover bg-center relative">
             <Image
                 src={logo}
                 alt="Logo"
@@ -31,10 +31,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                 height={120}
                 priority
                 fetchPriority="high"
-                className="pb-10"
+                className="py-5"
                 style={{ width: "auto", height: "auto" }}
             />
-            <div className="w-full h-full rounded-3xl max-h-[calc(100vh-180px)] max-w-[600px] flex justify-center items-center bg-background z-[-1s]">
+            <div className="flex-1 w-full rounded-3xl max-w-[600px] bg-background mb-4 relative overflow-hidden flex flex-col [&>div]:flex-1">
                 {children}
             </div>
         </div>

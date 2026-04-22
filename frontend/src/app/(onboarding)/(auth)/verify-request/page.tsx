@@ -1,12 +1,60 @@
+"use client";
+
 import Image from "next/image";
 import logo from "@/public/logomatchvibe.svg";
-import bg from "@/public/login-image.png";
-import { Mail, MoveLeft } from "lucide-react";
+import { MoveLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 
-export default function Login(emaila: string) {
-    const email = "abdellah.elkacem@gmail.com";
+function VerifyContent() {
+    const searchParams = useSearchParams();
+    const email = searchParams.get("email") || "this email";
+    const [isResending, setIsResending] = useState(false);
+    const [resendStatus, setResendStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-    const the_email = email.slice(0, 2) + "*****" + email.slice(-11);
+    // Mask the email like ab***@gmail.com if it's a valid email, else just use the string
+    const getMaskedEmail = (e: string) => {
+        const parts = e.split("@");
+        if (parts.length === 2) {
+            const name = parts[0];
+            const domain = parts[1];
+            if (name.length > 2) {
+                return `${name.slice(0, 2)}***@${domain}`;
+            }
+            return `${name}***@${domain}`;
+        }
+        return e;
+    };
+
+    const handleResend = async () => {
+        if (!email || email === "this email") return;
+        setIsResending(true);
+        setResendStatus(null);
+
+        try {
+            const res = await fetch("http://localhost:5001/api/auth/reset-password/request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            if (res.ok) {
+                setResendStatus({ type: "success", message: "Email resent successfully!" });
+            } else {
+                const data = await res.json();
+                setResendStatus({ type: "error", message: data.message || "Failed to resend email." });
+            }
+        } catch (err) {
+            setResendStatus({ type: "error", message: "An error occurred. Please try again." });
+        } finally {
+            setIsResending(false);
+        }
+    };
+
+    const the_email = getMaskedEmail(email);
+
     return (
         <div className="w-full h-screen flex items-center justify-center p-3 bg-white">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
@@ -29,28 +77,44 @@ export default function Login(emaila: string) {
                             We sent an email to{" "}
                             <span className="font-bold">{the_email}</span>{" "}
                             please check your inbox and spam folder.
-                            <h4 className="text-sm font-medium mt-1">
+                            <div className="text-sm font-medium mt-1">
                                 If you didn't receive an email, resend it again.
-                            </h4>
+                            </div>
                         </h4>
-                        <div className="flex flex-col gap-6">
-                            <a
-                                href="/reset-password"
-                                className="w-full flex items-center justify-center bg-[#6367FF] text-white py-3 rounded-xl font-bold"
+                        
+                        {resendStatus && (
+                            <div
+                                className={`px-4 py-3 rounded-xl text-xs font-semibold ${
+                                    resendStatus.type === "success"
+                                        ? "bg-green-50 text-green-600"
+                                        : "bg-red-50 text-red-500"
+                                }`}
                             >
-                                Resend Email
-                            </a>
+                                {resendStatus.message}
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-6">
+                            <button
+                                onClick={handleResend}
+                                disabled={isResending}
+                                className={`w-full flex items-center justify-center text-white py-3 rounded-xl font-bold transition-colors ${
+                                    isResending ? "bg-[#6367FF]/60 cursor-not-allowed" : "bg-[#6367FF] hover:bg-[#6367FF]/90 cursor-pointer"
+                                }`}
+                            >
+                                {isResending ? "Sending..." : "Resend Email"}
+                            </button>
                             <a
                                 href="/login"
-                                className="w-full flex flex-row items-center justify-center gap-3 border py-2 rounded-xl font-bold"
+                                className="w-full flex flex-row items-center justify-center gap-3 border border-gray-200 py-2 rounded-xl font-bold hover:bg-gray-50 transition-colors"
                             >
-                                <MoveLeft />
+                                <MoveLeft size={18}/>
                                 Back to Login
                             </a>
                         </div>
                     </div>
                 </div>
-                <div className="flex-1/4 w-full h-full flex flex-col bg-[url('/forget-pass-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
+                <div className="hidden lg:flex flex-1/4 w-full h-full flex-col bg-[url('/forget-pass-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
                     <div className="flex flex-row items-center gap-4 text-sm">
                         <a
                             href="/login"
@@ -58,7 +122,7 @@ export default function Login(emaila: string) {
                         >
                             LOGIN
                         </a>
-                        <a href="/sign-up" className="font-medium">
+                        <a href="/sign-up" className="font-medium hover:underline hover:underline-offset-4 transition-all">
                             SIGN UP
                         </a>
                     </div>
@@ -71,5 +135,13 @@ export default function Login(emaila: string) {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function VerifyRequest() {
+    return (
+        <Suspense fallback={<div className="w-full h-screen bg-white" />}>
+            <VerifyContent />
+        </Suspense>
     );
 }

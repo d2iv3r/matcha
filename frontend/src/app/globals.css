@@ -4,6 +4,19 @@
     --color-background1: #fff0fe;
     --color-background: #ffffff;
     --color-foreground: #171717;
+
+}
+.animate-infinite-scroll {
+    animation: infinite-scroll 20s linear infinite;
+}
+.marquee-wrapper:hover .animate-infinite-scroll,
+.marquee-wrapper:active .animate-infinite-scroll {
+    animation-play-state: paused;
+}
+
+@keyframes infinite-scroll {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
 }
 
 :root {
@@ -31,9 +44,6 @@ body {
 .animate-slide-left {
     animation: slide-left 0.5s ease-out forwards;
 }
-/* .xx{
-  background-color: #787BFC;
-} */
 
 .scrollbar-hide::-webkit-scrollbar {
     display: none;

@@ -1,65 +1,116 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Heart, ChevronDown } from "lucide-react";
-import { users, status } from "@/core/components/fake-data";
+import { status } from "@/core/components/fake-data";
+import { useProfile } from "@/core/contexts/ProfileContext";
+import { useRouter } from "next/navigation";
 
-interface User {
-    name: string;
-    age: number;
-    city: string;
-    country: string;
-    status: string;
-    matching: boolean;
-    image: string;
+export interface ApiProfile {
+    username: string;
+    first_name?: string;
+    last_name?: string;
+    age: number | null;
+    city: string | null;
+    country: string | null;
+    distance_km?: number | null;
+    rating: string;
+    avatar?: string | null;
+    is_match: boolean;
+    user_id: number;
+    interests?: string[];
+    bio?: string;
 }
 
-function UserCard({ user, statusColor }: { user: User; statusColor: string }) {
-    const [isLiked, setIsLiked] = useState(false);
+function UserCard({ user, statusColor, displayRating }: { user: ApiProfile; statusColor: string; displayRating: string }) {
+    const [isLiked, setIsLiked] = useState(user.is_match);
 
+    const imageUrl = user.avatar
+        ? (user.avatar.startsWith("/") && !user.avatar.startsWith("http")
+            ? `http://localhost:5001${user.avatar}`
+            : user.avatar)
+        : "/girl1.png";
 
+    const toggleLike = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const previousState = isLiked;
+        setIsLiked(!isLiked);
+
+        try {
+            const res = await fetch(`http://localhost:5001/api/v1/profile/${user.username}/like`, {
+                method: "POST",
+                credentials: "include"
+            });
+            
+            if (!res.ok) {
+                setIsLiked(previousState);
+            }
+        } catch (error) {
+            console.error("Failed to toggle like", error);
+            setIsLiked(previousState);
+        }
+    };
+
+    const router = useRouter();
+    const go_to_profile = (username: string) => {
+        router.push(`/profile/${username}`);
+    };
 
     return (
-        <div className="group flex flex-col h-full bg-[#F5F3FF] p-2 shadow-xl rounded-2xl w-full cursor-pointer">
-            <div className="w-full aspect-3.5/4 rounded-xl mb-1 overflow-hidden relative">
-                <div
-                    className="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-110"
-                    style={{ backgroundImage: `url(${user.image})` }}
+        <div onClick={() => go_to_profile(user.username)} className="group flex flex-col h-full bg-[#F5F3FF] p-2 shadow-xl rounded-2xl w-full cursor-pointer">
+            <div className="w-full aspect-3.5/4 rounded-xl mb-1 overflow-hidden relative group/image">
+                <Image
+                    src={imageUrl}
+                    alt={user.username}
+                    fill
+                    unoptimized
+                    className="object-cover object-center transition-transform duration-500 group-hover/image:scale-110"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                 />
-                <div className="relative z-10 w-full flex justify-end items-start p-2 pointer-events-none">
-                    {user.matching && (
-                        <div className="bg-[#DFD8FF]/90 backdrop-blur-sm px-3 py-[6px] rounded-lg flex justify-center items-center shadow-sm pointer-events-auto">
-                            <p className="text-xs text-[#6367FF] font-medium tracking-wide">
-                                Matching
-                            </p>
-                        </div>
-                    )}
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                    <p className="text-white text-[10px] line-clamp-2 italic mb-1">
+                        "{user.bio}"
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                        {user.interests?.slice(0, 3).map((interest, idx) => (
+                            <span key={idx} className="bg-white/20 backdrop-blur-md text-white text-[8px] px-1.5 py-0.5 rounded-full border border-white/30">
+                                {interest}
+                            </span>
+                        ))}
+                    </div>
                 </div>
             </div>
             <div className="w-full flex flex-row justify-between items-center gap-2 px-1 py-1 mt-auto">
                 <div className="flex flex-col min-w-0 flex-1">
                     <p className="font-bold text-xs md:text-sm text-gray-900 truncate">
-                        {user.name}, <span className="">{user.age}</span>
+                        {user.username}, <span className="">{user.age || "N/A"}</span>
                     </p>
-                    <p className="text-gray-500 text-xs truncate">
-                        {user.city}, <span>{user.country}</span>
+                    <p className="text-gray-500 text-[10px] md:text-xs truncate">
+                        {(user.city || user.country) ? `${user.city}${user.city && user.country ? ", " : ""}${user.country}` : "Unknown"}
                     </p>
+                    {user.distance_km !== undefined && user.distance_km !== null && (
+                        <p className="text-[#6367FF] text-[10px] font-semibold">
+                            {user.distance_km.toFixed(1)} km away
+                        </p>
+                    )}
                     <p
-                        className="text-xs font-bold mt-1 truncate"
+                        className="text-[10px] md:text-xs font-bold mt-0.5 truncate"
                         style={{ color: statusColor }}
                     >
-                        {user.status}
+                        {displayRating}
                     </p>
                 </div>
                 <div className="relative flex justify-center items-center group/heart">
                     <Heart
                         color="#6367FF"
-                        fill={user.matching || isLiked ? "#6367FF" : "none"}
+                        fill={isLiked ? "#6367FF" : "none"}
                         className="cursor-pointer transition-transform hover:scale-110 active:scale-95 shrink-0"
                         size={25}
+                        // onClick={toggleLike}
                         onClick={() => setIsLiked(!isLiked)}
                     />
                     <div className="absolute bottom-full mb-2 hidden group-hover/heart:block whitespace-nowrap bg-gray-800 text-white text-[10px] md:text-xs font-medium px-2 py-1 rounded shadow-lg pointer-events-none fade-in animate-in duration-200">
-                        {user.matching || isLiked ? "Unlike" : "Like"}
+                        {isLiked ? "Unlike" : "Like"}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                     </div>
                 </div>
@@ -73,44 +124,65 @@ export default function HomePage() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
     const [selectedAges, setSelectedAges] = useState<string[]>([]);
-    const [data, setData] = useState<any>(null);
     
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await fetch("http://localhost:5001/api/v1/account/profile", {
-                    method: "GET",
-                    credentials: "include",
-                    headers: {
-                        // "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    }
-                });
-                const jsonData = await res.json();
-                console.log("Profile Result Data (fetch):", jsonData);
-                setData(jsonData);
-            } catch (err) {
-                console.error("Error fetching profile:", err);
-            }
-        };
+    const { profile, isLoading } = useProfile();
+    
+    const [rawProfiles, setRawProfiles] = useState<ApiProfile[]>([]);
+    const [userList, setUserList] = useState<ApiProfile[]>([]);
+    
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const limit = 5;
 
-        fetchProfile();
+    const fetchProfiles = async (currentOffset: number, append: boolean = false) => {
+        try {
+            const res = await fetch(`http://localhost:5001/api/v1/accounts/profiles?limit=${limit}&offset=${currentOffset}`, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            const json = await res.json();
+            const data = json.data;
+            
+            if (data && data.profiles) {
+                setRawProfiles(prev => {
+                    const newRaw = append ? [...prev, ...data.profiles] : data.profiles;
+                    // Apply current filters immediately on the new set of data
+                    applyFilters(newRaw);
+                    return newRaw;
+                });
+                setHasMore(data.profiles.length === limit);
+            }
+        } catch (e) {
+            console.error("Failed to load profiles:", e);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfiles(0, false);
     }, []);
 
-    // console.log("Profile Result Data (state):", data);
+    const handleLoadMore = () => {
+        const nextOffset = offset + limit;
+        setOffset(nextOffset);
+        fetchProfiles(nextOffset, true);
+    };
 
-    
-    const [userList, setUserList] = useState<User[]>(users);
-
-    const handleSearch = () => {
-        let filtered = users;
+    const applyFilters = (profilesToFilter: ApiProfile[]) => {
+        let filtered = profilesToFilter;
         
         if (cityFilter.trim() !== "") {
-            filtered = filtered.filter(u => u.city.toLowerCase().includes(cityFilter.toLowerCase()));
+            filtered = filtered.filter(u => 
+                (u.city && u.city.toLowerCase().includes(cityFilter.toLowerCase())) ||
+                (u.country && u.country.toLowerCase().includes(cityFilter.toLowerCase()))
+            );
         }
         
         if (selectedAges.length > 0) {
             filtered = filtered.filter(u => {
+                if (!u.age) return false;
                 if (selectedAges.includes("18-25") && u.age >= 18 && u.age <= 25) return true;
                 if (selectedAges.includes("26-35") && u.age >= 26 && u.age <= 35) return true;
                 if (selectedAges.includes("36+") && u.age >= 36) return true;
@@ -119,13 +191,14 @@ export default function HomePage() {
         }
 
         if (selectedRatings.length > 0) {
-            filtered = filtered.filter(u => selectedRatings.includes(u.status));
+            filtered = filtered.filter(u => selectedRatings.some(r => r.includes(u.rating)));
         }
 
-        // Tags mapping future hook point:
-        // if (selectedTags.length > 0) filtered = filtered.filter(...)
-
         setUserList(filtered);
+    };
+
+    const handleSearch = () => {
+        applyFilters(rawProfiles);
     };
 
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -258,14 +331,40 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 {userList.map((u, i) => {
                     const matchedStatus = status.find(
-                        (s) => s.name === u.status,
+                        (s) => s.name.includes(u.rating)
                     );
                     const color = matchedStatus
                         ? matchedStatus.color
                         : "#34D399";
-                    return <UserCard key={i} user={u} statusColor={color} />;
+                    const displayRating = matchedStatus
+                        ? matchedStatus.name
+                        : u.rating;
+                    return <UserCard key={i} user={u} statusColor={color} displayRating={displayRating} />;
                 })}
             </div>
+            
+            {hasMore && userList.length > 0 && (
+                <div className="w-full flex justify-center mt-4">
+                    <button 
+                        onClick={handleLoadMore}
+                        className="bg-transparent text-[#6367FF] border-2 border-[#6367FF] font-semibold px-6 py-2 rounded-xl hover:bg-[#6367FF] hover:text-white transition-colors"
+                    >
+                        Load More
+                    </button>
+                </div>
+            )}
+            
+            {!hasMore && userList.length > 0 && (
+                <div className="w-full text-center text-gray-500 mt-4 text-sm font-medium">
+                    No more profiles to show
+                </div>
+            )}
+
+            {userList.length === 0 && (
+                <div className="w-full flex justify-center items-center h-48">
+                    <p className="text-gray-500 font-medium">No match found.</p>
+                </div>
+            )}
         </div>
     );
 }

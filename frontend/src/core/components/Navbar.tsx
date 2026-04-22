@@ -17,7 +17,8 @@ import {
     X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useProfile } from "@/core/contexts/ProfileContext";
 
 const NAV_ITEMS = [
     { name: "Home", href: "/home", icon: HouseHeart },
@@ -30,8 +31,42 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const { profile, isLoading } = useProfile();
     const [isMinimized, setIsMinimized] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const renderRating = (rating: string) => {
+        const ratingMap: Record<string, { label: string; color: string }> = {
+            Ghost: { label: "👻 Ghost", color: "#94A3B8" },
+            Rising: { label: "📈 Rising", color: "#34D399" },
+            Popular: { label: "🔥 Popular", color: "#FB923C" },
+            Elite: { label: "💎 Elite", color: "#3B82F6" },
+            Iconic: { label: "👑 Iconic", color: "#A855F7" },
+        };
+        const style = ratingMap[rating] || ratingMap.Ghost;
+        return (
+            <span style={{ color: style.color }} className="font-bold">
+                {style.label}
+            </span>
+        );
+    };
+
+    const handleLogout = async () => {
+        try {
+            await fetch("http://localhost:5001/api/auth/logout", {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("profile_data");
+            setIsMobileMenuOpen(false);
+            router.push("/login");
+        }
+    };
 
     useEffect(() => {
         let isMobile = window.innerWidth < 768;
@@ -124,19 +159,24 @@ export default function Navbar() {
             {isMobileMenuOpen && (
                 <div className="md:hidden absolute top-full left-0 right-0 mt-3 bg-white rounded-3xl shadow-2xl p-4 flex flex-col gap-2 z-50 animate-in fade-in slide-in-from-top-4 border-2 border-[#E9E8FF]">
                     <div className="flex items-center gap-3 mb-4 p-2 border-b pb-4">
-                        <Image
-                            src={girl}
-                            alt="Profile"
-                            width={50}
-                            height={50}
-                            className="rounded-full aspect-square object-cover"
-                        />
+                        {isLoading ? (
+                            <div className="w-[50px] h-[50px] rounded-full bg-gray-200 animate-pulse" />
+                        ) : (
+                            <div 
+                                className="w-[50px] h-[50px] rounded-full bg-cover bg-center border border-gray-200"
+                                style={{ backgroundImage: `url(${profile?.profile?.avatar})` }}
+                            />
+                        )}
                         <div className="flex flex-col">
-                            <h2 className="font-bold text-gray-900">
-                                Roger Geidt
-                            </h2>
-                            <p className="text-xs text-[#3B82F6] font-bold mt-1">
-                                💎 Elite
+                            {isLoading ? (
+                                <div className="h-5 bg-gray-200 rounded w-24 animate-pulse mb-1" />
+                            ) : (
+                                <h2 className="font-bold text-gray-900 truncate max-w-[120px]">
+                                    {profile?.profile?.username}
+                                </h2>
+                            )}
+                            <p className="text-xs font-bold mt-1">
+                                {renderRating(profile?.profile?.rating || "Ghost")}
                             </p>
                         </div>
                     </div>
@@ -162,37 +202,44 @@ export default function Navbar() {
                             </Link>
                         );
                     })}
-                    <Link
-                        href="/login"
-                        className="flex flex-row items-center rounded-xl p-3 bg-[#b800002d] text-[#b80000] hover:bg-[#b800004d] transition-colors duration-200 cursor-pointer mt-2 gap-4"
+                    <button
+                        onClick={handleLogout}
+                        className="flex w-full flex-row items-center rounded-xl p-3 bg-[#b800002d] text-[#b80000] hover:bg-[#b800004d] transition-colors duration-200 cursor-pointer mt-2 gap-4"
                     >
                         <LogOut size={20} className="shrink-0" />
                         <p className="text-sm font-medium">Logout</p>
-                    </Link>
+                    </button>
                 </div>
             )}
 
             {/* Profile Section - Desktop only */}
             {!isMinimized && (
-                <div className="hidden md:flex flex-col gap-2 items-center justify-center animate-in fade-in zoom-in duration-300">
-                    <Image
-                        src={girl}
-                        alt="Girl"
-                        width={140}
-                        height={140}
-                        className="rounded-4xl border-4 border-white aspect-square object-cover"
-                    />
-                    <div className="flex flex-col gap-1 items-center">
-                        <h2 className="text-lg font-bold text-center">
-                            Roger Geidt
-                        </h2>
-                        <p className="text-xs">
-                            Popularity:{" "}
-                            <span className="font-bold text-[#3B82F6]">
-                                💎 Elite
-                            </span>
-                        </p>
-                    </div>
+                <div className="hidden md:flex flex-col gap-2 items-center justify-center animate-in fade-in zoom-in duration-300 w-full overflow-hidden">
+                    {isLoading ? (
+                        <>
+                            <div className="w-[140px] h-[140px] rounded-[32px] border-4 border-white bg-gray-200 animate-pulse" />
+                            <div className="flex flex-col gap-1 items-center mt-2 w-full px-2">
+                                <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
+                                <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse mt-1" />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div 
+                                className="w-[140px] h-[140px] rounded-[32px] border-4 border-white shadow-sm bg-cover bg-center shrink-0"
+                                style={{ backgroundImage: `url(${profile?.profile?.avatar})` }}
+                            />
+                            <div className="flex flex-col gap-1 items-center max-w-full px-2">
+                                <h2 className="text-lg font-bold text-center truncate w-full">
+                                    {profile?.profile?.username}
+                                </h2>
+                                <p className="text-xs">
+                                    Popularity:{" "}
+                                    {renderRating(profile?.profile?.rating || "Ghost")}
+                                </p>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
@@ -231,8 +278,8 @@ export default function Navbar() {
             </div>
 
             {/* Desktop Logout */}
-            <Link
-                href="/login"
+            <button
+                onClick={handleLogout}
                 title={isMinimized ? "Logout" : undefined}
                 className={`hidden md:flex flex-row items-center rounded-xl p-2 bg-[#b800002d] text-[#b80000] hover:bg-[#b800004d] transition-colors duration-200 cursor-pointer mt-2 ${
                     isMinimized ? "justify-center w-10 h-10" : "gap-4 w-full"
@@ -244,7 +291,7 @@ export default function Navbar() {
                         Logout
                     </p>
                 )}
-            </Link>
+            </button>
         </div>
     );
 }

@@ -27,7 +27,7 @@ export default function Login() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ username, password}),
+                body: JSON.stringify({ username, password }),
             });
             const data = await res.json();
 
@@ -39,9 +39,9 @@ export default function Login() {
                 localStorage.setItem("access_token", data.access_token);
             }
 
-            if (data.user && !data.user.is_profile_complete) {
+            console.log("sa----------------------------", data);
+            if (!data.data?.is_profile_complete) {
                 router.push("/step1");
-                console.log( "sa", data);
             } else {
                 router.push("/home");
             }
@@ -91,7 +91,9 @@ export default function Login() {
                                         name="username"
                                         autoComplete="username"
                                         value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
+                                        onChange={(e) =>
+                                            setUsername(e.target.value)
+                                        }
                                         placeholder="Username"
                                         className="bg-transparent outline-none w-full text-black placeholder-black/50"
                                     />
@@ -102,15 +104,25 @@ export default function Login() {
                                 <div className="flex flex-row items-center gap-4 p-3 bg-[#EDEDED] rounded-xl">
                                     <LockKeyhole />
                                     <input
-                                        type={showPassword ? "text" : "password"}
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
                                         name="password"
                                         autoComplete="current-password"
                                         placeholder="Password"
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(e) =>
+                                            setPassword(e.target.value)
+                                        }
                                         className="bg-transparent outline-none w-full text-black placeholder-black/50"
                                     />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="cursor-pointer">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowPassword(!showPassword)
+                                        }
+                                        className="cursor-pointer"
+                                    >
                                         {showPassword ? <EyeOff /> : <Eye />}
                                     </button>
                                 </div>

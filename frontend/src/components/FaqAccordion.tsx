@@ -29,7 +29,7 @@ export default function FaqAccordion() {
     };
 
     return (
-        <div className="flex flex-col gap-4 w-full min-w-[800px] max-w-[800px]">
+        <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-[800px]">
             {faqData.map((faq, index) => {
                 const isOpen = openIndex === index;
 
@@ -37,10 +37,12 @@ export default function FaqAccordion() {
                     <div
                         key={index}
                         onClick={() => toggleFaq(index)}
-                        className="w-full flex flex-col gap-4 items-start bg-[#E2DCFF] rounded-3xl p-5 cursor-pointer transition-all duration-300"
+                        className="w-full flex flex-col gap-3 sm:gap-4 items-start bg-[#E2DCFF] rounded-2xl sm:rounded-3xl p-4 sm:p-5 cursor-pointer transition-all duration-300"
                     >
-                        <div className="flex flex-row justify-between w-full items-center">
-                            <p className="text-lg font-bold">{faq.question}</p>
+                        <div className="flex flex-row justify-between w-full items-center gap-2">
+                            <p className="text-base sm:text-lg font-bold">
+                                {faq.question}
+                            </p>
                             <span
                                 className="text-xl font-bold text-[#6367FF] transition-transform duration-300 transform"
                                 style={{
@@ -53,8 +55,8 @@ export default function FaqAccordion() {
                             </span>
                         </div>
                         {isOpen && (
-                            <div className="animate-fade-in">
-                                <p className="text-sm text-gray-800">
+                            <div className="animate-fade-in mt-2 sm:mt-0">
+                                <p className="text-xs sm:text-sm text-gray-800 leading-relaxed">
                                     {faq.answer}
                                 </p>
                             </div>

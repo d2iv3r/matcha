@@ -46,14 +46,14 @@ export default function TestimonialsCarousel() {
     }, []);
 
     return (
-        <div className="flex flex-col gap-8 items-center justify-center p-10 mt-6">
-            <div className="flex flex-row gap-8 items-center justify-center w-full max-w-[1000px]">
+        <div className="flex flex-col gap-8 items-center justify-center p-6 sm:p-10 mt-6">
+            <div className="flex flex-col sm:flex-row gap-8 items-center justify-center w-full max-w-[1000px]">
                 {/* Quote Content */}
                 <div 
                     key={currentIndex}
-                    className="flex flex-col gap-10 items-center justify-center w-[800px] min-h-[250px] animate-slide-left"
+                    className="flex flex-col gap-6 items-center justify-center w-full max-w-[800px] min-h-[250px] animate-slide-left"
                 >
-                    <p className="text-3xl font-medium text-center leading-relaxed">
+                    <p className="text-xl sm:text-2xl md:text-3xl font-medium text-center leading-relaxed">
                         "{testimonials[currentIndex].quote}"
                     </p>
                     <div className="flex flex-row gap-4 items-center justify-center">
@@ -64,23 +64,23 @@ export default function TestimonialsCarousel() {
                             height={50}
                             className="rounded-full object-cover w-12 h-12"
                         />
-                        <div className="flex flex-row text-lg">
+                        <div className="flex flex-row items-center space-x-1 text-sm whitespace-nowrap">
                             <p className="font-bold">
-                                {testimonials[currentIndex].name}
+                                {testimonials[currentIndex].name},
                             </p>
-                            <p>, {testimonials[currentIndex].location}</p>
+                            <p>{testimonials[currentIndex].location}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Pagination Dots */}
-            <div className="flex flex-row gap-3 mt-4">
+            <div className="flex flex-row gap-2 sm:gap-3 mt-4">
                 {testimonials.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => setCurrentIndex(index)}
-                        className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${
+                        className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
                             index === currentIndex
                                 ? "bg-[#6B6FFF] w-6"
                                 : "bg-gray-300 hover:bg-gray-400"
