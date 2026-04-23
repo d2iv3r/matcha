@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from app.db.queries.profile_likes_queries import (
     RECORD_PROFILE_LIKE,
+    REMOVE_PROFILE_LIKE,
     GET_PROFILE_LIKES_COUNT,
     GET_PROFILE_RECENT_LIKES,
     HAS_PROFILE_LIKE,
@@ -34,6 +35,18 @@ class ProfileLikesModel(BaseModel):
         try:
             cls.db_manager().execute(
                 RECORD_PROFILE_LIKE,
+                (profile_user_id, liker_user_id),
+            )
+            return True
+        except Exception:
+            return False
+    
+    @classmethod
+    def remove_like(cls, profile_user_id: int, liker_user_id: int) -> bool:
+        """Remove a profile like. Returns True if removed, False if not found."""
+        try:
+            cls.db_manager().execute(
+                REMOVE_PROFILE_LIKE,
                 (profile_user_id, liker_user_id),
             )
             return True

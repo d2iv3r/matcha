@@ -1,5 +1,6 @@
 """Controller for profile likes operations."""
 
+from __future__ import print_function
 from flask import request
 from flask_jwt_extended import get_jwt_identity
 
@@ -24,27 +25,27 @@ class ProfileLikesController:
         profile = ProfileService.get_profile_by_username(username)
         if not profile:
             raise NotFoundError("Profile", username)
-        if profile.id == liker_id:
+        if profile.user_id == liker_id:
             raise BadRequestError("Cannot record self-likes")
 
-        ProfileLikesService.record_profile_like(profile.id, liker_id)
-        return success(message="Profile like recorded")
+        ProfileLikesService.record_profile_like(profile.user_id, liker_id)
+        return success(message="Profile like recorded", data={})
 
     @staticmethod
     def remove_profile_like(username: str):
         """Remove a like for a user's profile."""
         liker_id = int(get_jwt_identity())
-        from app.services.profile_service import ProfileService
 
-        user = ProfileService.get_user_by_username(username)
-        if not user:
-            raise NotFoundError("User", username)
-        profile_user_id = user["id"] if isinstance(user, dict) else user.id
-
-        if liker_id == profile_user_id:
+        if not username:
+            raise BadRequestError("Username is required in the URL path")
+        profile = ProfileService.get_profile_by_username(username)
+        if not profile:
+            raise NotFoundError("Profile", username)
+        if profile.user_id == liker_id:
             raise BadRequestError("Cannot remove self-likes")
 
-        return success({"message": "Profile like removed"}, 200)
+        ProfileLikesService.remove_profile_like(profile.user_id, liker_id)
+        return success(message="Profile like removed", data={})
 
     @staticmethod
     def get_profile_likers():

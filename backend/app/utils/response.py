@@ -2,6 +2,7 @@
 from flask import jsonify, Response
 
 def success(data: dict | list | None, message: str = "Success", status: int = 200) -> tuple[Response, int]:
+    print("success")
     return jsonify({
         "success": True,
         "message": message,

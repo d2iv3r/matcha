@@ -19,6 +19,16 @@ class ProfileLikesService:
         ProfileLikesModel.record_like(profile_user_id, liker_user_id)
 
     @staticmethod
+    def remove_profile_like(profile_user_id: int, liker_user_id: int) -> None:
+        """Remove a like for a user's profile.
+        
+        Args:
+            profile_user_id: ID of the profile being unliked
+            liker_user_id: ID of the user unliking the profile
+        """
+        ProfileLikesModel.remove_like(profile_user_id, liker_user_id)
+
+    @staticmethod
     def get_profile_like_count(user_id: int) -> int:
         """Get the total number of times a user's profile has been liked.
         

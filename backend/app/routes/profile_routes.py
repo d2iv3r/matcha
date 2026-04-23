@@ -19,4 +19,5 @@ profile_bp.add_url_rule("/viewers", view_func=jwt_required()(profile_completion_
 # Profile Likes management endpoints
 profile_bp.add_url_rule("/<string:username>/like", view_func=jwt_required()(profile_completion_required(ProfileLikesController.record_profile_like)), methods=["POST"])
 profile_bp.add_url_rule("/likes", view_func=jwt_required()(profile_completion_required(ProfileLikesController.get_profile_likers)), methods=["GET"])
+profile_bp.add_url_rule("/<string:username>/unlike", view_func=jwt_required()(profile_completion_required(ProfileLikesController.remove_profile_like)), methods=["POST"])
 # profile_bp.add_url_rule("/likes-count", view_func=jwt_required()(profile_completion_required(ProfileLikesController.get_like_count)), methods=["GET"])
