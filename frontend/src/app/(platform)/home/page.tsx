@@ -5,6 +5,7 @@ import { Heart, ChevronDown } from "lucide-react";
 import { status } from "@/core/components/fake-data";
 import { useProfile } from "@/core/contexts/ProfileContext";
 import { useRouter } from "next/navigation";
+import MatchOverlay from "@/core/components/MatchOverlay";
 
 export interface ApiProfile {
     username: string;
@@ -17,13 +18,15 @@ export interface ApiProfile {
     rating: string;
     avatar?: string | null;
     is_match: boolean;
+    is_liked: boolean;
     user_id: number;
     interests?: string[];
     bio?: string;
 }
 
-function UserCard({ user, statusColor, displayRating }: { user: ApiProfile; statusColor: string; displayRating: string }) {
-    const [isLiked, setIsLiked] = useState(user.is_match);
+function UserCard({ user, statusColor, displayRating, onMatch }: { user: ApiProfile; statusColor: string; displayRating: string; onMatch: (u: ApiProfile) => void }) {
+    const [isLiked, setIsLiked] = useState(user.is_liked || user.is_match);
+    const [isMatch, setIsMatch] = useState(user.is_match);
 
     const imageUrl = user.avatar
         ? (user.avatar.startsWith("/") && !user.avatar.startsWith("http")
@@ -34,16 +37,27 @@ function UserCard({ user, statusColor, displayRating }: { user: ApiProfile; stat
     const toggleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
         const previousState = isLiked;
-        setIsLiked(!isLiked);
+        const newState = !isLiked;
+        setIsLiked(newState);
 
         try {
-            const res = await fetch(`http://localhost:5001/api/v1/profile/${user.username}/like`, {
+            const action = newState ? "like" : "unlike";
+            const res = await fetch(`http://localhost:5001/api/v1/profile/${user.username}/${action}`, {
                 method: "POST",
                 credentials: "include"
             });
+            console.log("res", res);
             
             if (!res.ok) {
                 setIsLiked(previousState);
+            } else {
+                const json = await res.json();
+                if (json.data?.is_match) {
+                    setIsMatch(true);
+                    onMatch(user);
+                } else if (!newState) {
+                    setIsMatch(false);
+                }
             }
         } catch (error) {
             console.error("Failed to toggle like", error);
@@ -67,6 +81,13 @@ function UserCard({ user, statusColor, displayRating }: { user: ApiProfile; stat
                     className="object-cover object-center transition-transform duration-500 group-hover/image:scale-110"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                 />
+                {isMatch && (
+                    <div className="absolute top-3 right-3 bg-[#E2DCFF]/90 backdrop-blur-sm px-3 py-2 rounded-xl z-10 shadow-sm">
+                        <p className="text-[9px] text-[#555EFF] font-semibold tracking-wider leading-none">
+                            Matching
+                        </p>
+                    </div>
+                )}
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
                     <p className="text-white text-[10px] line-clamp-2 italic mb-1">
                         "{user.bio}"
@@ -126,10 +147,16 @@ export default function HomePage() {
     const [selectedAges, setSelectedAges] = useState<string[]>([]);
     
     const { profile, isLoading } = useProfile();
+    const router = useRouter();
     
     const [rawProfiles, setRawProfiles] = useState<ApiProfile[]>([]);
     const [userList, setUserList] = useState<ApiProfile[]>([]);
     
+    const [matchModal, setMatchModal] = useState<{isOpen: boolean, user: ApiProfile | null}>({
+        isOpen: false,
+        user: null
+    });
+
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const limit = 5;
@@ -145,6 +172,7 @@ export default function HomePage() {
             });
             const json = await res.json();
             const data = json.data;
+            console.log("data", data);
             
             if (data && data.profiles) {
                 setRawProfiles(prev => {
@@ -339,9 +367,21 @@ export default function HomePage() {
                     const displayRating = matchedStatus
                         ? matchedStatus.name
                         : u.rating;
-                    return <UserCard key={i} user={u} statusColor={color} displayRating={displayRating} />;
+                    return <UserCard key={i} user={u} statusColor={color} displayRating={displayRating} onMatch={(u) => setMatchModal({isOpen: true, user: u})} />;
                 })}
             </div>
+
+            <MatchOverlay 
+                isOpen={matchModal.isOpen}
+                onClose={() => setMatchModal({isOpen: false, user: null})}
+                myAvatar={profile?.profile?.avatar || null}
+                matchAvatar={matchModal.user?.avatar || null}
+                matchName={matchModal.user?.first_name || matchModal.user?.username || ""}
+                onChat={() => {
+                    setMatchModal({isOpen: false, user: null});
+                    router.push("/chat");
+                }}
+            />
             
             {hasMore && userList.length > 0 && (
                 <div className="w-full flex justify-center mt-4">

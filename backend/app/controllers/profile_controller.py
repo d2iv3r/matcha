@@ -85,7 +85,7 @@ class ProfileController:
         data = {}
         data["profile"] = profile.to_dict()
         data["is_match"] = is_match
-        data["is_liked"] = ProfileLikesService.has_liked_profile(viewer_id, profile.user_id)
+        data["is_liked"] = ProfileLikesService.has_liked_profile(profile.user_id, viewer_id)
 
         return success(data)
 
@@ -105,7 +105,7 @@ class ProfileController:
             "user": base_profile,
             "profile": base_profile,
             "is_match": viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id),
-            "is_liked": ProfileLikesService.has_liked_profile(viewer_id, user_id)
+            "is_liked": ProfileLikesService.has_liked_profile(user_id, viewer_id)
         }
         return success(response_payload, 200)
 
@@ -119,11 +119,14 @@ class ProfileController:
         result = []
         for p in profiles:
             entry = p.to_dict()
+            entry["is_liked"] = (
+                p.user_id is not None
+                and ProfileLikesService.has_liked_profile(p.user_id, viewer_id)
+            )
             entry["is_match"] = (
                 p.user_id is not None
                 and ProfileLikesService.is_mutual_like(viewer_id, p.user_id)
             )
-            entry["is_liked"] = ProfileLikesService.has_liked_profile(viewer_id, p.user_id)
             distance_km = getattr(p, "distance_km", None)
             if distance_km is not None:
                 entry["distance_km"] = round(float(distance_km), 1)

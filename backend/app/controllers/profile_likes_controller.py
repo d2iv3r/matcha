@@ -29,7 +29,8 @@ class ProfileLikesController:
             raise BadRequestError("Cannot record self-likes")
 
         ProfileLikesService.record_profile_like(profile.user_id, liker_id)
-        return success(message="Profile like recorded", data={})
+        is_match = ProfileLikesService.is_mutual_like(profile.user_id, liker_id)
+        return success(message="Profile like recorded", data={"is_match": is_match})
 
     @staticmethod
     def remove_profile_like(username: str):
@@ -59,8 +60,13 @@ class ProfileLikesController:
         likers_data = ProfileLikesService.get_profile_likers(profile_user_id, limit=limit)
         data = {}
         for liker in likers_data:
-            is_match = ProfileLikesService.is_mutual_like(profile_user_id, liker.get("id"))
-            liker["is_match"] = is_match
+            liker_id = liker.get("liker_id")
+            if liker_id:
+                liker["is_match"] = ProfileLikesService.is_mutual_like(profile_user_id, liker_id)
+                liker["is_liked"] = ProfileLikesService.has_liked_profile(liker_id, profile_user_id)
+            else:
+                liker["is_match"] = False
+                liker["is_liked"] = False
         data["likers"] = likers_data
         data["count"] = len(likers_data)
 

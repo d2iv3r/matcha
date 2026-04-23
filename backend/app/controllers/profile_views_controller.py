@@ -53,8 +53,13 @@ class ProfileViewsController:
         viewers_data = ProfileViewsService.get_profile_viewers(profile_user_id, limit=limit)
         data = {}
         for viewer in viewers_data:
-            is_match = ProfileLikesService.is_mutual_like(profile_user_id, viewer.get("id"))
-            viewer["is_match"] = is_match
+            viewer_id = viewer.get("viewer_id")
+            if viewer_id:
+                viewer["is_match"] = ProfileLikesService.is_mutual_like(profile_user_id, viewer_id)
+                viewer["is_liked"] = ProfileLikesService.has_liked_profile(viewer_id, profile_user_id)
+            else:
+                viewer["is_match"] = False
+                viewer["is_liked"] = False
         data["viewers"] = viewers_data
         data["count"] = len(viewers_data)
 

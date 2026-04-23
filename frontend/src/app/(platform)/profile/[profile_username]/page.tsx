@@ -19,6 +19,7 @@ import {
     MessageCircleMore,
 } from "lucide-react";
 import { useProfile } from "@/core/contexts/ProfileContext";
+import MatchOverlay from "@/core/components/MatchOverlay";
 import { INTERESTS } from "@/core/constants/interests";
 
 // --- Sub-components ---
@@ -28,7 +29,10 @@ function MyProfileView({
     activeTab,
     setActiveTab,
     viewers,
+    setViewers,
     likers,
+    setLikers,
+    onMatch,
     isFetching,
 }: any) {
     const router = useRouter();
@@ -42,6 +46,49 @@ function MyProfileView({
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const tabsRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+    const handleLikeToggle = async (username: string, currentIsLiked: boolean, listType: 'viewers' | 'likers') => {
+        const newIsLiked = !currentIsLiked;
+        const action = newIsLiked ? 'like' : 'unlike';
+        
+        try {
+            const res = await fetch(`http://localhost:5001/api/v1/profile/${username}/${action}`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            
+            if (res.ok) {
+                const json = await res.json();
+                const isMatch = json.data?.is_match || false;
+                
+                const updateList = (list: any[]) => list.map(item => {
+                    const itemUsername = listType === 'viewers' ? item.viewer_username : item.liker_username;
+                    if (itemUsername === username) {
+                        return { ...item, is_liked: newIsLiked, is_match: isMatch };
+                    }
+                    return item;
+                });
+
+                if (listType === 'viewers') setViewers(updateList(viewers));
+                else setLikers(updateList(likers));
+
+                if (isMatch) {
+                    const matchedUser = (listType === 'viewers' ? viewers : likers).find((u: any) => 
+                        (listType === 'viewers' ? u.viewer_username : u.liker_username) === username
+                    );
+                    if (matchedUser) {
+                        onMatch({
+                            username: username,
+                            first_name: listType === 'viewers' ? matchedUser.viewer_first_name : matchedUser.liker_first_name,
+                            avatar: listType === 'viewers' ? matchedUser.viewer_avatar : matchedUser.liker_avatar
+                        });
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Failed to toggle like:", err);
+        }
+    };
+
     useEffect(() => {
         const el = tabsRef.current[activeTab];
         if (el) {
@@ -54,6 +101,8 @@ function MyProfileView({
             });
         }
     }, [activeTab, profileData]);
+    console.log("viewers", viewers);
+    console.log("likers", likers);
 
     const renderRating = (rating: string) => {
         const ratingMap: Record<string, { label: string; color: string }> = {
@@ -223,18 +272,18 @@ function MyProfileView({
                                             onClick={() =>
                                                 setExpandedImage(item)
                                             }
-                                            >
+                                        >
                                             <Image
                                                 src={
                                                     item.startsWith("/")
-                                                    ? `http://localhost:5001${item}`
-                                                    : item
+                                                        ? `http://localhost:5001${item}`
+                                                        : item
                                                 }
                                                 alt="Gallery"
                                                 fill
                                                 unoptimized
                                                 className="rounded-xl object-cover shadow-md"
-                                                />
+                                            />
                                         </div>
                                     ),
                                 )
@@ -294,6 +343,11 @@ function MyProfileView({
                                             <Heart
                                                 size={15}
                                                 color="#6367FF"
+                                                className="cursor-pointer hover:scale-110 transition-transform"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleLikeToggle(item.viewer_username, item.is_liked, 'viewers');
+                                                }}
                                                 fill={
                                                     item.is_liked ||
                                                     item.is_match
@@ -360,6 +414,11 @@ function MyProfileView({
                                             <Heart
                                                 size={15}
                                                 color="#6367FF"
+                                                className="cursor-pointer hover:scale-110 transition-transform"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleLikeToggle(item.liker_username, item.is_liked, 'likers');
+                                                }}
                                                 fill={
                                                     item.is_liked ||
                                                     item.is_match
@@ -419,7 +478,14 @@ function MyProfileView({
     );
 }
 
-function OtherProfileView({ profileData, isLiked, setIsLiked }: any) {
+function OtherProfileView({
+    profileData,
+    isLiked,
+    setIsLiked,
+    isMatch,
+    setIsMatch,
+    onMatch,
+}: any) {
     const [block, setBlock] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
@@ -431,10 +497,20 @@ function OtherProfileView({ profileData, isLiked, setIsLiked }: any) {
         const newLikedState = !isLiked;
         setIsLiked(newLikedState);
         try {
-            await fetch(
-                `http://localhost:5001/api/v1/profile/${profileData.username}/like`,
+            const action = newLikedState ? "like" : "unlike";
+            const res = await fetch(
+                `http://localhost:5001/api/v1/profile/${profileData.username}/${action}`,
                 { method: "POST", credentials: "include" },
             );
+            if (res.ok) {
+                const json = await res.json();
+                if (json.data?.is_match) {
+                    setIsMatch(true);
+                    onMatch(profileData);
+                } else if (!newLikedState) {
+                    setIsMatch(false);
+                }
+            }
         } catch (err) {
             setIsLiked(!newLikedState);
         }
@@ -517,7 +593,7 @@ function OtherProfileView({ profileData, isLiked, setIsLiked }: any) {
                                 </p>
                             </div>
                         </div>
-                        {isLiked && (
+                        {isMatch && (
                             <div className="absolute flex flex-col bg-[#E2DCFF] px-4 py-2 rounded-xl top-3 right-3">
                                 <p className="text-[8px] text-[#555EFF] font-semibold tracking-wider">
                                     Matching
@@ -767,6 +843,15 @@ export default function UnifiedProfilePage() {
     const [likers, setLikers] = useState<any[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
+    const [isMatch, setIsMatch] = useState(false);
+    const [matchModal, setMatchModal] = useState<{
+        isOpen: boolean;
+        user: any | null;
+    }>({
+        isOpen: false,
+        user: null,
+    });
+    const router = useRouter();
 
     const isOwner = myProfile?.profile?.username === profile_username;
 
@@ -790,7 +875,10 @@ export default function UnifiedProfilePage() {
                 .then((result) => {
                     if (result.success) {
                         setProfileData(result.data.profile);
-                        setIsLiked(result.data.is_match);
+                        setIsLiked(
+                            result.data.is_liked || result.data.is_match,
+                        );
+                        setIsMatch(result.data.is_match);
                     } else {
                         setProfileData(null);
                     }
@@ -848,22 +936,45 @@ export default function UnifiedProfilePage() {
 
     return (
         <div className="w-full h-full flex flex-col p-4 overflow-hidden">
-            {isOwner ? (
+            {!isOwner && profileData ? (
+                <OtherProfileView
+                    profileData={profileData}
+                    isLiked={isLiked}
+                    setIsLiked={setIsLiked}
+                    isMatch={isMatch}
+                    setIsMatch={setIsMatch}
+                    onMatch={(u: any) =>
+                        setMatchModal({ isOpen: true, user: u })
+                    }
+                />
+            ) : (
                 <MyProfileView
                     profileData={profileData}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     viewers={viewers}
+                    setViewers={setViewers}
                     likers={likers}
-                    isFetching={isFetching}
-                />
-            ) : (
-                <OtherProfileView
-                    profileData={profileData}
-                    isLiked={isLiked}
-                    setIsLiked={setIsLiked}
+                    setLikers={setLikers}
+                    onMatch={(u: any) => setMatchModal({ isOpen: true, user: u })}
                 />
             )}
+
+            <MatchOverlay
+                isOpen={matchModal.isOpen}
+                onClose={() => setMatchModal({ isOpen: false, user: null })}
+                myAvatar={myProfile?.profile?.avatar || null}
+                matchAvatar={matchModal.user?.avatar || null}
+                matchName={
+                    matchModal.user?.first_name ||
+                    matchModal.user?.username ||
+                    ""
+                }
+                onChat={() => {
+                    setMatchModal({ isOpen: false, user: null });
+                    router.push("/chat");
+                }}
+            />
         </div>
     );
 }
