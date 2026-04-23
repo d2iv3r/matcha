@@ -30,6 +30,7 @@ SELECT EXISTS (
 GET_PROFILE_RECENT_LIKES = """
 SELECT 
     u.id as liker_id,
+    u.username as liker_username,
     u.first_name as liker_first_name,
     u.last_name as liker_last_name,
     p.age as liker_age,

@@ -106,8 +106,8 @@ function UserCard({ user, statusColor, displayRating }: { user: ApiProfile; stat
                         fill={isLiked ? "#6367FF" : "none"}
                         className="cursor-pointer transition-transform hover:scale-110 active:scale-95 shrink-0"
                         size={25}
-                        // onClick={toggleLike}
-                        onClick={() => setIsLiked(!isLiked)}
+                        onClick={toggleLike}
+                        // onClick={() => setIsLiked(!isLiked)}
                     />
                     <div className="absolute bottom-full mb-2 hidden group-hover/heart:block whitespace-nowrap bg-gray-800 text-white text-[10px] md:text-xs font-medium px-2 py-1 rounded shadow-lg pointer-events-none fade-in animate-in duration-200">
                         {isLiked ? "Unlike" : "Like"}

@@ -15,6 +15,7 @@ WHERE profile_user_id = %s;
 GET_PROFILE_RECENT_VIEWS = """
 SELECT 
     u.id as viewer_id,
+    u.username as viewer_username,
     u.first_name as viewer_first_name,
     u.last_name as viewer_last_name,
     p.age as viewer_age,

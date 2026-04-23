@@ -6,6 +6,8 @@ import shape1 from "@/public/shape1.svg";
 import shape2 from "@/public/shape2.svg";
 import shape3 from "@/public/shape3.svg";
 import girl1 from "@/public/girl1.png";
+import girl2 from "@/public/girl2.png";
+import man1 from "@/public/man1.png";
 import quots from "@/public/quots.svg";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import smartAi from "@/public/smartai.svg";
@@ -70,13 +72,13 @@ export default function Marketing() {
                         <div className="hidden lg:flex flex-row gap-6 items-center justify-center font-bold text-[#2F2CD5]">
                             <a
                                 href="/login"
-                                className="text-md hover:text-white transition-colors"
+                                className="text-md transition-colors"
                             >
                                 LOGIN
                             </a>
                             <a
                                 href="/sign-up"
-                                className="text-md underline underline-offset-2 hover:text-white transition-colors"
+                                className="text-md underline underline-offset-2 transition-colors"
                             >
                                 SIGN UP
                             </a>
@@ -180,7 +182,7 @@ export default function Marketing() {
                                 <div className="overflow-hidden rounded-[8px] sm:rounded-[12px]">
                                     <Image
                                         src={girl1}
-                                        alt="Girl"
+                                        alt="picture of a girl"
                                         width={220}
                                         height={220}
                                         className="object-cover hover:scale-110 transition-transform duration-500 ease-in-out 
@@ -194,8 +196,8 @@ export default function Marketing() {
                             <div className="z-2 bg-[#DDDDDD] p-2 sm:p-3 flex flex-col gap-2 sm:gap-4 items-center justify-center rounded-[16px] sm:rounded-[24px] rotate-12 shadow-xl mt-22 sm:mt-28 md:mt-32 lg:mt-40">
                                 <div className="overflow-hidden rounded-[8px] sm:rounded-[12px]">
                                     <Image
-                                        src={girl1}
-                                        alt="Girl"
+                                        src={man1}
+                                        alt="picture of a man"
                                         width={220}
                                         height={220}
                                         className="object-cover hover:scale-110 transition-transform duration-500 ease-in-out 
@@ -209,8 +211,8 @@ export default function Marketing() {
                             <div className="z-1 bg-[#545454] p-2 sm:p-3 flex flex-col gap-2 sm:gap-4 items-center justify-center rounded-[16px] sm:rounded-[24px] rotate-20 shadow-xl mt-50 sm:mt-56 md:mt-64 lg:mt-80 xl:mt-90">
                                 <div className="overflow-hidden rounded-[8px] sm:rounded-[12px]">
                                     <Image
-                                        src={girl1}
-                                        alt="Girl"
+                                        src={girl2}
+                                        alt="picture of a random Girl"
                                         width={220}
                                         height={220}
                                         className="object-cover hover:scale-110 transition-transform duration-500 ease-in-out 
@@ -324,7 +326,7 @@ export default function Marketing() {
                     {Array.from({ length: 8 }).map((_, index) => (
                         <div
                             key={index}
-                            className={`col-span-1 row-span-1 aspect-3.5/4.5 relative rounded-xl flex flex-col justify-end px-3 py-2 shadow-lg overflow-hidden group cursor-pointer ${index >= 6 ? "hidden xl:block" : index >= 4 ? "hidden lg:block" : ""}`}
+                            className={`col-span-1 row-span-1 aspect-3.5/4.5 relative rounded-xl flex flex-col justify-end px-3 py-2 shadow-lg overflow-hidden group cursor-pointer ${index >= 6 ? "hidden xl:flex" : index >= 4 ? "hidden lg:flex" : ""}`}
                         >
                             <div
                                 className="absolute inset-0 bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-110"

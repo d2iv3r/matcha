@@ -77,9 +77,9 @@ class ProfileController:
         viewer_id = int(get_jwt_identity())
         profile = ProfileService.get_profile_by_username(username)
         is_match = False
-        if viewer_id != profile.id:
-            ProfileViewsService.record_profile_view(profile.id, viewer_id)
-            is_match = ProfileLikesService.is_mutual_like(viewer_id, profile.id)
+        if viewer_id != profile.user_id:
+            ProfileViewsService.record_profile_view(profile.user_id, viewer_id)
+            is_match = ProfileLikesService.is_mutual_like(viewer_id, profile.user_id)
         data = {}
         data["profile"] = profile.to_dict()
         data["is_match"] = is_match

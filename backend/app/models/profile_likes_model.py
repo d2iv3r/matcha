@@ -18,6 +18,7 @@ class ProfileLikesModel(BaseModel):
     """Model for `profile_likes` table operations."""
 
     liker_id: int | None = None
+    liker_username: str | None = None
     liker_first_name: str | None = None
     liker_last_name: str | None = None
     liker_age: int | None = None
@@ -74,6 +75,7 @@ class ProfileLikesModel(BaseModel):
         """Convert the model instance to a dictionary."""
         return {
             "liker_id": self.liker_id,
+            "liker_username": self.liker_username,
             "liker_first_name": self.liker_first_name,
             "liker_last_name": self.liker_last_name,
             "liker_age": self.liker_age,

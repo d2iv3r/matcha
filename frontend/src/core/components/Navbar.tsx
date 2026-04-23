@@ -20,21 +20,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useProfile } from "@/core/contexts/ProfileContext";
 
-const NAV_ITEMS = [
-    { name: "Home", href: "/home", icon: HouseHeart },
-    { name: "Profile", href: "/profile", icon: User },
-    { name: "Chat", href: "/chat", icon: MessageCircle },
-    { name: "Advanced Search", href: "/advance-search", icon: Search },
-    { name: "Notifications", href: "/notifications", icon: BellDot },
-    { name: "Settings", href: "/settings", icon: Settings },
-];
-
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const { profile, isLoading } = useProfile();
     const [isMinimized, setIsMinimized] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const NAV_ITEMS = [
+        { name: "Home", href: "/home", icon: HouseHeart },
+        { name: "Profile", href: profile?.profile?.username ? `/profile/${profile.profile.username}` : "/profile", icon: User },
+        { name: "Chat", href: "/chat", icon: MessageCircle },
+        { name: "Advanced Search", href: "/advance-search", icon: Search },
+        { name: "Notifications", href: "/notifications", icon: BellDot },
+        { name: "Settings", href: "/settings", icon: Settings },
+    ];
 
     const renderRating = (rating: string) => {
         const ratingMap: Record<string, { label: string; color: string }> = {
@@ -162,9 +162,11 @@ export default function Navbar() {
                         {isLoading ? (
                             <div className="w-[50px] h-[50px] rounded-full bg-gray-200 animate-pulse" />
                         ) : (
-                            <div 
+                            <div
                                 className="w-[50px] h-[50px] rounded-full bg-cover bg-center border border-gray-200"
-                                style={{ backgroundImage: `url(${profile?.profile?.avatar})` }}
+                                style={{
+                                    backgroundImage: `url(${profile?.profile?.avatar})`,
+                                }}
                             />
                         )}
                         <div className="flex flex-col">
@@ -176,7 +178,9 @@ export default function Navbar() {
                                 </h2>
                             )}
                             <p className="text-xs font-bold mt-1">
-                                {renderRating(profile?.profile?.rating || "Ghost")}
+                                {renderRating(
+                                    profile?.profile?.rating || "Ghost",
+                                )}
                             </p>
                         </div>
                     </div>
@@ -225,9 +229,11 @@ export default function Navbar() {
                         </>
                     ) : (
                         <>
-                            <div 
+                            <div
                                 className="w-[140px] h-[140px] rounded-[32px] border-4 border-white shadow-sm bg-cover bg-center shrink-0"
-                                style={{ backgroundImage: `url(${profile?.profile?.avatar})` }}
+                                style={{
+                                    backgroundImage: `url(${profile?.profile?.avatar})`,
+                                }}
                             />
                             <div className="flex flex-col gap-1 items-center max-w-full px-2">
                                 <h2 className="text-lg font-bold text-center truncate w-full">
@@ -235,7 +241,9 @@ export default function Navbar() {
                                 </h2>
                                 <p className="text-xs">
                                     Popularity:{" "}
-                                    {renderRating(profile?.profile?.rating || "Ghost")}
+                                    {renderRating(
+                                        profile?.profile?.rating || "Ghost",
+                                    )}
                                 </p>
                             </div>
                         </>

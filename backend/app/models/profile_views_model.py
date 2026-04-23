@@ -16,6 +16,7 @@ class ProfileViewsModel(BaseModel):
     """Model for `profile_views` table operations."""
 
     viewer_id: int | None = None
+    viewer_username: str | None = None
     viewer_first_name: str | None = None
     viewer_last_name: str | None = None
     viewer_age: int | None = None
@@ -55,6 +56,7 @@ class ProfileViewsModel(BaseModel):
         """Convert the model instance to a dictionary."""
         return {
             "viewer_id": self.viewer_id,
+            "viewer_username": self.viewer_username,
             "viewer_first_name": self.viewer_first_name,
             "viewer_last_name": self.viewer_last_name,
             "viewer_age": self.viewer_age,
