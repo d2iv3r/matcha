@@ -6,7 +6,9 @@ from flask import request, g
 from flask_jwt_extended import get_jwt_identity
 
 from app.schemas.profile_schemas import CreateProfileSchema
+from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema
 from app.services.profile_service import ProfileService
+from app.services.user_service import UserService
 from app.services.profile_views_service import ProfileViewsService
 from app.services.profile_likes_service import ProfileLikesService
 from app.utils.response import success
@@ -83,6 +85,7 @@ class ProfileController:
         data = {}
         data["profile"] = profile.to_dict()
         data["is_match"] = is_match
+        data["is_liked"] = ProfileLikesService.has_liked_profile(viewer_id, profile.user_id)
 
         return success(data)
 
@@ -102,6 +105,7 @@ class ProfileController:
             "user": base_profile,
             "profile": base_profile,
             "is_match": viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id),
+            "is_liked": ProfileLikesService.has_liked_profile(viewer_id, user_id)
         }
         return success(response_payload, 200)
 
@@ -111,22 +115,59 @@ class ProfileController:
         viewer_id = int(get_jwt_identity())
         limit = int(request.args.get("limit", 20))
         offset = int(request.args.get("offset", 0))
-        print("----->before calling get_profiles_list")
         profiles = ProfileService.get_profiles_list(user_id=viewer_id, limit=limit, offset=offset)
-        print("----->after calling get_profiles_list")
         result = []
         for p in profiles:
             entry = p.to_dict()
-            print(f"+++entry == {entry}")
             entry["is_match"] = (
                 p.user_id is not None
                 and ProfileLikesService.is_mutual_like(viewer_id, p.user_id)
             )
-            print(f"++++=== after is_match == {entry}")
+            entry["is_liked"] = ProfileLikesService.has_liked_profile(viewer_id, p.user_id)
             distance_km = getattr(p, "distance_km", None)
             if distance_km is not None:
                 entry["distance_km"] = round(float(distance_km), 1)
-            print(f"++++=== final entry == {entry}")
             result.append(entry)
 
         return success({"profiles": result, "count": len(result)}, 200)
+
+    @staticmethod
+    def update_my_profile():
+        user_id = int(get_jwt_identity())
+
+        raw_payload = request.get_json(silent=True)
+        if raw_payload is None:
+            raw_payload = request.form.to_dict(flat=True)
+        if raw_payload is None:
+            raw_payload = {}
+
+        avatar = request.files.get("avatar")
+        if avatar is not None:
+            raw_payload["avatar"] = avatar
+
+        pictures = request.files.getlist("pictures")
+        if pictures:
+            raw_payload["pictures"] = pictures
+
+        if "interests" not in raw_payload and request.form:
+            interests = request.form.getlist("interests")
+            if interests or "interests" in request.form:
+                raw_payload["interests"] = interests
+
+        payload = UpdateAccountProfileSchema.model_validate(raw_payload)
+        data = payload.model_dump(exclude_none=True)
+        print(f"-->> data after validation == {data}")
+
+        user_fields = {}
+        for key in ("first_name", "last_name", "email"):
+            if key in data:
+                user_fields[key] = data.pop(key)
+
+        if user_fields:
+            UserService.update_account_fields(user_id=user_id, **user_fields)
+
+        if data:
+            ProfileService.update_profile_fields(user_id, data)
+
+        profile = ProfileService.get_my_profile_by_user_id(user_id)
+        return success(message="Profile updated successfully", data={"profile": profile.to_dict()})

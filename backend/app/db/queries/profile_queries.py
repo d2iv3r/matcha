@@ -81,6 +81,17 @@ ORDER BY distance_km ASC
 LIMIT %s OFFSET %s
 """
 
+UPDATE_PROFILE_BY_USER_ID = """
+UPDATE profiles
+SET gender = COALESCE(%s, gender),
+    bio = COALESCE(%s, bio),
+    interests = COALESCE(%s::TEXT[], interests),
+    avatar = COALESCE(%s, avatar),
+    pictures = COALESCE(%s::TEXT[], pictures)
+WHERE user_id = %s
+RETURNING user_id, gender, age, date_of_birth, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, rating
+"""
+
 
 # UPSERT_PROFILE = """
 # INSERT INTO profiles (user_id, gender, age, date_of_birth, location, bio, interests, avatar, pictures)

@@ -11,6 +11,7 @@ from app.db.queries import (
     GET_MY_PROFILE_BY_USER_ID,
     GET_PROFILE_BY_USERNAME,
     GET_PROFILES_LIST,
+    UPDATE_PROFILE_BY_USER_ID,
     # GET_PROFILES_WITH_USERS,
 )
 from app.models.base_model import BaseModel
@@ -110,5 +111,21 @@ class ProfileModel(BaseModel):
             (latitude, longitude, latitude, user_id, gender, limit, offset),
         )
         return cls.from_rows(rows)
+
+    @classmethod
+    def update_profile_by_user_id(
+        cls,
+        user_id: int,
+        gender: str | None = None,
+        bio: str | None = None,
+        interests: Any | None = None,
+        avatar: str | None = None,
+        pictures: Any | None = None,
+    ) -> Optional["ProfileModel"]:
+        row = cls.db_manager().execute_returning(
+            UPDATE_PROFILE_BY_USER_ID,
+            (gender, bio, interests, avatar, pictures, user_id),
+        )
+        return cls.from_row(row)
 
     

@@ -66,3 +66,12 @@ UPDATE users
 SET password_hash = %s
 WHERE id = %s
 """
+
+UPDATE_USER_BY_ID = """
+UPDATE users
+SET first_name = COALESCE(%s, first_name),
+	last_name = COALESCE(%s, last_name),
+	email = COALESCE(%s, email)
+WHERE id = %s
+RETURNING id, username, first_name, last_name, email, is_active, is_profile_complete
+"""

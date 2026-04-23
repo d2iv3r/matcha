@@ -108,6 +108,19 @@ def get_openapi_spec() -> dict:
                         "pictures": {"type": "array", "items": {"type": "string", "format": "binary"}},
                     },
                 },
+                "UpdateAccountProfileRequest": {
+                    "type": "object",
+                    "properties": {
+                        "first_name": {"type": "string", "maxLength": 150},
+                        "last_name": {"type": "string", "maxLength": 150},
+                        "email": {"type": "string", "format": "email"},
+                        "gender": {"type": "string", "enum": ["male", "female"]},
+                        "bio": {"type": "string", "maxLength": 500},
+                        "interests": {"type": "array", "items": {"type": "string"}},
+                        "avatar": {"type": "string", "format": "binary"},
+                        "pictures": {"type": "array", "items": {"type": "string", "format": "binary"}},
+                    },
+                },
                 "ErrorResponse": {
                     "type": "object",
                     "properties": {
@@ -451,6 +464,45 @@ def get_openapi_spec() -> dict:
                         "401": {"description": "Unauthorized"},
                         "403": {"description": "Profile completion required"},
                         "404": {"description": NOT_FOUND},
+                    },
+                },
+                "patch": {
+                    "tags": ["Accounts"],
+                    "summary": "Update authenticated user profile",
+                    "security": [{"bearerAuth": []}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {"schema": {"$ref": "#/components/schemas/UpdateAccountProfileRequest"}},
+                            "multipart/form-data": {"schema": {"$ref": "#/components/schemas/UpdateAccountProfileRequest"}},
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Profile updated successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "profile": {"$ref": PROFILE_SCHEMA_REF},
+                                                },
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                        "404": {"description": NOT_FOUND},
+                        "409": {"description": "Conflict"},
                     },
                 }
             },

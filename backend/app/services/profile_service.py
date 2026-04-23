@@ -107,6 +107,20 @@ class ProfileService:
             offset=offset,
         )
 
+    @staticmethod
+    def update_profile_fields(user_id: int, profile_data: dict) -> ProfileModel:
+        profile = ProfileModel.update_profile_by_user_id(
+            user_id=user_id,
+            gender=profile_data.get("gender"),
+            bio=profile_data.get("bio"),
+            interests=profile_data.get("interests"),
+            avatar=profile_data.get("avatar"),
+            pictures=profile_data.get("pictures"),
+        )
+        if not profile:
+            raise NotFoundError("Profile", user_id)
+        return profile
+
 
     # @staticmethod
     # def _normalize_rating(value: Any) -> str:

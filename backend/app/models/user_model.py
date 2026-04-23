@@ -14,6 +14,7 @@ from app.db.queries import (
     ACTIVATE_USER_BY_ID,
     MARK_PROFILE_COMPLETE,
     UPDATE_USER_PASSWORD_BY_ID,
+    UPDATE_USER_BY_ID,
 )
 from app.models.base_model import BaseModel
 
@@ -106,3 +107,18 @@ class UserModel(BaseModel):
     def update_password(cls, user_id: int, password_hash: str) -> bool:
         affected_rows = cls.db_manager().execute(UPDATE_USER_PASSWORD_BY_ID, (password_hash, user_id))
         return affected_rows > 0
+
+    @classmethod
+    def update_user_by_id(
+        cls,
+        user_id: int,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        email: str | None = None,
+    ) -> Optional["UserModel"]:
+        return cls._from_row(
+            cls.db_manager().execute_returning(
+                UPDATE_USER_BY_ID,
+                (first_name, last_name, email, user_id),
+            )
+        )
