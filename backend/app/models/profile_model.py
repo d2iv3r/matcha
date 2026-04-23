@@ -68,8 +68,6 @@ class ProfileModel(BaseModel):
         return cls.from_row(cls.db_manager().fetch_one(GET_MY_PROFILE_BY_USER_ID, (user_id,)))
 
     def to_dict(self) -> dict:
-        print("=++++++++++++++++++++")
-        print(f"-->> user_id == {self.user_id}")
         return {
             "user_id": self.user_id,
             "username": self.username,

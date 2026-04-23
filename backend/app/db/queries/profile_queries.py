@@ -38,7 +38,7 @@ LIMIT 1
 """
 
 GET_PROFILE_BY_USERNAME = """
-SELECT u.first_name, u.last_name,
+SELECT u.first_name, u.last_name, u.username
 	p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country, p.bio, p.interests, p.avatar, p.pictures, p.rating
 FROM users u
 JOIN profiles p ON p.user_id = u.id
