@@ -645,6 +645,37 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
+            "/api/v1/profile/{username}/unlike": {
+                "post": {
+                    "tags": ["Profile"],
+                    "summary": "Remove a like from a user's profile",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {"name": "username", "in": "path", "required": True, "schema": {"type": "string"}}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Profile like removed successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {"type": "object"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Bad request"},
+                        "404": {"description": NOT_FOUND},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
             "/api/v1/profile/likes": {
                 "get": {
                     "tags": ["Profile"],
