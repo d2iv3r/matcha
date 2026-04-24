@@ -163,9 +163,7 @@ class ProfileController:
 
         if data:
             ProfileService.update_profile_fields(user_id, data)
-
-        profile = ProfileService.get_my_profile_by_user_id(user_id)
-        return success(message="Profile updated successfully", data={"profile": profile.to_dict()})
+        return success(message="Profile updated successfully", data={})
 
     @staticmethod
     def update_profile_media():
@@ -186,6 +184,4 @@ class ProfileController:
 
         if data:
             ProfileService.update_profile_fields(user_id, data)
-
-        profile = ProfileService.get_my_profile_by_user_id(user_id)
-        return success(message="Profile media updated successfully", data={"profile": profile.to_dict()})
+        return success(message="Profile media updated successfully", data={})

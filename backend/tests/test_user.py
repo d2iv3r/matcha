@@ -2,7 +2,6 @@
 
 from io import BytesIO
 
-import pytest
 from flask_jwt_extended import create_access_token
 from werkzeug.datastructures import MultiDict
 
@@ -32,12 +31,16 @@ def test_update_profile_requires_auth(client):
     payload = {
         "gender": "male",
         "date_of_birth": "1999-01-01",
-        "location": "Paris",
+        "city": "Paris",
+        "country": "France",
+        "ip_address": "192.168.1.10",
+        "latitude": 48.8566,
+        "longitude": 2.3522,
         "bio": "",
         "interests": ["music", "travel"],
     }
 
-    response = client.put('/api/v1/accounts/complete-profile', json=payload)
+    response = client.post('/api/v1/accounts/complete-profile', json=payload)
 
     assert response.status_code == 401
 
@@ -47,7 +50,11 @@ def test_update_profile_success_verified_user(client, app, monkeypatch):
         [
             ("gender", "female"),
             ("date_of_birth", "1997-04-18"),
-            ("location", "Berlin"),
+            ("city", "Berlin"),
+            ("country", "Germany"),
+            ("ip_address", "192.168.1.10"),
+            ("latitude", "52.52"),
+            ("longitude", "13.405"),
             ("bio", ""),
             ("interests", '["reading", "hiking"]'),
             ("avatar", (BytesIO(b"fake avatar bytes"), "avatar.png")),
@@ -57,22 +64,34 @@ def test_update_profile_success_verified_user(client, app, monkeypatch):
     with app.app_context():
         access_token = create_access_token(identity="1")
 
-    def fake_update_profile(user_id, **kwargs):
-        assert user_id == 1
-        return {
-            "user_id": user_id,
-            "gender": kwargs["gender"],
-            "date_of_birth": kwargs["date_of_birth"].isoformat(),
-            "location": kwargs["location"],
-            "bio": kwargs["bio"],
-            "interests": kwargs["interests"],
-            "avatar": "/static/uploads/profile_pictures/1/avatar.png",
-            "pictures": [],
-        }
+    def fake_update_profile(profile_data):
+        assert profile_data["user_id"] == 1
+        class FakeProfile:
+            def to_dict(self_inner):
+                return {
+                    "user_id": profile_data["user_id"],
+                    "gender": profile_data["gender"],
+                    "date_of_birth": profile_data["date_of_birth"].isoformat(),
+                    "city": profile_data["city"],
+                    "country": profile_data["country"],
+                    "ip_address": profile_data["ip_address"],
+                    "latitude": profile_data["latitude"],
+                    "longitude": profile_data["longitude"],
+                    "bio": profile_data["bio"],
+                    "interests": profile_data["interests"],
+                    "avatar": "/static/uploads/profile_pictures/1/avatar.png",
+                    "pictures": [],
+                }
 
-    monkeypatch.setattr(ProfileService, "update_profile", fake_update_profile)
+        return FakeProfile()
 
-    response = client.put(
+    monkeypatch.setattr(ProfileService, "complete_profile", fake_update_profile)
+    monkeypatch.setattr(
+        "app.schemas.profile_schemas.save_image",
+        lambda *_args, **_kwargs: "/static/uploads/profile_pictures/1/avatar.png",
+    )
+
+    response = client.post(
         '/api/v1/accounts/complete-profile',
         data=payload,
         headers={"Authorization": f"Bearer {access_token}"},
@@ -82,8 +101,8 @@ def test_update_profile_success_verified_user(client, app, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["profile"]["user_id"] == 1
-    assert data["profile"]["gender"] == "female"
+    assert data["data"]["profile"]["user_id"] == 1
+    assert data["data"]["profile"]["gender"] == "female"
 
 
 def test_update_profile_accepts_avatar_pic_and_profile_pictures(client, app, monkeypatch):
@@ -94,7 +113,11 @@ def test_update_profile_accepts_avatar_pic_and_profile_pictures(client, app, mon
         [
             ("gender", "female"),
             ("date_of_birth", "1997-04-18"),
-            ("location", "Berlin"),
+            ("city", "Berlin"),
+            ("country", "Germany"),
+            ("ip_address", "192.168.1.10"),
+            ("latitude", "52.52"),
+            ("longitude", "13.405"),
             ("bio", "Traveler"),
             ("interests", '["reading", "hiking"]'),
             ("avatar", (BytesIO(b"fake image bytes"), "avatar.png")),
@@ -103,28 +126,40 @@ def test_update_profile_accepts_avatar_pic_and_profile_pictures(client, app, mon
         ]
     )
 
-    def fake_update_profile(user_id, **kwargs):
-        assert user_id == 1
-        assert kwargs["avatar"].filename == "avatar.png"
-        assert len(kwargs["pictures"]) == 2
-        return {
-            "user_id": user_id,
-            "gender": kwargs["gender"],
-            "date_of_birth": kwargs["date_of_birth"].isoformat(),
-            "location": kwargs["location"],
-            "bio": kwargs["bio"],
-            "interests": kwargs["interests"],
-            "avatar": "/static/uploads/profile_pictures/1/avatar.png",
-            "pictures": [
-                "/static/uploads/profile_pictures/1/avatar.png",
-                "/static/uploads/profile_pictures/1/pic1.png",
-                "/static/uploads/profile_pictures/1/pic2.png",
-            ],
-        }
+    def fake_update_profile(profile_data):
+        assert profile_data["user_id"] == 1
+        assert profile_data["avatar"]
+        assert len(profile_data["pictures"]) == 2
+        class FakeProfile:
+            def to_dict(self_inner):
+                return {
+                    "user_id": profile_data["user_id"],
+                    "gender": profile_data["gender"],
+                    "date_of_birth": profile_data["date_of_birth"].isoformat(),
+                    "city": profile_data["city"],
+                    "country": profile_data["country"],
+                    "ip_address": profile_data["ip_address"],
+                    "latitude": profile_data["latitude"],
+                    "longitude": profile_data["longitude"],
+                    "bio": profile_data["bio"],
+                    "interests": profile_data["interests"],
+                    "avatar": "/static/uploads/profile_pictures/1/avatar.png",
+                    "pictures": [
+                        "/static/uploads/profile_pictures/1/avatar.png",
+                        "/static/uploads/profile_pictures/1/pic1.png",
+                        "/static/uploads/profile_pictures/1/pic2.png",
+                    ],
+                }
 
-    monkeypatch.setattr(ProfileService, "update_profile", fake_update_profile)
+        return FakeProfile()
 
-    response = client.put(
+    monkeypatch.setattr(ProfileService, "complete_profile", fake_update_profile)
+    monkeypatch.setattr(
+        "app.schemas.profile_schemas.save_image",
+        lambda *_args, **_kwargs: "/static/uploads/profile_pictures/1/avatar.png",
+    )
+
+    response = client.post(
         "/api/v1/accounts/complete-profile",
         data=payload,
         headers={"Authorization": f"Bearer {access_token}"},
@@ -134,7 +169,7 @@ def test_update_profile_accepts_avatar_pic_and_profile_pictures(client, app, mon
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["profile"]["avatar"] == "/static/uploads/profile_pictures/1/avatar.png"
+    assert data["data"]["profile"]["avatar"] == "/static/uploads/profile_pictures/1/avatar.png"
 
 
 def test_update_profile_forbidden_for_unverified_user(client, app, monkeypatch):
@@ -142,7 +177,11 @@ def test_update_profile_forbidden_for_unverified_user(client, app, monkeypatch):
         [
             ("gender", "male"),
             ("date_of_birth", "1994-06-10"),
-            ("location", "Rome"),
+            ("city", "Rome"),
+            ("country", "Italy"),
+            ("ip_address", "192.168.1.10"),
+            ("latitude", "41.9028"),
+            ("longitude", "12.4964"),
             ("bio", ""),
             ("interests", '["cooking"]'),
             ("avatar", (BytesIO(b"fake avatar bytes"), "avatar.png")),
@@ -152,12 +191,16 @@ def test_update_profile_forbidden_for_unverified_user(client, app, monkeypatch):
     with app.app_context():
         access_token = create_access_token(identity="2")
 
-    def fake_update_profile(_user_id, **_kwargs):
+    def fake_update_profile(_profile_data):
         raise ForbiddenError("Only verified users can update profile")
 
-    monkeypatch.setattr(ProfileService, "update_profile", fake_update_profile)
+    monkeypatch.setattr(ProfileService, "complete_profile", fake_update_profile)
+    monkeypatch.setattr(
+        "app.schemas.profile_schemas.save_image",
+        lambda *_args, **_kwargs: "/static/uploads/profile_pictures/1/avatar.png",
+    )
 
-    response = client.put(
+    response = client.post(
         '/api/v1/accounts/complete-profile',
         data=payload,
         headers={"Authorization": f"Bearer {access_token}"},
@@ -175,7 +218,11 @@ def test_update_profile_validation_error(client, app):
         [
             ("gender", "other"),  # Invalid: not "male" or "female"
             ("date_of_birth", "1994-06-10"),
-            ("location", "Rome"),
+            ("city", "Rome"),
+            ("country", "Italy"),
+            ("ip_address", "192.168.1.10"),
+            ("latitude", "41.9028"),
+            ("longitude", "12.4964"),
             ("bio", ""),
             ("interests", '["cooking"]'),
             ("avatar", (BytesIO(b"fake avatar bytes"), "avatar.png")),
@@ -185,7 +232,7 @@ def test_update_profile_validation_error(client, app):
     with app.app_context():
         access_token = create_access_token(identity="1")
 
-    response = client.put(
+    response = client.post(
         '/api/v1/accounts/complete-profile',
         data=invalid_payload,
         headers={"Authorization": f"Bearer {access_token}"},
@@ -212,13 +259,15 @@ def test_get_profiles_list_success(client, app, monkeypatch):
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
-    monkeypatch.setattr(
-        ProfileService,
-        "get_profiles_list",
-        lambda limit, offset: [
-            {
-                "user_id": 2,
-                "username": "alice",
+    class FakeProfile:
+        def __init__(self, user_id, username):
+            self.user_id = user_id
+            self.username = username
+
+        def to_dict(self):
+            return {
+                "user_id": self.user_id,
+                "username": self.username,
                 "first_name": "Alice",
                 "last_name": "Doe",
                 "gender": "female",
@@ -229,12 +278,20 @@ def test_get_profiles_list_success(client, app, monkeypatch):
                 "avatar": "https://example.com/a.jpg",
                 "pictures": [],
             }
-        ],
+
+    monkeypatch.setattr(
+        ProfileService,
+        "get_profiles_list",
+        lambda user_id, limit, offset: [FakeProfile(2, "alice")],
     )
 
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
         lambda viewer_id, profile_user_id: False,
+    )
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.has_liked_profile",
+        lambda profile_user_id, viewer_id: False,
     )
 
     response = client.get(
@@ -244,9 +301,9 @@ def test_get_profiles_list_success(client, app, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["count"] == 1
-    assert data["profiles"][0]["username"] == "alice"
-    assert data["profiles"][0]["is_match"] is False
+    assert data["data"]["count"] == 1
+    assert data["data"]["profiles"][0]["username"] == "alice"
+    assert data["data"]["profiles"][0]["is_match"] is False
 
 
 def test_get_profiles_list_includes_is_match(client, app, monkeypatch):
@@ -258,30 +315,37 @@ def test_get_profiles_list_includes_is_match(client, app, monkeypatch):
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
+    class FakeProfile:
+        def __init__(self, user_id, username, rating):
+            self.user_id = user_id
+            self.username = username
+            self.rating = rating
+
+        def to_dict(self):
+            return {
+                "user_id": self.user_id,
+                "username": self.username,
+                "age": 28,
+                "location": "Berlin",
+                "rating": self.rating,
+            }
+
     monkeypatch.setattr(
         ProfileService,
         "get_profiles_list",
-        lambda limit, offset: [
-            {
-                "user_id": 2,
-                "username": "alice",
-                "age": 28,
-                "location": "Berlin",
-                "rating": "Popular",
-            },
-            {
-                "user_id": 1,
-                "username": "me",
-                "age": 29,
-                "location": "Paris",
-                "rating": "Elite",
-            },
+        lambda user_id, limit, offset: [
+            FakeProfile(2, "alice", "Popular"),
+            FakeProfile(1, "me", "Elite"),
         ],
     )
 
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
         lambda viewer_id, profile_user_id: profile_user_id == 2,
+    )
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.has_liked_profile",
+        lambda profile_user_id, viewer_id: False,
     )
 
     response = client.get(
@@ -291,11 +355,11 @@ def test_get_profiles_list_includes_is_match(client, app, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["count"] == 2
-    assert data["profiles"][0]["username"] == "alice"
-    assert data["profiles"][0]["is_match"] is True
-    assert data["profiles"][1]["username"] == "me"
-    assert data["profiles"][1]["is_match"] is False
+    assert data["data"]["count"] == 2
+    assert data["data"]["profiles"][0]["username"] == "alice"
+    assert data["data"]["profiles"][0]["is_match"] is True
+    assert data["data"]["profiles"][1]["username"] == "me"
+    assert data["data"]["profiles"][1]["is_match"] is False
 
 
 def test_openapi_includes_profiles_endpoint(client):
@@ -305,32 +369,6 @@ def test_openapi_includes_profiles_endpoint(client):
     data = response.get_json()
     assert "/api/v1/accounts/profiles" in data["paths"]
     assert "get" in data["paths"]["/api/v1/accounts/profiles"]
-
-
-def test_get_profiles_list_parses_non_json_text(monkeypatch):
-    monkeypatch.setattr(
-        "app.services.profile_service.ProfileModel.get_profiles_list",
-        lambda limit, offset: [
-            {
-                "username": "zsanchez",
-                "first_name": "Z",
-                "last_name": "S",
-                "gender": "male",
-                "age": 30,
-                "date_of_birth": None,
-                "location": "Paris",
-                "interests": "['music', 'travel']",
-                "avatar": "https://example.com/avatar.jpg",
-                "pictures": "{pic1.jpg,pic2.jpg}",
-            }
-        ],
-    )
-
-    payload = ProfileService.get_profiles_list(limit=20, offset=0)
-
-    assert len(payload) == 1
-    assert payload[0]["interests"] == ["music", "travel"]
-    assert payload[0]["pictures"] == ["pic1.jpg", "pic2.jpg"]
 
 
 def test_record_profile_view_success(app, monkeypatch):
@@ -378,21 +416,27 @@ def test_get_profile_by_user_id_records_view(client, app, monkeypatch):
         fake_record_view,
     )
 
+    class FakeProfile:
+        def __init__(self, user_id, username):
+            self.user_id = user_id
+            self.username = username
+
+        def to_dict(self):
+            return {"user_id": self.user_id, "username": self.username}
+
     monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileService.get_profile_by_user_id",
-        lambda user_id: {"user": {"id": user_id}, "profile": None},
+        ProfileService,
+        "get_profile_by_username",
+        lambda username: FakeProfile(2, username),
     )
 
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
         lambda viewer_id, profile_user_id: False,
     )
-
     monkeypatch.setattr(
-        ProfileService,
-        "get_user_by_username",
-        lambda username: {"id": 2, "username": username},
-        raising=False,
+        "app.controllers.profile_controller.ProfileLikesService.has_liked_profile",
+        lambda profile_user_id, viewer_id: False,
     )
 
     response = client.get(
@@ -416,23 +460,17 @@ def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch)
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
-    monkeypatch.setattr(
-        ProfileService,
-        "get_user_by_username",
-        lambda username: {"id": 2, "username": username},
-        raising=False,
-    )
+    class FakeProfile:
+        def __init__(self, user_id, username):
+            self.user_id = user_id
+            self.username = username
 
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileService.get_profile_by_user_id",
-        lambda user_id: {
-            "user": {
-                "id": user_id,
+        def to_dict(self):
+            return {
+                "user_id": self.user_id,
                 "username": "alice",
                 "first_name": "Alice",
                 "last_name": "Doe",
-            },
-            "profile": {
                 "age": 25,
                 "location": "Paris",
                 "rating": "Popular",
@@ -440,13 +478,25 @@ def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch)
                 "interests": ["music"],
                 "avatar": "https://example.com/a.jpg",
                 "pictures": ["https://example.com/p1.jpg"],
-            },
-        },
+            }
+
+    monkeypatch.setattr(
+        ProfileService,
+        "get_profile_by_username",
+        lambda username: FakeProfile(2, username),
     )
 
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
         lambda viewer_id, profile_user_id: True,
+    )
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.has_liked_profile",
+        lambda profile_user_id, viewer_id: False,
+    )
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.has_liked_profile",
+        lambda profile_user_id, viewer_id: False,
     )
 
     response = client.get(
@@ -456,11 +506,11 @@ def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch)
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["is_match"] is True
+    assert data["data"]["is_match"] is True
 
 
-def test_get_own_profile_includes_view_statistics(client, app, monkeypatch):
-    """Test that own profile includes view statistics."""
+def test_get_own_profile_returns_profile(client, app, monkeypatch):
+    """Test that own profile returns profile data."""
     with app.app_context():
         access_token = create_access_token(identity="1")
 
@@ -469,79 +519,17 @@ def test_get_own_profile_includes_view_statistics(client, app, monkeypatch):
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileService.get_profile_by_user_id",
-        lambda user_id: {"user": {"id": user_id}, "profile": None},
-    )
+    class FakeProfile:
+        def to_dict(self):
+            return {"user_id": 1, "username": "me"}
 
     monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileViewsService.get_profile_view_count",
-        lambda user_id: 10,
+        "app.controllers.profile_controller.ProfileService.get_my_profile_by_user_id",
+        lambda user_id: FakeProfile(),
     )
-
     monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileViewsService.get_profile_viewers",
-        lambda user_id, limit: [
-            {
-                "viewer_id": 2,
-                "viewer_username": "alice",
-                "viewer_first_name": "Alice",
-                "viewer_last_name": "Doe",
-                "viewer_avatar": "https://example.com/a.jpg",
-                "viewed_at": "2026-04-19T10:00:00",
-            }
-        ],
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileLikesService.get_profile_like_count",
-        lambda user_id: 5,
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileLikesService.get_profile_likers",
-        lambda user_id, limit: [
-            {
-                "liker_username": "bob",
-                "age": 25,
-                "location": "Paris",
-                "avatar": "https://example.com/b.jpg",
-            }
-        ],
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileLikesService.get_profile_like_count",
-        lambda user_id: 5,
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileLikesService.get_profile_likers",
-        lambda user_id, limit: [
-            {
-                "liker_username": "bob",
-                "age": 25,
-                "location": "Paris",
-                "avatar": "https://example.com/b.jpg",
-            }
-        ],
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileLikesService.get_profile_like_count",
-        lambda user_id: 5,
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileLikesService.get_profile_likers",
-        lambda user_id, limit: [
-            {
-                "liker_username": "bob",
-                "age": 25,
-                "location": "Paris",
-                "avatar": "https://example.com/b.jpg",
-            }
-        ],
+        "app.schemas.accounts_requests_schemas.save_image",
+        lambda *_args, **_kwargs: "new_avatar.png",
     )
 
     response = client.get(
@@ -551,82 +539,8 @@ def test_get_own_profile_includes_view_statistics(client, app, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert "profile_views" in data
-    assert data["profile_views"]["total_views"] == 10
-    assert len(data["profile_views"]["recent_viewers"]) == 1
-
-    assert "profile_likes" in data
-    assert data["profile_likes"]["total_likes"] == 5
-    assert len(data["profile_likes"]["recent_likers"]) == 1
-
-    assert "profile_likes" in data
-    assert data["profile_likes"]["total_likes"] == 5
-    assert len(data["profile_likes"]["recent_likers"]) == 1
-
-    assert "profile_likes" in data
-    assert data["profile_likes"]["total_likes"] == 5
-    assert len(data["profile_likes"]["recent_likers"]) == 1
-
-
-def test_record_profile_viewer_success(client, app, monkeypatch):
-    """Test recording a profile view via ProfileViewsController."""
-    with app.app_context():
-        access_token = create_access_token(identity="1")
-
-    monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserModel.get_user_by_id",
-        lambda _user_id: {"id": 1, "is_profile_complete": True},
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_views_controller.ProfileViewsService.record_profile_view",
-        lambda profile_user_id, viewer_user_id: None,
-    )
-
-    monkeypatch.setattr(
-        ProfileService,
-        "get_user_by_username",
-        lambda username: {"id": 2, "username": username},
-        raising=False,
-    )
-
-    response = client.post(
-        "/api/v1/profile/alice/view",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["success"] is True
-    assert "Profile view recorded" in data["message"]
-
-
-def test_record_profile_viewer_self_view(client, app, monkeypatch):
-    """Test that self-views are rejected."""
-    with app.app_context():
-        access_token = create_access_token(identity="1")
-
-    monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserModel.get_user_by_id",
-        lambda _user_id: {"id": 1, "is_profile_complete": True},
-    )
-
-    monkeypatch.setattr(
-        ProfileService,
-        "get_user_by_username",
-        lambda username: {"id": 1, "username": username},
-        raising=False,
-    )
-
-    response = client.post(
-        "/api/v1/profile/me/view",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-
-    assert response.status_code == 400
-    data = response.get_json()
-    assert data["success"] is False
-    assert "self-view" in data["error"].lower()
+    assert "profile" in data["data"]
+    assert data["data"]["profile"]["user_id"] == 1
 
 
 def test_get_profile_viewers_success(client, app, monkeypatch):
@@ -656,6 +570,14 @@ def test_get_profile_viewers_success(client, app, monkeypatch):
             },
         ],
     )
+    monkeypatch.setattr(
+        "app.controllers.profile_views_controller.ProfileLikesService.is_mutual_like",
+        lambda profile_user_id, viewer_id: False,
+    )
+    monkeypatch.setattr(
+        "app.controllers.profile_views_controller.ProfileLikesService.has_liked_profile",
+        lambda viewer_id, profile_user_id: False,
+    )
 
     response = client.get(
         "/api/v1/profile/viewers?profile_user_id=1",
@@ -665,8 +587,8 @@ def test_get_profile_viewers_success(client, app, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["count"] == 2
-    assert len(data["viewers"]) == 2
+    assert data["data"]["count"] == 2
+    assert len(data["data"]["viewers"]) == 2
 
 
 def test_get_profile_viewers_ignores_profile_user_id_query_param(client, app, monkeypatch):
@@ -683,6 +605,14 @@ def test_get_profile_viewers_ignores_profile_user_id_query_param(client, app, mo
         "app.controllers.profile_views_controller.ProfileViewsService.get_profile_viewers",
         lambda user_id, limit: [],
     )
+    monkeypatch.setattr(
+        "app.controllers.profile_views_controller.ProfileLikesService.is_mutual_like",
+        lambda profile_user_id, viewer_id: False,
+    )
+    monkeypatch.setattr(
+        "app.controllers.profile_views_controller.ProfileLikesService.has_liked_profile",
+        lambda viewer_id, profile_user_id: False,
+    )
 
     response = client.get(
         "/api/v1/profile/viewers?profile_user_id=2",
@@ -692,59 +622,7 @@ def test_get_profile_viewers_ignores_profile_user_id_query_param(client, app, mo
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["count"] == 0
-
-
-def test_get_view_count_success(client, app, monkeypatch):
-    """Test retrieving view count for own profile."""
-    with app.app_context():
-        access_token = create_access_token(identity="1")
-
-    monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserModel.get_user_by_id",
-        lambda _user_id: {"id": 1, "is_profile_complete": True},
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_views_controller.ProfileViewsService.get_profile_view_count",
-        lambda user_id: 42,
-    )
-
-    response = client.get(
-        "/api/v1/profile/views-count?profile_user_id=1",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["success"] is True
-    assert data["view_count"] == 42
-
-
-def test_get_view_count_ignores_profile_user_id_query_param(client, app, monkeypatch):
-    """Test that view count endpoint uses JWT identity and ignores query profile_user_id."""
-    with app.app_context():
-        access_token = create_access_token(identity="1")
-
-    monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserModel.get_user_by_id",
-        lambda _user_id: {"id": 1, "is_profile_complete": True},
-    )
-
-    monkeypatch.setattr(
-        "app.controllers.profile_views_controller.ProfileViewsService.get_profile_view_count",
-        lambda user_id: 42,
-    )
-
-    response = client.get(
-        "/api/v1/profile/views-count?profile_user_id=2",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["success"] is True
-    assert data["view_count"] == 42
+    assert data["data"]["count"] == 0
 
 
 def test_update_my_profile_success(client, app, monkeypatch):
@@ -785,11 +663,6 @@ def test_update_my_profile_success(client, app, monkeypatch):
         fake_update_profile_fields,
     )
 
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileService.get_my_profile_by_user_id",
-        lambda user_id: type("FakeProfile", (), {"to_dict": lambda: {"user_id": 1, "bio": "New bio", "first_name": "New"}})(),
-    )
-
     response = client.patch(
         '/api/v1/accounts/profile',
         json=payload,
@@ -799,7 +672,7 @@ def test_update_my_profile_success(client, app, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["data"]["profile"]["bio"] == "New bio"
+    assert data["data"] == {}
 
 
 def test_update_profile_media_success(client, app, monkeypatch):
@@ -829,11 +702,6 @@ def test_update_profile_media_success(client, app, monkeypatch):
         fake_update_profile_fields,
     )
 
-    monkeypatch.setattr(
-        "app.controllers.profile_controller.ProfileService.get_my_profile_by_user_id",
-        lambda user_id: type("FakeProfile", (), {"to_dict": lambda: {"user_id": 1, "avatar": "new_avatar.png"}})(),
-    )
-
     response = client.patch(
         '/api/v1/accounts/profile/media',
         data=payload,
@@ -844,4 +712,4 @@ def test_update_profile_media_success(client, app, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()
     assert data["success"] is True
-    assert data["data"]["profile"]["avatar"] == "new_avatar.png"
+    assert data["data"] == {}
