@@ -46,40 +46,66 @@ function MyProfileView({
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const tabsRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-    const handleLikeToggle = async (username: string, currentIsLiked: boolean, listType: 'viewers' | 'likers') => {
+    const handleLikeToggle = async (
+        username: string,
+        currentIsLiked: boolean,
+        listType: "viewers" | "likers",
+    ) => {
         const newIsLiked = !currentIsLiked;
-        const action = newIsLiked ? 'like' : 'unlike';
-        
+        const action = newIsLiked ? "like" : "unlike";
+
         try {
-            const res = await fetch(`http://localhost:5001/api/v1/profile/${username}/${action}`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-            
+            const res = await fetch(
+                `http://localhost:5001/api/v1/profile/${username}/${action}`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                },
+            );
+
             if (res.ok) {
                 const json = await res.json();
                 const isMatch = json.data?.is_match || false;
-                
-                const updateList = (list: any[]) => list.map(item => {
-                    const itemUsername = listType === 'viewers' ? item.viewer_username : item.liker_username;
-                    if (itemUsername === username) {
-                        return { ...item, is_liked: newIsLiked, is_match: isMatch };
-                    }
-                    return item;
-                });
 
-                if (listType === 'viewers') setViewers(updateList(viewers));
+                const updateList = (list: any[]) =>
+                    list.map((item) => {
+                        const itemUsername =
+                            listType === "viewers"
+                                ? item.viewer_username
+                                : item.liker_username;
+                        if (itemUsername === username) {
+                            return {
+                                ...item,
+                                is_liked: newIsLiked,
+                                is_match: isMatch,
+                            };
+                        }
+                        return item;
+                    });
+
+                if (listType === "viewers") setViewers(updateList(viewers));
                 else setLikers(updateList(likers));
 
                 if (isMatch) {
-                    const matchedUser = (listType === 'viewers' ? viewers : likers).find((u: any) => 
-                        (listType === 'viewers' ? u.viewer_username : u.liker_username) === username
+                    const matchedUser = (
+                        listType === "viewers" ? viewers : likers
+                    ).find(
+                        (u: any) =>
+                            (listType === "viewers"
+                                ? u.viewer_username
+                                : u.liker_username) === username,
                     );
                     if (matchedUser) {
                         onMatch({
                             username: username,
-                            first_name: listType === 'viewers' ? matchedUser.viewer_first_name : matchedUser.liker_first_name,
-                            avatar: listType === 'viewers' ? matchedUser.viewer_avatar : matchedUser.liker_avatar
+                            first_name:
+                                listType === "viewers"
+                                    ? matchedUser.viewer_first_name
+                                    : matchedUser.liker_first_name,
+                            avatar:
+                                listType === "viewers"
+                                    ? matchedUser.viewer_avatar
+                                    : matchedUser.liker_avatar,
                         });
                     }
                 }
@@ -346,7 +372,11 @@ function MyProfileView({
                                                 className="cursor-pointer hover:scale-110 transition-transform"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleLikeToggle(item.viewer_username, item.is_liked, 'viewers');
+                                                    handleLikeToggle(
+                                                        item.viewer_username,
+                                                        item.is_liked,
+                                                        "viewers",
+                                                    );
                                                 }}
                                                 fill={
                                                     item.is_liked ||
@@ -417,7 +447,11 @@ function MyProfileView({
                                                 className="cursor-pointer hover:scale-110 transition-transform"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleLikeToggle(item.liker_username, item.is_liked, 'likers');
+                                                    handleLikeToggle(
+                                                        item.liker_username,
+                                                        item.is_liked,
+                                                        "likers",
+                                                    );
                                                 }}
                                                 fill={
                                                     item.is_liked ||
@@ -555,20 +589,19 @@ function OtherProfileView({
 
     return (
         <div className="w-full h-full flex flex-col p-4">
-            <div className="w-full h-full gap-4 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl">
+            <div className="w-full h-full flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl">
                 <div className="relative flex w-full h-fit flex-col lg:flex-row items-center lg:items-stretch gap-5 shrink-0 p-4 px-5">
-                    <div className="relative">
+                    <div className="relative w-[180px] h-[180px] md:h-[220px] shrink-0">
                         <Image
                             src={formatAvatar(profileData.avatar)}
                             alt="Profile"
-                            width={180}
-                            height={400}
+                            fill
                             unoptimized
-                            className="rounded-[24px] aspect-4.5/5 object-cover shadow-lg shrink-0"
+                            className="rounded-[24px] object-cover shadow-lg"
                         />
                         <div className="absolute bottom-0 w-full h-1/2 bg-linear-to-t from-[#555DFF] to-transparent rounded-b-2xl"></div>
                         <div className="absolute flex flex-col gap-2 bottom-3 left-3">
-                            {isLiked && (
+                            {isMatch && (
                                 <div className="flex gap-2 items-center cursor-pointer">
                                     <MessageCircleMore
                                         size={20}
@@ -701,10 +734,17 @@ function OtherProfileView({
                         <p className="text-[#555DFF] font-semibold">Gallery</p>
                     </div>
                     <div className="w-full h-full p-4 grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 content-start overflow-y-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#E9E8FF] rounded-b-4xl min-h-[300px]">
-                        {Array.isArray(profileData.pictures) &&
-                        profileData.pictures.length > 0 ? (
-                            profileData.pictures.map(
-                                (item: string, index: number) => (
+                        {(Array.isArray(profileData.pictures) &&
+                            profileData.pictures.length > 0) ||
+                        profileData.avatar ? (
+                            [
+                                profileData.avatar,
+                                ...(Array.isArray(profileData.pictures)
+                                    ? profileData.pictures
+                                    : []),
+                            ]
+                                .filter(Boolean)
+                                .map((item: string, index: number) => (
                                     <Image
                                         key={index}
                                         src={
@@ -714,13 +754,12 @@ function OtherProfileView({
                                         }
                                         alt={`Gallery image ${index + 1}`}
                                         width={180}
-                                        height={250}
+                                        height={280}
                                         unoptimized
                                         onClick={() => setExpandedImage(item)}
-                                        className="rounded-2xl object-cover w-full h-auto shadow-sm cursor-zoom-in hover:brightness-95 transition-all duration-300"
+                                        className="rounded-2xl object-cover w-full aspect-3/4 shadow-sm cursor-zoom-in hover:brightness-95 transition-all duration-300"
                                     />
-                                ),
-                            )
+                                ))
                         ) : (
                             <div className="col-span-full py-20 text-center opacity-40">
                                 <GalleryVertical className="mx-auto mb-2" /> No
@@ -956,7 +995,9 @@ export default function UnifiedProfilePage() {
                     setViewers={setViewers}
                     likers={likers}
                     setLikers={setLikers}
-                    onMatch={(u: any) => setMatchModal({ isOpen: true, user: u })}
+                    onMatch={(u: any) =>
+                        setMatchModal({ isOpen: true, user: u })
+                    }
                 />
             )}
 

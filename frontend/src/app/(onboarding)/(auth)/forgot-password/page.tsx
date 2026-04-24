@@ -22,7 +22,7 @@ export default function ForgotPassword() {
         setError(null);
 
         try {
-            const res = await fetch("http://localhost:5001/api/auth/reset-password/request", {
+            const res = await fetch("http://localhost:5001/api/auth/request-password-reset", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

@@ -63,7 +63,7 @@ class AuthController:
         user = AuthService.authenticate(data)
 
         if user is None:
-            raise BadRequestError("Invalid Credentials")
+            raise BadRequestError("Wrong username or password")
         if user.is_active is False:
             raise BadRequestError("Account is not active. Please verify your email.")
 
@@ -100,13 +100,9 @@ class AuthController:
     @staticmethod
     def reset_password():
         """Reset the user's password using a valid reset token."""
-        token = request.args.get("token", "")
-        print(f"Received password reset request with token: {token}")
-        if not token:
-            raise BadRequestError("Password reset token is required")
         data = PasswordResetConfirmSchema.model_validate(request.get_json())
-        print(f"New password received: {data.new_password}")
-        AuthService.reset_password(token, data.new_password)
+        print(f"Received password reset request with token: {data.token}")
+        AuthService.reset_password(data.token, data.new_password)
         return success(message="Password reset successful", data={})
 
     # @staticmethod

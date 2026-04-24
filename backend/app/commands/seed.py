@@ -15,6 +15,10 @@ except ImportError:
         "Faker is required for seeding. Install it with: pip install faker"
     )
 
+import urllib.request
+import urllib.parse
+import json
+
 
 logger = logging.getLogger(__name__)
 fake = Faker()
@@ -51,6 +55,8 @@ class DataSeeder:
     ]
     RATING = ["Ghost", "Rising", "Popular", "Elite", "Iconic"]
 
+    PEXELS_API_KEY = "Q4DxSkR1aWPuKu1Evs2zCnRPFjb0ePP9k1xrMyb9UyMK82rLlTjqTJHN"
+
     def __init__(self, count: int = 10):
         """
         Initialize the DataSeeder.
@@ -60,6 +66,40 @@ class DataSeeder:
         """
         self.count = count
         self.created_users: List[Dict[str, Any]] = []
+        self.photo_cache: Dict[str, List[str]] = {"male": [], "female": []}
+        self.photo_index: Dict[str, int] = {"male": 0, "female": 0}
+        # Pre-build a gender pool with exactly half male, half female
+        half = count // 2
+        gender_pool = ["male"] * half + ["female"] * (count - half)
+        random.shuffle(gender_pool)
+        self.gender_pool = gender_pool
+        self.gender_pool_index = 0
+
+    def _fetch_pexels_photos(self, gender: str) -> List[str]:
+        """Fetch portrait photos from Pexels for a specific gender."""
+        query = urllib.parse.quote("man portrait" if gender == "male" else "woman portrait")
+        url = f"https://api.pexels.com/v1/search?query={query}&per_page=80"
+        req = urllib.request.Request(url, headers={
+            "Authorization": self.PEXELS_API_KEY,
+            "User-Agent": "Mozilla/5.0 (compatible; MatchaSeeder/1.0)",
+        })
+        try:
+            with urllib.request.urlopen(req) as response:
+                data = json.loads(response.read().decode())
+                return [photo["src"]["large"] for photo in data.get("photos", [])]
+        except Exception as e:
+            logger.error(f"[SEED] Pexels API error: {str(e)}")
+            return []
+
+    def _get_photo(self, gender: str) -> str:
+        """Get the next photo URL for a gender, fetching from Pexels if cache is empty."""
+        if not self.photo_cache[gender]:
+            self.photo_cache[gender] = self._fetch_pexels_photos(gender)
+        if self.photo_cache[gender]:
+            index = self.photo_index[gender] % len(self.photo_cache[gender])
+            self.photo_index[gender] += 1
+            return self.photo_cache[gender][index]
+        return ""
 
     def generate_mock_user(self) -> tuple:
         """
@@ -110,11 +150,12 @@ class DataSeeder:
         import datetime
         date_of_birth = fake.date_of_birth(minimum_age=18, maximum_age=70)
         age = (datetime.date.today() - date_of_birth).days // 365
-        gender = random.choice(self.GENDERS)
+        # Pull gender from the pre-built pool for a guaranteed 50/50 split
+        gender = self.gender_pool[self.gender_pool_index % len(self.gender_pool)]
+        self.gender_pool_index += 1
         from flask import current_app
 
-        gender_path = "men" if gender == "male" else "women"
-        avatar_url = f"https://randomuser.me/api/portraits/{gender_path}/{random.randint(1, 99)}.jpg"
+        avatar_url = self._get_photo(gender)
         interests = random.sample(self.INTERESTS, k=random.randint(3, 8))
         formatted_items: list[str] = []
         for item in interests:

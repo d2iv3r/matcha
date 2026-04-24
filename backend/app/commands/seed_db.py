@@ -2,17 +2,17 @@
 This module defines CLI commands for seeding the database with mock data.
 """
 
-from venv import logger
-
+import logging
 import click
-
 from flask import current_app
 from app.db.queries.users_queries import SEED_USERS
 from app.db.queries.profile_queries import SEED_PROFILES
 
+logger = logging.getLogger(__name__)
+
 
 @click.command("seed-db")
-@click.option("--count", default=10, type=int, help="Number of mock users to generate (default: 10)",)
+@click.option("--count", default=40, type=int, help="Number of mock users to generate (default: 40)",)
 def seed_db(count):
     """
     Seed the database with mock data.
