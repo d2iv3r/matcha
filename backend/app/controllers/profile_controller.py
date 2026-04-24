@@ -6,7 +6,7 @@ from flask import request, g
 from flask_jwt_extended import get_jwt_identity
 
 from app.schemas.profile_schemas import CreateProfileSchema
-from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema
+from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema, UpdateProfileMediaSchema
 from app.services.profile_service import ProfileService
 from app.services.user_service import UserService
 from app.services.profile_views_service import ProfileViewsService
@@ -144,14 +144,6 @@ class ProfileController:
         if raw_payload is None:
             raw_payload = {}
 
-        avatar = request.files.get("avatar")
-        if avatar is not None:
-            raw_payload["avatar"] = avatar
-
-        pictures = request.files.getlist("pictures")
-        if pictures:
-            raw_payload["pictures"] = pictures
-
         if "interests" not in raw_payload and request.form:
             interests = request.form.getlist("interests")
             if interests or "interests" in request.form:
@@ -174,3 +166,26 @@ class ProfileController:
 
         profile = ProfileService.get_my_profile_by_user_id(user_id)
         return success(message="Profile updated successfully", data={"profile": profile.to_dict()})
+
+    @staticmethod
+    def update_profile_media():
+        user_id = int(get_jwt_identity())
+
+        raw_payload = {}
+        avatar = request.files.get("avatar")
+        if avatar is not None:
+            raw_payload["avatar"] = avatar
+
+        pictures = request.files.getlist("pictures")
+        if pictures:
+            raw_payload["pictures"] = pictures
+
+        payload = UpdateProfileMediaSchema.model_validate(raw_payload)
+        data = payload.model_dump(exclude_none=True)
+        print(f"-->> media data after validation == {data}")
+
+        if data:
+            ProfileService.update_profile_fields(user_id, data)
+
+        profile = ProfileService.get_my_profile_by_user_id(user_id)
+        return success(message="Profile media updated successfully", data={"profile": profile.to_dict()})

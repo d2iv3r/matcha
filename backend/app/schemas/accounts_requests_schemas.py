@@ -69,6 +69,38 @@ class UpdateAccountProfileSchema(BaseModel):
     gender: Optional[str] = Field(None, pattern=r"^(male|female)$")
     bio: Optional[str] = Field(None, max_length=500)
     interests: Optional[List[str]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def require_at_least_one_field(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(key in values for key in cls.model_fields):
+            raise ValueError("At least one field must be provided for update")
+        return values
+
+    @field_validator("interests", mode="before")
+    @classmethod
+    def normalize_interests(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        if isinstance(value, str):
+            text = value.strip()
+            if text.startswith("{") and text.endswith("}"):
+                text = text[1:-1]
+            if not text:
+                return []
+            return [item.strip().strip('"').strip("'") for item in text.split(",") if item.strip()]
+        return [str(value).strip()]
+
+
+class UpdateProfileMediaSchema(BaseModel):
+    """Schema for updating profile media."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     avatar: Optional[Any] = None
     pictures: Optional[List[Any]] = None
 
@@ -107,22 +139,6 @@ class UpdateAccountProfileSchema(BaseModel):
                 continue
             _validate_image_file(file_item, "picture")
         return value
-
-    @field_validator("interests", mode="before")
-    @classmethod
-    def normalize_interests(cls, value):
-        if value is None:
-            return value
-        if isinstance(value, list):
-            return [str(item).strip() for item in value if str(item).strip()]
-        if isinstance(value, str):
-            text = value.strip()
-            if text.startswith("{") and text.endswith("}"):
-                text = text[1:-1]
-            if not text:
-                return []
-            return [item.strip().strip('"').strip("'") for item in text.split(",") if item.strip()]
-        return [str(value).strip()]
 
     @model_validator(mode="after")
     def resolve_media(self):

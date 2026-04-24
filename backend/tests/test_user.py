@@ -208,7 +208,7 @@ def test_get_profiles_list_success(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -254,7 +254,7 @@ def test_get_profiles_list_includes_is_match(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -369,7 +369,7 @@ def test_get_profile_by_user_id_records_view(client, app, monkeypatch):
         view_recorded["viewer_user_id"] = viewer_user_id
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -412,7 +412,7 @@ def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch)
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -465,7 +465,7 @@ def test_get_own_profile_includes_view_statistics(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -574,7 +574,7 @@ def test_record_profile_viewer_success(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -607,7 +607,7 @@ def test_record_profile_viewer_self_view(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -635,7 +635,7 @@ def test_get_profile_viewers_success(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -675,7 +675,7 @@ def test_get_profile_viewers_ignores_profile_user_id_query_param(client, app, mo
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -701,7 +701,7 @@ def test_get_view_count_success(client, app, monkeypatch):
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -727,7 +727,7 @@ def test_get_view_count_ignores_profile_user_id_query_param(client, app, monkeyp
         access_token = create_access_token(identity="1")
 
     monkeypatch.setattr(
-        "app.middlewares.profile_guard.UserService.get_user_by_id",
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
         lambda _user_id: {"id": 1, "is_profile_complete": True},
     )
 
@@ -745,3 +745,103 @@ def test_get_view_count_ignores_profile_user_id_query_param(client, app, monkeyp
     data = response.get_json()
     assert data["success"] is True
     assert data["view_count"] == 42
+
+
+def test_update_my_profile_success(client, app, monkeypatch):
+    """Test updating user profile fields successfully."""
+    payload = {
+        "first_name": "New",
+        "last_name": "Name",
+        "gender": "male",
+        "bio": "New bio",
+        "interests": ["coding", "music"]
+    }
+
+    with app.app_context():
+        access_token = create_access_token(identity="1")
+
+    monkeypatch.setattr(
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
+        lambda _user_id: {"id": 1, "is_profile_complete": True},
+    )
+
+    def fake_update_account_fields(user_id, **kwargs):
+        assert user_id == 1
+        assert kwargs["first_name"] == "New"
+        assert kwargs["last_name"] == "Name"
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.UserService.update_account_fields",
+        fake_update_account_fields,
+    )
+
+    def fake_update_profile_fields(user_id, data):
+        assert user_id == 1
+        assert data["gender"] == "male"
+        assert data["bio"] == "New bio"
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileService.update_profile_fields",
+        fake_update_profile_fields,
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileService.get_my_profile_by_user_id",
+        lambda user_id: type("FakeProfile", (), {"to_dict": lambda: {"user_id": 1, "bio": "New bio", "first_name": "New"}})(),
+    )
+
+    response = client.patch(
+        '/api/v1/accounts/profile',
+        json=payload,
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["profile"]["bio"] == "New bio"
+
+
+def test_update_profile_media_success(client, app, monkeypatch):
+    """Test updating profile media successfully."""
+    with app.app_context():
+        access_token = create_access_token(identity="1")
+
+    payload = MultiDict(
+        [
+            ("avatar", (BytesIO(b"fake image bytes"), "avatar.png")),
+            ("pictures", (BytesIO(b"fake image bytes 1"), "pic1.png")),
+        ]
+    )
+
+    monkeypatch.setattr(
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
+        lambda _user_id: {"id": 1, "is_profile_complete": True},
+    )
+
+    def fake_update_profile_fields(user_id, data):
+        assert user_id == 1
+        assert "avatar" in data
+        assert "pictures" in data
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileService.update_profile_fields",
+        fake_update_profile_fields,
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileService.get_my_profile_by_user_id",
+        lambda user_id: type("FakeProfile", (), {"to_dict": lambda: {"user_id": 1, "avatar": "new_avatar.png"}})(),
+    )
+
+    response = client.patch(
+        '/api/v1/accounts/profile/media',
+        data=payload,
+        headers={"Authorization": f"Bearer {access_token}"},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["profile"]["avatar"] == "new_avatar.png"
