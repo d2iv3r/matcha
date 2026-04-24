@@ -10,6 +10,7 @@ function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get("token");
+    console.log(token);
 
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -59,7 +60,7 @@ function ResetPasswordForm() {
         setStatus(null);
 
         try {
-            const res = await fetch("http://localhost:5001/api/auth/reset-password/confirm", {
+            const res = await fetch("http://localhost:5001/api/auth/confirm-password-reset", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

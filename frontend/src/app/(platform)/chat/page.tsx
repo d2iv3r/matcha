@@ -10,6 +10,7 @@ import {
     X,
     Smile,
     Send,
+    ArrowLeft,
 } from "lucide-react";
 import girl from "@/public/girl1.png";
 import Image from "next/image";
@@ -351,6 +352,7 @@ export default function ChatPage() {
     const [reportReasons, setReportReasons] = useState<string[]>([]);
     const [message, setMessage] = useState("");
     const [showEmojis, setShowEmojis] = useState(false);
+    const [mobileView, setMobileView] = useState<"list" | "chat">("chat");
     const menuRef = useRef<HTMLDivElement>(null);
     const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -400,8 +402,13 @@ export default function ChatPage() {
 
     return (
         <div className="w-full h-full flex flex-col p-4">
-            <div className="w-full h-full flex flex-row bg-[#F5F3FF] rounded-4xl shadow-xl">
-                <div className="flex flex-col gap-3 p-5 w-[30%]">
+            <div className="w-full h-full flex flex-row bg-[#F5F3FF] rounded-4xl shadow-xl overflow-hidden">
+                {/* Left panel: chat list — hidden on mobile when in chat view */}
+                <div
+                    className={`flex flex-col gap-3 p-5 w-full lg:w-[35%] lg:flex shrink-0 ${
+                        mobileView === "chat" ? "hidden" : "flex"
+                    }`}
+                >
                     <h1 className="text-lg font-semibold">Now active</h1>
                     <div className="flex gap-2 bg-[#E9E8FF] p-1 rounded-lg items-center text-[#6367FF] mb-2">
                         <Search size={20} />
@@ -434,7 +441,8 @@ export default function ChatPage() {
                             {chatmessage.map((chat, index) => (
                                 <div
                                     key={index}
-                                    className="w-full flex flex-row gap-2 items-center"
+                                    className="w-full flex flex-row gap-2 items-center cursor-pointer hover:bg-[#E9E8FF] rounded-xl p-1 transition-colors"
+                                    onClick={() => setMobileView("chat")}
                                 >
                                     <div className="relative">
                                         <Image
@@ -477,10 +485,26 @@ export default function ChatPage() {
                         </div>
                     </div>
                 </div>
-                <div className="w-px h-full bg-[#C6BAFF]" />
-                <div className="w-[70%] flex flex-col">
+                {/* Right panel: chat — hidden on mobile when in list view */}
+                <div
+                    className={`w-px h-full bg-[#C6BAFF] hidden lg:block ${
+                        mobileView === "chat" ? "block" : "hidden"
+                    }`}
+                />
+                <div
+                    className={`flex-1 flex flex-col min-w-0 ${
+                        mobileView === "chat" ? "flex" : "hidden lg:flex"
+                    }`}
+                >
                     <div className="relative flex flex-row gap-2 items-center p-5 justify-between">
                         <div className="flex gap-4 items-center">
+                            {/* Back button — only visible below lg */}
+                            <button
+                                onClick={() => setMobileView("list")}
+                                className="lg:hidden p-2 text-[#6367FF] hover:bg-[#E2DCFF] rounded-xl transition-colors cursor-pointer"
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
                             <div className="relative">
                                 <Image
                                     src={girl}
