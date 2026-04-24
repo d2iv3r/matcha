@@ -121,6 +121,22 @@ class ProfileService:
             raise NotFoundError("Profile", user_id)
         return profile
 
+    @staticmethod
+    def search_profiles(user_id: int, filters: dict) -> list[ProfileModel]:
+        return ProfileModel.search_profiles(
+            user_id=user_id,
+            first_name=filters.get("first_name"),
+            last_name=filters.get("last_name"),
+            city=filters.get("city"),
+            min_age=filters.get("min_age"),
+            max_age=filters.get("max_age"),
+            rating=filters.get("rating"),
+            interests=filters.get("interests"),
+            limit=filters.get("limit", 20),
+            offset=filters.get("offset", 0),
+        )
+
+
 
     # @staticmethod
     # def _normalize_rating(value: Any) -> str:
