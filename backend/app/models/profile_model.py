@@ -128,4 +128,55 @@ class ProfileModel(BaseModel):
         )
         return cls.from_row(row)
 
-    
+    @classmethod
+    def search_profiles(
+        cls,
+        user_id: int,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        city: str | None = None,
+        min_age: int | None = None,
+        max_age: int | None = None,
+        rating: str | None = None,
+        interests: list[str] | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list["ProfileModel"]:
+        query = """
+            SELECT
+                u.username, u.first_name, u.last_name,
+                p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country,
+                p.bio, p.interests, p.avatar, p.pictures, p.rating, p.latitude, p.longitude
+            FROM users u
+            JOIN profiles p ON p.user_id = u.id
+            WHERE u.id != %s
+        """
+        params = [user_id]
+
+        if first_name:
+            query += " AND u.first_name ILIKE %s"
+            params.append(f"%{first_name}%")
+        if last_name:
+            query += " AND u.last_name ILIKE %s"
+            params.append(f"%{last_name}%")
+        if city:
+            query += " AND p.city ILIKE %s"
+            params.append(f"%{city}%")
+        if min_age is not None:
+            query += " AND p.age >= %s"
+            params.append(min_age)
+        if max_age is not None:
+            query += " AND p.age <= %s"
+            params.append(max_age)
+        if rating:
+            query += " AND p.rating = %s"
+            params.append(rating)
+        if interests:
+            query += " AND p.interests && %s::TEXT[]"
+            params.append(interests)
+
+        query += " LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
+
+        rows = cls.db_manager().fetch_all(query, tuple(params))
+        return cls.from_rows(rows)

@@ -186,3 +186,47 @@ class ProfileController:
         if data:
             ProfileService.update_profile_fields(user_id, data)
         return success(message="Profile media updated successfully", data={})
+
+    @staticmethod
+    def search_profiles():
+        """Advanced search for profiles."""
+        viewer_id = int(get_jwt_identity())
+        
+        limit = request.args.get("limit", 20, type=int)
+        offset = request.args.get("offset", 0, type=int)
+        first_name = request.args.get("first_name")
+        last_name = request.args.get("last_name")
+        city = request.args.get("city")
+        min_age = request.args.get("min_age", type=int)
+        max_age = request.args.get("max_age", type=int)
+        rating = request.args.get("rating")
+        interests = request.args.getlist("interests")
+
+        filters = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "city": city,
+            "min_age": min_age,
+            "max_age": max_age,
+            "rating": rating,
+            "interests": interests if interests else None,
+            "limit": limit,
+            "offset": offset,
+        }
+
+        profiles = ProfileService.search_profiles(user_id=viewer_id, filters=filters)
+        
+        result = []
+        for p in profiles:
+            entry = p.to_dict()
+            entry["is_liked"] = (
+                p.user_id is not None
+                and ProfileLikesService.has_liked_profile(p.user_id, viewer_id)
+            )
+            entry["is_match"] = (
+                p.user_id is not None
+                and ProfileLikesService.is_mutual_like(viewer_id, p.user_id)
+            )
+            result.append(entry)
+
+        return success(message="Profiles retrieved successfully", data={"profiles": result, "count": len(result)})

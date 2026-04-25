@@ -74,7 +74,7 @@ def get_openapi_spec() -> dict:
                             "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
                             "default": "Ghost",
                         },
-                        "interests": {"type": "string"},
+                        "interests": {"type": "array", "items": {"type": "string"}},
                         "avatar": {"type": "string", "format": "uri"},
                         "pictures": {"type": "array", "items": {"type": "string", "format": "uri"}},
                     },
@@ -103,7 +103,7 @@ def get_openapi_spec() -> dict:
                         "latitude": {"type": "number", "format": "float"},
                         "longitude": {"type": "number", "format": "float"},
                         "bio": {"type": "string", "maxLength": 500},
-                        "interests": {"type": "string", "minLength": 1},
+                        "interests": {"type": "array", "items": {"type": "string"}, "minItems": 1},
                         "avatar": {"type": "string", "format": "binary"},
                         "pictures": {"type": "array", "items": {"type": "string", "format": "binary"}},
                     },
@@ -117,6 +117,11 @@ def get_openapi_spec() -> dict:
                         "gender": {"type": "string", "enum": ["male", "female"]},
                         "bio": {"type": "string", "maxLength": 500},
                         "interests": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+                "UpdateProfileMediaRequest": {
+                    "type": "object",
+                    "properties": {
                         "avatar": {"type": "string", "format": "binary"},
                         "pictures": {"type": "array", "items": {"type": "string", "format": "binary"}},
                     },
@@ -138,8 +143,9 @@ def get_openapi_spec() -> dict:
                 },
                 "PasswordResetConfirm": {
                     "type": "object",
-                    "required": ["new_password"],
+                    "required": ["token", "new_password"],
                     "properties": {
+                        "token": {"type": "string"},
                         "new_password": {"type": "string", "minLength": 8},
                     },
                 },
@@ -287,6 +293,8 @@ def get_openapi_spec() -> dict:
                                                 "type": "object",
                                                 "properties": {
                                                     "username": {"type": "string"},
+                                                    "is_active": {"type": "boolean"},
+                                                    "is_profile_complete": {"type": "boolean"},
                                                 },
                                             },
                                         },
@@ -294,7 +302,7 @@ def get_openapi_spec() -> dict:
                                 }
                             },
                         },
-                        "401": {"description": "Invalid credentials"},
+                        "400": {"description": "Invalid credentials"},
                     },
                 }
             },
@@ -362,14 +370,6 @@ def get_openapi_spec() -> dict:
                 "post": {
                     "tags": ["Auth"],
                     "summary": "Confirm password reset",
-                    "parameters": [
-                        {
-                            "name": "token",
-                            "in": "query",
-                            "required": True,
-                            "schema": {"type": "string"},
-                        }
-                    ],
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -487,12 +487,7 @@ def get_openapi_spec() -> dict:
                                         "properties": {
                                             "success": {"type": "boolean"},
                                             "message": {"type": "string"},
-                                            "data": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "profile": {"$ref": PROFILE_SCHEMA_REF},
-                                                },
-                                            },
+                                            "data": {"type": "object"},
                                         },
                                     }
                                 }
@@ -543,14 +538,18 @@ def get_openapi_spec() -> dict:
                                                         "items": {
                                                             "type": "object",
                                                             "properties": {
+                                                                "user_id": {"type": "integer", "nullable": True},
                                                                 "username": {"type": "string"},
                                                                 "age": {"type": "integer", "nullable": True},
-                                                                "location": {"type": "string", "nullable": True},
+                                                                "city": {"type": "string", "nullable": True},
+                                                                "country": {"type": "string", "nullable": True},
                                                                 "rating": {
                                                                     "type": "string",
                                                                     "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
                                                                     "default": "Ghost",
                                                                 },
+                                                                "distance_km": {"type": "number", "format": "float", "nullable": True},
+                                                                "is_liked": {"type": "boolean"},
                                                                 "is_match": {"type": "boolean"},
                                                             },
                                                         },
@@ -596,6 +595,7 @@ def get_openapi_spec() -> dict:
                                                 "properties": {
                                                     "profile": {"$ref": PROFILE_SCHEMA_REF},
                                                     "is_match": {"type": "boolean"},
+                                                    "is_liked": {"type": "boolean"},
                                                 },
                                             },
                                         },
@@ -648,7 +648,9 @@ def get_openapi_spec() -> dict:
                                                                 "viewer_city": {"type": "string", "nullable": True},
                                                                 "viewer_country": {"type": "string", "nullable": True},
                                                                 "viewer_avatar": {"type": "string", "nullable": True},
+                                                                "viewed_at": {"type": "string", "format": "date-time", "nullable": True},
                                                                 "is_match": {"type": "boolean"},
+                                                                "is_liked": {"type": "boolean"},
                                                             },
                                                         },
                                                     },
@@ -684,7 +686,12 @@ def get_openapi_spec() -> dict:
                                         "properties": {
                                             "success": {"type": "boolean"},
                                             "message": {"type": "string"},
-                                            "data": {"type": "object"},
+                                            "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "is_match": {"type": "boolean"},
+                                                },
+                                            },
                                         },
                                     }
                                 }
@@ -768,6 +775,7 @@ def get_openapi_spec() -> dict:
                                                                 "liker_country": {"type": "string", "nullable": True},
                                                                 "liker_avatar": {"type": "string", "nullable": True},
                                                                 "is_match": {"type": "boolean"},
+                                                                "is_liked": {"type": "boolean"},
                                                             },
                                                         },
                                                     },
@@ -779,6 +787,41 @@ def get_openapi_spec() -> dict:
                                 }
                             },
                         },
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
+            "/api/v1/accounts/profile/media": {
+                "patch": {
+                    "tags": ["Accounts"],
+                    "summary": "Update authenticated user profile media",
+                    "security": [{"bearerAuth": []}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "multipart/form-data": {
+                                "schema": {"$ref": "#/components/schemas/UpdateProfileMediaRequest"}
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Profile media updated successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {"type": "object"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
                         "401": {"description": "Unauthorized"},
                         "403": {"description": "Profile completion required"},
                     },

@@ -713,3 +713,56 @@ def test_update_profile_media_success(client, app, monkeypatch):
     data = response.get_json()
     assert data["success"] is True
     assert data["data"] == {}
+
+
+def test_search_profiles_success(client, app, monkeypatch):
+    """Test advanced search for profiles."""
+    with app.app_context():
+        access_token = create_access_token(identity="1")
+
+    monkeypatch.setattr(
+        "app.middlewares.profile_guard.UserModel.get_user_by_id",
+        lambda _user_id: {"id": 1, "is_profile_complete": True},
+    )
+
+    def fake_search_profiles(user_id, filters):
+        assert user_id == 1
+        assert filters["first_name"] == "Alice"
+        assert filters["min_age"] == 20
+        assert filters["max_age"] == 30
+        assert filters["city"] == "Paris"
+        return [
+            type("FakeProfile", (), {
+                "user_id": 2,
+                "first_name": "Alice",
+                "to_dict": lambda self: {"user_id": 2, "first_name": "Alice"}
+            })()
+        ]
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileService.search_profiles",
+        fake_search_profiles,
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
+        lambda viewer_id, profile_user_id: False,
+    )
+
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileLikesService.has_liked_profile",
+        lambda profile_user_id, viewer_id: False,
+    )
+
+    response = client.get(
+        "/api/v1/accounts/profiles/search?first_name=Alice&min_age=20&max_age=30&city=Paris",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    if response.status_code != 200:
+        print(f"FAILED WITH 500: {response.data}")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["count"] == 1
+    assert data["data"]["profiles"][0]["first_name"] == "Alice"
