@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from app.db.queries.notifications_queries import (
+    CREATE_NOTIFICATION,
     GET_USER_NOTIFICATIONS,
     MARK_NOTIFICATION_READ,
 )
@@ -38,6 +39,20 @@ class NotificationModel(BaseModel):
             (user_id, limit, offset),
         )
         return cls.from_rows(rows)
+
+    @classmethod
+    def create(
+        cls,
+        user_id: int,
+        notification_type: str,
+        message: str | None = None,
+        data: Any | None = None,
+    ) -> "NotificationModel" | None:
+        row = cls.db_manager().execute_returning(
+            CREATE_NOTIFICATION,
+            (user_id, notification_type, message, data),
+        )
+        return cls.from_row(row)
 
     @classmethod
     def mark_read(cls, user_id: int, notification_id: int) -> "NotificationModel" | None:

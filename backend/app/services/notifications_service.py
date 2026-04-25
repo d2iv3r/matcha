@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.extensions import socketio
 from app.models.notification_model import NotificationModel
 
 
@@ -15,3 +16,23 @@ class NotificationsService:
     @staticmethod
     def mark_notification_read(user_id: int, notification_id: int) -> NotificationModel | None:
         return NotificationModel.mark_read(user_id, notification_id)
+
+    @staticmethod
+    def send_notification(
+        user_id: int,
+        notification_type: str,
+        message: str | None = None,
+        data: dict | None = None,
+    ) -> NotificationModel | None:
+        notification = NotificationModel.create(
+            user_id=user_id,
+            notification_type=notification_type,
+            message=message,
+            data=data,
+        )
+        if notification is None:
+            return None
+
+        payload = notification.to_dict()
+        socketio.emit("notification", payload, room=f"user:{user_id}")
+        return notification

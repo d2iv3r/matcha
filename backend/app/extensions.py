@@ -12,7 +12,7 @@ jwt = JWTManager()
 limiter = Limiter(key_func=get_remote_address)
 cache = Cache()
 cors = CORS()
-socketio = SocketIO()
+socketio = SocketIO(logger=True, engineio_logger=True)
 
 def register_extensions(app:Flask) -> None:
     """Initialize Flask extensions with proper configuration."""

@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 
 from flask import current_app, request, session
 from flask_jwt_extended import decode_token
-from flask_socketio import ConnectionRefusedError
+from flask_socketio import ConnectionRefusedError, join_room, leave_room
 
 
 logger = logging.getLogger(__name__)
@@ -34,21 +34,29 @@ def register_event_handlers(socketio_instance) -> None:
 
     @socketio_instance.on("connect")
     def _connect(auth: Optional[Dict[str, Any]] = None):
+        logger.info("[Realtime] Connect attempt sid=%s", request.sid)
         token = _get_token_from_request(auth)
         if not token:
-            logger.info("[Realtime] Connection rejected: missing token")
+            logger.info("[Realtime] Connection rejected sid=%s reason=missing_token", request.sid)
             raise ConnectionRefusedError("Authentication required")
 
         try:
             decoded = _verify_jwt_token(token)
         except Exception as exc:
-            logger.info("[Realtime] Connection rejected: invalid token (%s)", exc)
+            logger.info("[Realtime] Connection rejected sid=%s reason=invalid_token error=%s", request.sid, exc)
             raise ConnectionRefusedError("Invalid token") from exc
 
-        session["user_id"] = decoded.get("sub")
+        user_id = decoded.get("sub")
+        session["user_id"] = user_id
         session["jwt_claims"] = decoded
+        join_room(f"user:{user_id}")
+        logger.info("[Realtime] Connected sid=%s user_id=%s room=user:%s", request.sid, user_id, user_id)
 
     @socketio_instance.on("disconnect")
     def _disconnect():
+        user_id = session.get("user_id")
+        if user_id is not None:
+            leave_room(f"user:{user_id}")
+        logger.info("[Realtime] Disconnected sid=%s user_id=%s", request.sid, user_id)
         session.pop("user_id", None)
         session.pop("jwt_claims", None)

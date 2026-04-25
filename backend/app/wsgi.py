@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 
+
 # Configure logging - reduce verbosity from noisy libraries
 logging.basicConfig(
     level=logging.INFO,
@@ -45,4 +46,12 @@ if __name__ == "__main__":
     if app is None:
         logger.error("[WSGI] Failed to initialize app")
         sys.exit(1)
-    app.run(host="0.0.0.0", port=5000)
+    from app.extensions import socketio
+    allow_unsafe = FLASK_ENV != "prod"
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=5000,
+        debug=allow_unsafe,
+        allow_unsafe_werkzeug=allow_unsafe,
+    )

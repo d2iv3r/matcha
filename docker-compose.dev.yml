@@ -23,6 +23,7 @@ services:
         environment:
             - FLASK_APP=app.wsgi
             - FLASK_ENV=dev
+            - SOCKETIO_ASYNC_MODE=eventlet
         ports:
             - "5001:5000"
         volumes:
@@ -35,7 +36,7 @@ services:
             sh -c "
               flask init-db &&
               flask seed-db &&
-              flask run --host=0.0.0.0 --reload
+                            python -m app.wsgi
             "
     frontend:
         image: node:20-alpine
