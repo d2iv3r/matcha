@@ -90,8 +90,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
             if (data?.profile) {
                 data.profile.avatar = formatUrl(data.profile.avatar);
-                if (data.profile.pictures && Array.isArray(data.profile.pictures)) {
-                    data.profile.pictures = data.profile.pictures.map(formatUrl);
+                if (data.profile.pictures) {
+                    data.profile.pictures = parsePostgresArray(data.profile.pictures).map(formatUrl);
                 }
                 data.profile.interests = parsePostgresArray(data.profile.interests);
             }

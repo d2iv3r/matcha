@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Heart, ChevronDown } from "lucide-react";
 import { status } from "@/core/components/fake-data";
@@ -71,7 +71,7 @@ function UserCard({ user, statusColor, displayRating, onMatch }: { user: ApiProf
     };
 
     return (
-        <div onClick={() => go_to_profile(user.username)} className="group flex flex-col h-full bg-[#F5F3FF] p-2 shadow-xl rounded-2xl w-full cursor-pointer">
+        <div onClick={() => go_to_profile(user.username)} className="group flex flex-col h-full bg-[#F5F3FF] p-2 shadow-xl rounded-2xl w-full cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
             <div className="w-full aspect-3.5/4 rounded-xl mb-1 overflow-hidden relative group/image">
                 <Image
                     src={imageUrl}
@@ -159,46 +159,11 @@ export default function HomePage() {
 
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const limit = 5;
+    const [isFetching, setIsFetching] = useState(false);
+    const limit = 10;
+    const observer = useRef<IntersectionObserver | null>(null);
 
-    const fetchProfiles = async (currentOffset: number, append: boolean = false) => {
-        try {
-            const res = await fetch(`http://localhost:5001/api/v1/accounts/profiles?limit=${limit}&offset=${currentOffset}`, {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-            const json = await res.json();
-            const data = json.data;
-            console.log("data", data);
-            
-            if (data && data.profiles) {
-                setRawProfiles(prev => {
-                    const newRaw = append ? [...prev, ...data.profiles] : data.profiles;
-                    // Apply current filters immediately on the new set of data
-                    applyFilters(newRaw);
-                    return newRaw;
-                });
-                setHasMore(data.profiles.length === limit);
-            }
-        } catch (e) {
-            console.error("Failed to load profiles:", e);
-        }
-    };
-
-    useEffect(() => {
-        fetchProfiles(0, false);
-    }, []);
-
-    const handleLoadMore = () => {
-        const nextOffset = offset + limit;
-        setOffset(nextOffset);
-        fetchProfiles(nextOffset, true);
-    };
-
-    const applyFilters = (profilesToFilter: ApiProfile[]) => {
+    const applyFilters = useCallback((profilesToFilter: ApiProfile[]) => {
         let filtered = profilesToFilter;
         
         if (cityFilter.trim() !== "") {
@@ -223,7 +188,64 @@ export default function HomePage() {
         }
 
         setUserList(filtered);
-    };
+    }, [cityFilter, selectedAges, selectedRatings]);
+
+    const fetchProfiles = useCallback(async (currentOffset: number, append: boolean = false) => {
+        setIsFetching(true);
+        // "Have time" - Add a slight delay to make the loading state feel more natural and visible
+        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            const res = await fetch(`http://localhost:5001/api/v1/accounts/profiles?limit=${limit}&offset=${currentOffset}`, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            const json = await res.json();
+            const data = json.data;
+            console.log("data", data);
+            
+            if (data && data.profiles) {
+                setRawProfiles(prev => {
+                    const newRaw = append ? [...prev, ...data.profiles] : data.profiles;
+                    applyFilters(newRaw);
+                    return newRaw;
+                });
+                setHasMore(data.profiles.length === limit);
+            }
+        } catch (e) {
+            console.error("Failed to load profiles:", e);
+        } finally {
+            setIsFetching(false);
+        }
+    }, [limit, applyFilters]);
+
+    const handleLoadMore = useCallback(() => {
+        if (isFetching || !hasMore) return;
+        setOffset(prev => {
+            const nextOffset = prev + limit;
+            fetchProfiles(nextOffset, true);
+            return nextOffset;
+        });
+    }, [isFetching, hasMore, limit, fetchProfiles]);
+
+    const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+        if (isFetching) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                handleLoadMore();
+            }
+        });
+        if (node) observer.current.observe(node);
+    }, [isFetching, hasMore, handleLoadMore]);
+
+    useEffect(() => {
+        fetchProfiles(0, false);
+    }, [fetchProfiles]);
+
+
 
     const handleSearch = () => {
         applyFilters(rawProfiles);
@@ -383,14 +405,14 @@ export default function HomePage() {
                 }}
             />
             
-            {hasMore && userList.length > 0 && (
-                <div className="w-full flex justify-center mt-4">
-                    <button 
-                        onClick={handleLoadMore}
-                        className="bg-transparent text-[#6367FF] border-2 border-[#6367FF] font-semibold px-6 py-2 rounded-xl hover:bg-[#6367FF] hover:text-white transition-colors"
-                    >
-                        Load More
-                    </button>
+            {hasMore && (
+                <div ref={lastElementRef} className="w-full flex justify-center py-8">
+                    {isFetching && (
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 border-4 border-[#6367FF]/20 border-t-[#6367FF] rounded-full animate-spin"></div>
+                            <p className="text-[#6367FF] text-xs font-semibold">Loading more...</p>
+                        </div>
+                    )}
                 </div>
             )}
             
