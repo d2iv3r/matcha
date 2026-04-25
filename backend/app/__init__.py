@@ -8,10 +8,10 @@ from flask import Flask
 from app.config import DevConfig, BaseConfig
 
 from app.middlewares.middleware import register_middleware
-from app.extensions import register_extensions
+from app.extensions import register_extensions, socketio
 from app.utils.app_error import register_error_handlers
 
-from app.routes import api_bp, auth_bp, docs_bp, profile_bp, accounts_bp
+from app.routes import api_bp, auth_bp, docs_bp, profile_bp, accounts_bp, notifications_bp
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,10 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         # Extensions registration
         register_extensions(app)
         logger.info("[APP] Extensions registered successfully.")
+
+        from app.realtime import register_realtime
+        register_realtime(socketio)
+        logger.info("[APP] Realtime module registered successfully.")
 
         # Initialize database connection pool (without running migrations)
         from app.db.database import init_db
@@ -68,6 +72,7 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         app.register_blueprint(auth_bp)
         app.register_blueprint(accounts_bp)
         app.register_blueprint(profile_bp)
+        app.register_blueprint(notifications_bp)
         
         logger.info("[APP] App created successfully!")
     except Exception as e:

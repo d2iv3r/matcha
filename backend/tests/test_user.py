@@ -735,6 +735,7 @@ def test_search_profiles_success(client, app, monkeypatch):
             type("FakeProfile", (), {
                 "user_id": 2,
                 "first_name": "Alice",
+                "distance_km": 3.14159,
                 "to_dict": lambda self: {"user_id": 2, "first_name": "Alice"}
             })()
         ]
@@ -766,3 +767,4 @@ def test_search_profiles_success(client, app, monkeypatch):
     assert data["success"] is True
     assert data["data"]["count"] == 1
     assert data["data"]["profiles"][0]["first_name"] == "Alice"
+    assert data["data"]["profiles"][0]["distance_km"] == 3.1

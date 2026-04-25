@@ -226,6 +226,9 @@ class ProfileController:
                 p.user_id is not None
                 and ProfileLikesService.is_mutual_like(viewer_id, p.user_id)
             )
+            distance_km = getattr(p, "distance_km", None)
+            if distance_km is not None:
+                entry["distance_km"] = round(float(distance_km), 1)
             result.append(entry)
 
         return success(message="Profiles retrieved successfully", data={"profiles": result, "count": len(result)})

@@ -37,6 +37,12 @@ from .profile_queries import (
     UPDATE_PROFILE_BY_USER_ID,
 )
 
+# NOTIFICATION QUERIES
+from .notifications_queries import (
+    GET_USER_NOTIFICATIONS,
+    MARK_NOTIFICATION_READ,
+)
+
 __all__ = [
     # AUTH QUERIES
     "STORE_EMAIL_VERIFICATION_TOKEN",
@@ -64,4 +70,7 @@ __all__ = [
     "GET_PROFILE_BY_USERNAME",
     "GET_PROFILES_LIST",
     "UPDATE_PROFILE_BY_USER_ID",
+    # NOTIFICATION QUERIES
+    "GET_USER_NOTIFICATIONS",
+    "MARK_NOTIFICATION_READ",
 ]

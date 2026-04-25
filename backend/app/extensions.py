@@ -6,11 +6,13 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 from flask_cors import CORS
+from flask_socketio import SocketIO
 
 jwt = JWTManager()
 limiter = Limiter(key_func=get_remote_address)
 cache = Cache()
 cors = CORS()
+socketio = SocketIO()
 
 def register_extensions(app:Flask) -> None:
     """Initialize Flask extensions with proper configuration."""
@@ -27,6 +29,15 @@ def register_extensions(app:Flask) -> None:
             "supports_credentials": True,
         }
     })
+
+    socketio.init_app(
+        app,
+        cors_allowed_origins=app.config.get("SOCKETIO_CORS_ORIGINS"),
+        async_mode=app.config.get("SOCKETIO_ASYNC_MODE"),
+        ping_interval=app.config.get("SOCKETIO_PING_INTERVAL"),
+        ping_timeout=app.config.get("SOCKETIO_PING_TIMEOUT"),
+        max_http_buffer_size=app.config.get("SOCKETIO_MAX_HTTP_BUFFER_SIZE"),
+    )
 
     @jwt.unauthorized_loader
     def handle_missing_jwt(reason: str):

@@ -567,6 +567,119 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
+            "/api/v1/accounts/profiles/search": {
+                "get": {
+                    "tags": ["Accounts"],
+                    "summary": "Search profiles",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 1, "default": 20},
+                        },
+                        {
+                            "name": "offset",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 0, "default": 0},
+                        },
+                        {
+                            "name": "first_name",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "last_name",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "city",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "min_age",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 0},
+                        },
+                        {
+                            "name": "max_age",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 0},
+                        },
+                        {
+                            "name": "rating",
+                            "in": "query",
+                            "required": False,
+                            "schema": {
+                                "type": "string",
+                                "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
+                            },
+                        },
+                        {
+                            "name": "interests",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "array", "items": {"type": "string"}},
+                            "style": "form",
+                            "explode": True,
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Profiles retrieved successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "profiles": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "user_id": {"type": "integer", "nullable": True},
+                                                                "username": {"type": "string"},
+                                                                "age": {"type": "integer", "nullable": True},
+                                                                "city": {"type": "string", "nullable": True},
+                                                                "country": {"type": "string", "nullable": True},
+                                                                "rating": {
+                                                                    "type": "string",
+                                                                    "enum": ["Ghost", "Rising", "Popular", "Elite", "Iconic"],
+                                                                    "default": "Ghost",
+                                                                },
+                                                                "distance_km": {"type": "number", "format": "float", "nullable": True},
+                                                                "is_liked": {"type": "boolean"},
+                                                                "is_match": {"type": "boolean"},
+                                                            },
+                                                        },
+                                                    },
+                                                    "count": {"type": "integer"},
+                                                },
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
             "/api/v1/accounts/profile/{username}": {
                 "get": {
                     "tags": ["Accounts"],
