@@ -40,6 +40,13 @@ class BaseConfig:
         "PROFILE_PICTURES_UPLOAD_SUBDIR",
         os.path.join("uploads", "pictures"),
     )
+    SOCKETIO_CORS_ORIGINS = os.environ.get("SOCKETIO_CORS_ORIGINS", FRONTEND_URL)
+    SOCKETIO_ASYNC_MODE = os.environ.get("SOCKETIO_ASYNC_MODE", "threading")
+    SOCKETIO_PING_INTERVAL = int(os.environ.get("SOCKETIO_PING_INTERVAL", 25))
+    SOCKETIO_PING_TIMEOUT = int(os.environ.get("SOCKETIO_PING_TIMEOUT", 60))
+    SOCKETIO_MAX_HTTP_BUFFER_SIZE = int(
+        os.environ.get("SOCKETIO_MAX_HTTP_BUFFER_SIZE", 1000000)
+    )
 
 
 class DevConfig(BaseConfig):

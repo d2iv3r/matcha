@@ -123,8 +123,21 @@ class ProfileService:
 
     @staticmethod
     def search_profiles(user_id: int, filters: dict) -> list[ProfileModel]:
+        caller_profile = ProfileModel.get_my_profile_by_user_id(user_id)
+        if not caller_profile:
+            raise NotFoundError("Profile", user_id)
+
+        gender_map = {"male": "female", "female": "male"}
+        opposite_gender = gender_map.get((caller_profile.gender or "").lower(), "female")
+
+        latitude = caller_profile.latitude or 0.0
+        longitude = caller_profile.longitude or 0.0
+
         return ProfileModel.search_profiles(
             user_id=user_id,
+            gender=opposite_gender,
+            latitude=latitude,
+            longitude=longitude,
             first_name=filters.get("first_name"),
             last_name=filters.get("last_name"),
             city=filters.get("city"),

@@ -132,6 +132,9 @@ class ProfileModel(BaseModel):
     def search_profiles(
         cls,
         user_id: int,
+        gender: str,
+        latitude: float,
+        longitude: float,
         first_name: str | None = None,
         last_name: str | None = None,
         city: str | None = None,
@@ -146,12 +149,22 @@ class ProfileModel(BaseModel):
             SELECT
                 u.username, u.first_name, u.last_name,
                 p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country,
-                p.bio, p.interests, p.avatar, p.pictures, p.rating, p.latitude, p.longitude
+                p.bio, p.interests, p.avatar, p.pictures, p.rating, p.latitude, p.longitude,
+                (6371 * acos(
+                    GREATEST(-1, LEAST(1,
+                        cos(radians(%s)) * cos(radians(p.latitude)) *
+                        cos(radians(p.longitude) - radians(%s)) +
+                        sin(radians(%s)) * sin(radians(p.latitude))
+                    ))
+                )) AS distance_km
             FROM users u
             JOIN profiles p ON p.user_id = u.id
             WHERE u.id != %s
+                AND p.gender = %s
+                AND p.latitude IS NOT NULL
+                AND p.longitude IS NOT NULL
         """
-        params = [user_id]
+        params = [latitude, longitude, latitude, user_id, gender]
 
         if first_name:
             query += " AND u.first_name ILIKE %s"
@@ -175,7 +188,7 @@ class ProfileModel(BaseModel):
             query += " AND p.interests && %s::TEXT[]"
             params.append(interests)
 
-        query += " LIMIT %s OFFSET %s"
+        query += " ORDER BY distance_km ASC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
 
         rows = cls.db_manager().fetch_all(query, tuple(params))
