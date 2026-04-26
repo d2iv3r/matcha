@@ -27,61 +27,114 @@ import {
     Eye,
     MessageCircleMore,
     CircleOff,
+    Search
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { status } from "@/core/components/fake-data";
-import { users } from "@/core/components/fake-data";
+import { useProfile } from "@/core/contexts/ProfileContext";
+import MatchOverlay from "@/core/components/MatchOverlay";
+import { INTERESTS } from "@/core/constants/interests";
 
-const INTERESTS = [
-    { id: "food", label: "Food & Cooking", icon: <Utensils size={16} /> },
-    { id: "coffee", label: "Coffee", icon: <Coffee size={16} /> },
-    { id: "tea", label: "Moroccan Tea", icon: <CupSoda size={16} /> },
-    { id: "nightlife", label: "Nightlife", icon: <GlassWater size={16} /> },
-    { id: "gaming", label: "Gaming", icon: <Gamepad2 size={16} /> },
-    { id: "anime", label: "Anime", icon: <Tv size={16} /> },
-    { id: "fitness", label: "Fitness", icon: <Dumbbell size={16} /> },
-    { id: "football", label: "Football", icon: <Trophy size={16} /> },
-    { id: "swimming", label: "Swimming", icon: <Waves size={16} /> },
-    { id: "camping", label: "Camping", icon: <Tent size={16} /> },
-    { id: "music", label: "Music", icon: <Music size={16} /> },
-    { id: "movies", label: "Movies", icon: <Film size={16} /> },
-    { id: "photography", label: "Photography", icon: <Camera size={16} /> },
-    { id: "reading", label: "Reading", icon: <BookOpen size={16} /> },
-    { id: "art", label: "Painting & Art", icon: <Brush size={16} /> },
-    { id: "karaoke", label: "Karaoke", icon: <Mic2 size={16} /> },
-    { id: "theater", label: "Theater", icon: <Theater size={16} /> },
-    { id: "travel", label: "Travel", icon: <Plane size={16} /> },
-    { id: "adventure", label: "Adventure", icon: <Map size={16} /> },
-    { id: "fashion", label: "Fashion", icon: <ShoppingBag size={16} /> },
-    { id: "education", label: "Learning", icon: <GraduationCap size={16} /> },
-    { id: "dating", label: "Romance", icon: <Heart size={16} /> },
-];
+// const INTERESTS = [
+//     { id: "food", label: "Food & Cooking", icon: <Utensils size={16} /> },
+//     { id: "coffee", label: "Coffee", icon: <Coffee size={16} /> },
+//     { id: "tea", label: "Moroccan Tea", icon: <CupSoda size={16} /> },
+//     { id: "nightlife", label: "Nightlife", icon: <GlassWater size={16} /> },
+//     { id: "gaming", label: "Gaming", icon: <Gamepad2 size={16} /> },
+//     { id: "anime", label: "Anime", icon: <Tv size={16} /> },
+//     { id: "fitness", label: "Fitness", icon: <Dumbbell size={16} /> },
+//     { id: "football", label: "Football", icon: <Trophy size={16} /> },
+//     { id: "swimming", label: "Swimming", icon: <Waves size={16} /> },
+//     { id: "camping", label: "Camping", icon: <Tent size={16} /> },
+//     { id: "music", label: "Music", icon: <Music size={16} /> },
+//     { id: "movies", label: "Movies", icon: <Film size={16} /> },
+//     { id: "photography", label: "Photography", icon: <Camera size={16} /> },
+//     { id: "reading", label: "Reading", icon: <BookOpen size={16} /> },
+//     { id: "art", label: "Painting & Art", icon: <Brush size={16} /> },
+//     { id: "karaoke", label: "Karaoke", icon: <Mic2 size={16} /> },
+//     { id: "theater", label: "Theater", icon: <Theater size={16} /> },
+//     { id: "travel", label: "Travel", icon: <Plane size={16} /> },
+//     { id: "adventure", label: "Adventure", icon: <Map size={16} /> },
+//     { id: "fashion", label: "Fashion", icon: <ShoppingBag size={16} /> },
+//     { id: "education", label: "Learning", icon: <GraduationCap size={16} /> },
+//     { id: "dating", label: "Romance", icon: <Heart size={16} /> },
+// ];
 
-interface UserData {
-    name: string;
-    age: number;
-    city: string;
-    country: string;
-    matching: boolean;
-    image: string;
-    status: string;
+export interface ApiProfile {
+    username: string;
+    first_name?: string;
+    last_name?: string;
+    age: number | null;
+    city: string | null;
+    country: string | null;
+    distance_km?: number | null;
+    rating: string;
+    avatar?: string | null;
+    is_match: boolean;
+    is_liked: boolean;
+    user_id: number;
+    interests?: string[];
+    bio?: string;
 }
 
-const SearchProfileCard = ({ user }: { user: UserData }) => {
-    const [isLiked, setIsLiked] = useState(false);
-    const statusObj = status.find((s) => s.name === user.status);
+const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: ApiProfile) => void }) => {
+    const [isLiked, setIsLiked] = useState(user.is_liked || user.is_match);
+    const [isMatch, setIsMatch] = useState(user.is_match);
+    const router = useRouter();
+    
+    const statusObj = status.find((s) => s.name.toLowerCase().includes(user.rating.toLowerCase()));
     const ratingColor = statusObj ? statusObj.color : "#4B4B4B";
 
+    const imageUrl = user.avatar
+        ? (user.avatar.startsWith("/") && !user.avatar.startsWith("http")
+            ? `http://localhost:5001${user.avatar}`
+            : user.avatar)
+        : "/girl1.png";
+
+    const toggleLike = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const previousState = isLiked;
+        const newState = !isLiked;
+        setIsLiked(newState);
+
+        try {
+            const action = newState ? "like" : "unlike";
+            const res = await fetch(`http://localhost:5001/api/v1/profile/${user.username}/${action}`, {
+                method: "POST",
+                credentials: "include"
+            });
+            
+            if (!res.ok) {
+                setIsLiked(previousState);
+            } else {
+                const json = await res.json();
+                if (json.data?.is_match) {
+                    setIsMatch(true);
+                    onMatch(user);
+                } else if (!newState) {
+                    setIsMatch(false);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to toggle like", error);
+            setIsLiked(previousState);
+        }
+    };
+
     return (
-        <div className="flex flex-row gap-2 bg-[#F5F3FF] shadow-xl p-3 rounded-3xl">
-            <div className="relative border-4 border-[#F5F3FF] rounded-2xl shadow-2xl flex-1">
+        <div 
+            onClick={() => router.push(`/profile/${user.username}`)}
+            className="flex flex-row gap-2 bg-[#F5F3FF] shadow-xl p-3 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 cursor-pointer hover:bg-white transition-colors group"
+        >
+            <div className="relative border-4 border-[#F5F3FF] rounded-2xl shadow-2xl flex-1 group-hover:border-white transition-colors">
                 <div
                     className="w-full h-full aspect-square bg-center bg-cover rounded-xl"
-                    style={{ backgroundImage: `url(${user.image})` }}
+                    style={{ backgroundImage: `url(${imageUrl})` }}
                 />
-                {user.matching && (
-                    <div className="absolute bottom-2 right-2 text-[#6367FF] bg-[#DFD8FF] px-2 py-1 rounded-lg flex items-center justify-center shadow-sm">
-                        <span className="text-[10px] font-semibold">
+                {isMatch && (
+                    <div className="absolute bottom-2 right-2 text-[#6367FF] bg-[#DFD8FF]/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center justify-center shadow-sm">
+                        <span className="text-[10px] font-semibold text-[#6367FF]">
                             Matching
                         </span>
                     </div>
@@ -90,43 +143,56 @@ const SearchProfileCard = ({ user }: { user: UserData }) => {
             <div className="w-full flex flex-col justify-between gap-3 py-3 flex-2 min-w-0">
                 <div className="flex flex-row justify-between gap-2 min-w-0">
                     <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-xs font-semibold truncate">
-                            {user.name}, {user.age}
+                        <span className="text-xs font-bold truncate text-gray-900">
+                            {user.first_name || user.username}, {user.age || "N/A"}
                         </span>
-                        <span className="text-xs text-gray-600 truncate">
-                            {user.city}, {user.country}
+                        <span className="text-[10px] text-gray-500 truncate font-medium">
+                            {user.city || "Unknown"}{user.country ? `, ${user.country}` : ""}
                         </span>
                         <span
-                            className="text-[10px] font-bold truncate"
+                            className="text-[10px] font-bold truncate mt-1"
                             style={{ color: ratingColor }}
                         >
-                            {user.status}
+                            {statusObj?.name || user.rating}
                         </span>
                     </div>
-                    <Eye
-                        size={20}
-                        className="cursor-pointer mr-2 text-gray-500 hover:text-gray-800 transition-colors"
-                    />
+                    <div 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/profile/${user.username}`);
+                        }}
+                    >
+                        <Eye
+                            size={18}
+                            className="text-gray-400 hover:text-[#6367FF] transition-colors"
+                        />
+                    </div>
                 </div>
-                <div className="flex flex-row gap-2 bottom-3 left-3">
+                <div className="flex flex-row gap-3">
                     <div
                         className="flex gap-2 items-center cursor-pointer active:scale-95 transition-transform"
-                        onClick={() => setIsLiked(!isLiked)}
+                        onClick={toggleLike}
                     >
                         <Heart
-                            size={20}
+                            size={18}
                             className="text-[#6367FF] transition-colors"
                             fill={
-                                user.matching || isLiked
+                                isLiked
                                     ? "#6367FF"
                                     : "transparent"
                             }
                         />
                     </div>
-                    {(user.matching || isLiked) && (
-                        <div className="flex gap-2 items-center cursor-pointer hover:scale-105 transition-transform">
+                    {isMatch && (
+                        <div 
+                            className="flex gap-2 items-center cursor-pointer hover:scale-105 transition-transform"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/chat?user=${user.username}`);
+                            }}
+                        >
                             <MessageCircleMore
-                                size={20}
+                                size={18}
                                 className="text-[#6367FF]"
                             />
                         </div>
@@ -140,6 +206,14 @@ const SearchProfileCard = ({ user }: { user: UserData }) => {
 export default function AdvanceSearchPage() {
     const [advanceSearch, setAdvanceSearch] = useState(false);
     const [isSearch, setIsSearch] = useState(false);
+    const [isFetching, setIsFetching] = useState(false);
+    const [searchResults, setSearchResults] = useState<ApiProfile[]>([]);
+    const { profile } = useProfile();
+    const [matchModal, setMatchModal] = useState<{isOpen: boolean, user: ApiProfile | null}>({
+        isOpen: false,
+        user: null
+    });
+    const router = useRouter();
     // const [isViewed, setIsViewed] = useState(false);
     // const [isMessage, setIsMessage] = useState(false);
 
@@ -208,6 +282,53 @@ export default function AdvanceSearchPage() {
         setSorting("");
         setTagInput("");
         setTags([]);
+        setSearchResults([]);
+        setIsSearch(false);
+    };
+
+    const handleSearch = async () => {
+        setIsFetching(true);
+        setIsSearch(true);
+        try {
+            const params = new URLSearchParams();
+            if (fullName.trim()) {
+                const parts = fullName.trim().split(" ");
+                params.append("first_name", parts[0]);
+                if (parts.length > 1) params.append("last_name", parts.slice(1).join(" "));
+            }
+            if (city.trim()) params.append("city", city.trim());
+            if (ageMin) params.append("min_age", ageMin);
+            if (ageMax) params.append("max_age", ageMax);
+            if (sorting) params.append("sorting", sorting.toLowerCase());
+            
+            fameRatings.forEach(r => {
+                const rating = r.split(' ').pop();
+                if (rating) params.append("rating", rating);
+            });
+            
+            tags.forEach(t => params.append("interests", t));
+            console.log("params",params);
+
+            const res = await fetch(`http://localhost:5001/api/v1/accounts/profiles/search?${params.toString()}`, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) throw new Error("Search failed");
+            
+            const json = await res.json();
+            console.log("json",json);
+            setSearchResults(json.data?.profiles || []);
+            setAdvanceSearch(false);
+        } catch (error) {
+            console.error("Search error:", error);
+            setSearchResults([]);
+        } finally {
+            setIsFetching(false);
+        }
     };
 
     const availableTags = INTERESTS.filter(
@@ -248,15 +369,13 @@ export default function AdvanceSearchPage() {
                             />
                         </div>
                     </div>
-                    <div
-                        className="flex-1 max-w-fit flex justify-center item-center px-7 py-2 bg-linear-to-r from-[#6367FF] to-[#2d31ac] rounded-xl text-sm text-white font-medium cursor-pointer"
-                        onClick={() => {
-                            setAdvanceSearch(false);
-                            setIsSearch(true);
-                        }}
+                    <button
+                        className="flex-1 max-w-fit flex justify-center items-center px-10 py-2.5 bg-linear-to-r from-[#6367FF] to-[#2d31ac] rounded-xl text-sm text-white font-bold cursor-pointer hover:shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                        onClick={handleSearch}
+                        disabled={isFetching}
                     >
-                        Search
-                    </div>
+                        {isFetching ? "Searching..." : "Search"}
+                    </button>
                 </div>
                 <span
                     className="flex gap-2 text-[#6367FF] items-center text-sm font-semibold cursor-pointer max-w-fit"
@@ -509,11 +628,16 @@ export default function AdvanceSearchPage() {
                     </div>
                 )}
             </div>
-            {isSearch && users.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto scrollbar-hide pb-10 px-4">
-                    {users.map((user, index) => (
-                        <SearchProfileCard key={index} user={user} />
+            {isSearch && !isFetching && searchResults.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto scrollbar-hide pb-10 px-4">
+                    {searchResults.map((user, index) => (
+                        <SearchProfileCard key={index} user={user} onMatch={(u) => setMatchModal({isOpen: true, user: u})} />
                     ))}
+                </div>
+            ) : isFetching ? (
+                <div className="w-full flex-1 flex flex-col justify-center items-center gap-4 py-20">
+                    <div className="w-12 h-12 border-4 border-[#6367FF]/20 border-t-[#6367FF] rounded-full animate-spin"></div>
+                    <p className="text-[#6367FF] font-bold animate-pulse">Finding your perfect match...</p>
                 </div>
             ) : (
                 <div className="w-full flex-1 flex flex-col justify-center items-center gap-5 text-center px-4 py-16">
@@ -534,6 +658,18 @@ export default function AdvanceSearchPage() {
                     </div>
                 </div>
             )}
+
+            <MatchOverlay 
+                isOpen={matchModal.isOpen}
+                onClose={() => setMatchModal({isOpen: false, user: null})}
+                myAvatar={profile?.profile?.avatar || null}
+                matchAvatar={matchModal.user?.avatar || null}
+                matchName={matchModal.user?.first_name || matchModal.user?.username || ""}
+                onChat={() => {
+                    setMatchModal({isOpen: false, user: null});
+                    router.push(`/chat?user=${matchModal.user?.username}`);
+                }}
+            />
         </div>
     );
 }
