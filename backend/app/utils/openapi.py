@@ -22,6 +22,7 @@ def get_openapi_spec() -> dict:
             {"name": "Accounts", "description": "Authenticated account profile endpoints"},
             {"name": "Profile", "description": "Profile views and likes endpoints"},
             {"name": "Notifications", "description": "Notification management endpoints"},
+            {"name": "Chat", "description": "Real-time messaging endpoints"},
         ],
         "components": {
             "securitySchemes": {
@@ -160,6 +161,32 @@ def get_openapi_spec() -> dict:
                         "message": {"type": "string"},
                         "data": {"type": "object", "nullable": True},
                         "entity_id": {"type": "integer", "nullable": True},
+                        "is_read": {"type": "boolean"},
+                        "created_at": {"type": "string", "format": "date-time"},
+                    },
+                },
+                "Conversation": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "user1_id": {"type": "integer"},
+                        "user2_id": {"type": "integer"},
+                        "created_at": {"type": "string", "format": "date-time"},
+                        "user1_username": {"type": "string", "nullable": True},
+                        "user2_username": {"type": "string", "nullable": True},
+                        "user1_avatar": {"type": "string", "nullable": True, "format": "uri"},
+                        "user2_avatar": {"type": "string", "nullable": True, "format": "uri"},
+                        "last_message": {"type": "string", "nullable": True},
+                        "last_message_at": {"type": "string", "nullable": True, "format": "date-time"},
+                    },
+                },
+                "Message": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "conversation_id": {"type": "integer"},
+                        "sender_id": {"type": "integer"},
+                        "content": {"type": "string"},
                         "is_read": {"type": "boolean"},
                         "created_at": {"type": "string", "format": "date-time"},
                     },
@@ -1058,6 +1085,147 @@ def get_openapi_spec() -> dict:
                                             "success": {"type": "boolean"},
                                             "message": {"type": "string"},
                                             "data": {"type": "object"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/chat/conversations": {
+                "get": {
+                    "tags": ["Chat"],
+                    "summary": "Get list of user conversations",
+                    "security": [{"bearerAuth": []}],
+                    "responses": {
+                        "200": {
+                            "description": "Conversations retrieved",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "array",
+                                                "items": {"$ref": "#/components/schemas/Conversation"},
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/chat/conversations/{id}/messages": {
+                "get": {
+                    "tags": ["Chat"],
+                    "summary": "Get message history for a conversation",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {"name": "id", "in": "path", "required": True, "schema": {"type": "integer"}},
+                        {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer", "default": 20}},
+                        {"name": "offset", "in": "query", "required": False, "schema": {"type": "integer", "default": 0}},
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Messages retrieved",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "array",
+                                                "items": {"$ref": "#/components/schemas/Message"},
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/chat/messages": {
+                "post": {
+                    "tags": ["Chat"],
+                    "summary": "Send a message",
+                    "security": [{"bearerAuth": []}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["receiver_id", "content"],
+                                    "properties": {
+                                        "receiver_id": {"type": "integer"},
+                                        "content": {"type": "string", "minLength": 1},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Message sent",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {"$ref": "#/components/schemas/Message"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Bad request"},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Forbidden (no match)"},
+                    },
+                }
+            },
+            "/api/v1/chat/messages/read": {
+                "patch": {
+                    "tags": ["Chat"],
+                    "summary": "Mark messages in a conversation as read",
+                    "security": [{"bearerAuth": []}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["conversation_id"],
+                                    "properties": {
+                                        "conversation_id": {"type": "integer"},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Messages marked as read",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
                                         },
                                     }
                                 }
