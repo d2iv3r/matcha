@@ -39,3 +39,9 @@ class NotificationsController:
             raise NotFoundError("Notification", notification_id)
 
         return success(message="Notification marked as read", data={"notification": notification.to_dict()})
+
+    @staticmethod
+    def mark_all_read():
+        user_id = int(get_jwt_identity())
+        NotificationsService.mark_all_read(user_id)
+        return success(message="All notifications marked as read")

@@ -1,0 +1,75 @@
+📦app
+ ┣ 📂commands
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜init_db.py
+ ┃ ┣ 📜seed.py
+ ┃ ┗ 📜seed_db.py
+ ┣ 📂controllers
+ ┃ ┣ 📜auth_controller.py
+ ┃ ┣ 📜notifications_controller.py
+ ┃ ┣ 📜profile_controller.py
+ ┃ ┣ 📜profile_likes_controller.py
+ ┃ ┣ 📜profile_views_controller.py
+ ┃ ┗ 📜users_controller.py
+ ┣ 📂core
+ ┣ 📂db
+ ┃ ┣ 📂migrations
+ ┃ ┃ ┗ 📜20250416_163000_dbSchema.sql
+ ┃ ┣ 📂queries
+ ┃ ┃ ┣ 📜__init__.py
+ ┃ ┃ ┣ 📜auth_queries.py
+ ┃ ┃ ┣ 📜notifications_queries.py
+ ┃ ┃ ┣ 📜profile_likes_queries.py
+ ┃ ┃ ┣ 📜profile_queries.py
+ ┃ ┃ ┣ 📜profile_views_queries.py
+ ┃ ┃ ┗ 📜users_queries.py
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜database.py
+ ┃ ┗ 📜migrations.py
+ ┣ 📂middlewares
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜middleware.py
+ ┃ ┗ 📜profile_guard.py
+ ┣ 📂models
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜base_model.py
+ ┃ ┣ 📜email_verification_token_model.py
+ ┃ ┣ 📜notification_model.py
+ ┃ ┣ 📜password_reset_token_model.py
+ ┃ ┣ 📜profile_likes_model.py
+ ┃ ┣ 📜profile_model.py
+ ┃ ┣ 📜profile_views_model.py
+ ┃ ┗ 📜user_model.py
+ ┣ 📂routes
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜accounts_route.py
+ ┃ ┣ 📜api_routes.py
+ ┃ ┣ 📜auth_routes.py
+ ┃ ┣ 📜docs_routes.py
+ ┃ ┣ 📜notifications_routes.py
+ ┃ ┗ 📜profile_routes.py
+ ┣ 📂schemas
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜accounts_requests_schemas.py
+ ┃ ┣ 📜auth_requests_schemas.py
+ ┃ ┣ 📜profile_schemas.py
+ ┃ ┗ 📜user_schemas.py
+ ┣ 📂services
+ ┃ ┣ 📜auth_service.py
+ ┃ ┣ 📜notifications_service.py
+ ┃ ┣ 📜profile_likes_service.py
+ ┃ ┣ 📜profile_service.py
+ ┃ ┣ 📜profile_views_service.py
+ ┃ ┗ 📜user_service.py
+ ┣ 📂utils
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜app_error.py
+ ┃ ┣ 📜mail.py
+ ┃ ┣ 📜openapi.py
+ ┃ ┣ 📜profile_media.py
+ ┃ ┣ 📜response.py
+ ┃ ┗ 📜utils.py
+ ┣ 📜__init__.py
+ ┣ 📜config.py
+ ┣ 📜extensions.py
+ ┗ 📜wsgi.py

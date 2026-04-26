@@ -40,7 +40,7 @@ export default function Login() {
             }
 
             console.log("sa----------------------------", data);
-            if (!data.data?.is_profile_complete) {
+            if (!data.data.is_profile_complete) {
                 router.push("/step1");
             } else {
                 router.push("/home");

@@ -66,8 +66,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             // Helpers
             const formatUrl = (url: string | null) => {
                 if (!url) return url;
-                if (url.startsWith('/static')) {
-                    return `http://localhost:5001${url}`;
+                if (url.startsWith("http")) return url;
+
+                const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+                if (cleanUrl.startsWith("/static")) {
+                    return `http://localhost:5001${cleanUrl}`;
                 }
                 return url;
             };

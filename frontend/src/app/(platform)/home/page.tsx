@@ -204,7 +204,7 @@ export default function HomePage() {
             });
             const json = await res.json();
             const data = json.data;
-            console.log("data", data);
+            // console.log("data", data);
             
             if (data && data.profiles) {
                 setRawProfiles(prev => {
