@@ -21,6 +21,7 @@ def get_openapi_spec() -> dict:
             {"name": "Auth", "description": "Authentication endpoints"},
             {"name": "Accounts", "description": "Authenticated account profile endpoints"},
             {"name": "Profile", "description": "Profile views and likes endpoints"},
+            {"name": "Notifications", "description": "Notification management endpoints"},
         ],
         "components": {
             "securitySchemes": {
@@ -147,6 +148,20 @@ def get_openapi_spec() -> dict:
                     "properties": {
                         "token": {"type": "string"},
                         "new_password": {"type": "string", "minLength": 8},
+                    },
+                },
+                "Notification": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "user_id": {"type": "integer"},
+                        "actor_id": {"type": "integer", "nullable": True},
+                        "type": {"type": "string", "enum": ["LIKE", "VIEW", "MESSAGE", "MATCH", "UNLIKE"]},
+                        "message": {"type": "string"},
+                        "data": {"type": "object", "nullable": True},
+                        "entity_id": {"type": "integer", "nullable": True},
+                        "is_read": {"type": "boolean"},
+                        "created_at": {"type": "string", "format": "date-time"},
                     },
                 },
             },
@@ -937,6 +952,118 @@ def get_openapi_spec() -> dict:
                         "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
                         "401": {"description": "Unauthorized"},
                         "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
+            "/api/v1/notifications/": {
+                "get": {
+                    "tags": ["Notifications"],
+                    "summary": "Get authenticated user notifications",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 1, "default": 20},
+                        },
+                        {
+                            "name": "offset",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "minimum": 0, "default": 0},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Notifications retrieved successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "notifications": {
+                                                        "type": "array",
+                                                        "items": {"$ref": "#/components/schemas/Notification"},
+                                                    },
+                                                    "count": {"type": "integer"},
+                                                },
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/notifications/{id}/read": {
+                "patch": {
+                    "tags": ["Notifications"],
+                    "summary": "Mark a notification as read",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "integer"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Notification marked as read",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "notification": {"$ref": "#/components/schemas/Notification"},
+                                                },
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                        "404": {"description": "Notification not found"},
+                    },
+                }
+            },
+            "/api/v1/notifications/read-all": {
+                "patch": {
+                    "tags": ["Notifications"],
+                    "summary": "Mark all notifications as read",
+                    "security": [{"bearerAuth": []}],
+                    "responses": {
+                        "200": {
+                            "description": "All notifications marked as read",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {"type": "object"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
                     },
                 }
             },

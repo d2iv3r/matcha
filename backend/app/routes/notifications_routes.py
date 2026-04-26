@@ -14,3 +14,8 @@ notifications_bp.add_url_rule(
     view_func=jwt_required()(NotificationsController.mark_notification_read),
     methods=["PATCH"],
 )
+notifications_bp.add_url_rule(
+    "/read-all",
+    view_func=jwt_required()(NotificationsController.mark_all_read),
+    methods=["PATCH"],
+)

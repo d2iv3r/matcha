@@ -72,9 +72,11 @@ CREATE INDEX IF NOT EXISTS idx_profile_likes_liker_user ON profile_likes(liker_u
 CREATE TABLE IF NOT EXISTS notifications (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(50) NOT NULL,
+    actor_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('LIKE', 'VIEW', 'MESSAGE', 'MATCH', 'UNLIKE')),
     message VARCHAR(500),
     data JSONB,
+    entity_id BIGINT,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

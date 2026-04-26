@@ -16,7 +16,53 @@ class ProfileLikesService:
             profile_user_id: ID of the profile being liked
             liker_user_id: ID of the user liking the profile
         """
+        is_match_already = ProfileLikesService.has_liked_profile(liker_user_id, profile_user_id)
         ProfileLikesModel.record_like(profile_user_id, liker_user_id)
+        
+        from app.services.notifications_service import NotificationsService
+        from app.models.profile_model import ProfileModel
+        
+        # Fetch actor info
+        actor_profile = ProfileModel.get_my_profile_by_user_id(liker_user_id)
+        actor_data = {
+            "username": actor_profile.username if actor_profile else "Unknown",
+            "avatar": actor_profile.avatar if actor_profile else None
+        }
+
+        if is_match_already:
+            # Fetch target info for the mutual match notification
+            target_profile = ProfileModel.get_my_profile_by_user_id(profile_user_id)
+            target_data = {
+                "username": target_profile.username if target_profile else "Unknown",
+                "avatar": target_profile.avatar if target_profile else None
+            }
+
+            # Send MATCH notification to both users
+            NotificationsService.send_notification(
+                user_id=profile_user_id,
+                notification_type="MATCH",
+                actor_id=liker_user_id,
+                message=f"You matched with {actor_data['username']}!",
+                data=actor_data,
+                entity_id=liker_user_id
+            )
+            NotificationsService.send_notification(
+                user_id=liker_user_id,
+                notification_type="MATCH",
+                actor_id=profile_user_id,
+                message=f"You matched with {target_data['username']}!",
+                data=target_data,
+                entity_id=profile_user_id
+            )
+        else:
+            NotificationsService.send_notification(
+                user_id=profile_user_id,
+                notification_type="LIKE",
+                actor_id=liker_user_id,
+                message=f"{actor_data['username']} liked your profile",
+                data=actor_data,
+                entity_id=liker_user_id
+            )
 
     @staticmethod
     def remove_profile_like(profile_user_id: int, liker_user_id: int) -> None:
@@ -27,6 +73,25 @@ class ProfileLikesService:
             liker_user_id: ID of the user unliking the profile
         """
         ProfileLikesModel.remove_like(profile_user_id, liker_user_id)
+        
+        from app.services.notifications_service import NotificationsService
+        from app.models.profile_model import ProfileModel
+        
+        # Fetch actor info
+        actor_profile = ProfileModel.get_my_profile_by_user_id(liker_user_id)
+        actor_data = {
+            "username": actor_profile.username if actor_profile else "Unknown",
+            "avatar": actor_profile.avatar if actor_profile else None
+        }
+
+        NotificationsService.send_notification(
+            user_id=profile_user_id,
+            notification_type="UNLIKE",
+            actor_id=liker_user_id,
+            message=f"{actor_data['username']} unliked your profile",
+            data=actor_data,
+            entity_id=liker_user_id
+        )
 
     @staticmethod
     def get_profile_like_count(user_id: int) -> int:

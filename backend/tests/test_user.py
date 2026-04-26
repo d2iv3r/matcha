@@ -1,6 +1,8 @@
 """Tests for user-related functionality."""
 
+import os
 from io import BytesIO
+from unittest.mock import MagicMock
 
 from flask_jwt_extended import create_access_token
 from werkzeug.datastructures import MultiDict
@@ -375,6 +377,14 @@ def test_record_profile_view_success(app, monkeypatch):
     """Test recording a profile view."""
     with app.app_context():
         monkeypatch.setattr(
+            "app.models.profile_model.ProfileModel.get_my_profile_by_user_id",
+            lambda user_id: MagicMock(username="tester", avatar=None)
+        )
+        monkeypatch.setattr(
+            "app.services.notifications_service.NotificationsService.send_notification",
+            lambda **kwargs: None
+        )
+        monkeypatch.setattr(
             "app.models.profile_views_model.ProfileViewsModel.record_view",
             lambda profile_user_id, viewer_user_id: True,
         )
@@ -486,6 +496,10 @@ def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch)
         lambda username: FakeProfile(2, username),
     )
 
+    monkeypatch.setattr(
+        "app.controllers.profile_controller.ProfileViewsService.record_profile_view",
+        lambda profile_user_id, viewer_user_id: None,
+    )
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
         lambda viewer_id, profile_user_id: True,

@@ -17,6 +17,25 @@ class ProfileViewsService:
             viewer_user_id: ID of the user viewing the profile
         """
         ProfileViewsModel.record_view(profile_user_id, viewer_user_id)
+        
+        from app.services.notifications_service import NotificationsService
+        from app.models.profile_model import ProfileModel
+        
+        # Fetch actor info
+        actor_profile = ProfileModel.get_my_profile_by_user_id(viewer_user_id)
+        actor_data = {
+            "username": actor_profile.username if actor_profile else "Unknown",
+            "avatar": actor_profile.avatar if actor_profile else None
+        }
+
+        NotificationsService.send_notification(
+            user_id=profile_user_id,
+            notification_type="VIEW",
+            actor_id=viewer_user_id,
+            message=f"{actor_data['username']} viewed your profile",
+            data=actor_data,
+            entity_id=viewer_user_id
+        )
 
     @staticmethod
     def get_profile_view_count(user_id: int) -> int:
