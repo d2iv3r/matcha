@@ -66,8 +66,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             // Helpers
             const formatUrl = (url: string | null) => {
                 if (!url) return url;
-                if (url.startsWith('/static')) {
-                    return `http://localhost:5001${url}`;
+                if (url.startsWith("http")) return url;
+
+                const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+                if (cleanUrl.startsWith("/static")) {
+                    return `http://localhost:5001${cleanUrl}`;
                 }
                 return url;
             };
@@ -90,8 +93,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
             if (data?.profile) {
                 data.profile.avatar = formatUrl(data.profile.avatar);
-                if (data.profile.pictures && Array.isArray(data.profile.pictures)) {
-                    data.profile.pictures = data.profile.pictures.map(formatUrl);
+                if (data.profile.pictures) {
+                    data.profile.pictures = parsePostgresArray(data.profile.pictures).map(formatUrl);
                 }
                 data.profile.interests = parsePostgresArray(data.profile.interests);
             }

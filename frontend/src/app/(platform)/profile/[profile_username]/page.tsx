@@ -894,15 +894,20 @@ export default function UnifiedProfilePage() {
 
     const isOwner = myProfile?.profile?.username === profile_username;
 
+    const hasFetched = useRef(false);
+
     // Main profile fetch
     useEffect(() => {
         if (!profile_username || isMyProfileLoading) return;
+        if (hasFetched.current) return;
 
         if (isOwner && myProfile) {
             setProfileData(myProfile.profile);
             setIsFetching(false);
+            hasFetched.current = true;
         } else if (!isOwner) {
             setIsFetching(true);
+            hasFetched.current = true;
             fetch(
                 `http://localhost:5001/api/v1/accounts/profile/${profile_username}`,
                 { credentials: "include" },
@@ -925,6 +930,7 @@ export default function UnifiedProfilePage() {
                 .catch((err) => {
                     console.error("Profile fetch error:", err);
                     setProfileData(null);
+                    hasFetched.current = false; // Allow retry on error
                 })
                 .finally(() => setIsFetching(false));
         }

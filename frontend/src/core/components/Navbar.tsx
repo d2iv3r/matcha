@@ -10,7 +10,7 @@ import {
     User,
     MessageCircle,
     Settings,
-    BellDot,
+    Bell,
     Search,
     LogOut,
     Menu,
@@ -19,20 +19,28 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useProfile } from "@/core/contexts/ProfileContext";
+import { useNotifications } from "@/core/contexts/NotificationContext";
 
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const { profile, isLoading } = useProfile();
+    const { unreadCount } = useNotifications();
     const [isMinimized, setIsMinimized] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const NAV_ITEMS = [
         { name: "Home", href: "/home", icon: HouseHeart },
-        { name: "Profile", href: profile?.profile?.username ? `/profile/${profile.profile.username}` : "/profile", icon: User },
+        {
+            name: "Profile",
+            href: profile?.profile?.username
+                ? `/profile/${profile.profile.username}`
+                : "/profile",
+            icon: User,
+        },
         { name: "Chat", href: "/chat", icon: MessageCircle },
         { name: "Advanced Search", href: "/advance-search", icon: Search },
-        { name: "Notifications", href: "/notifications", icon: BellDot },
+        { name: "Notifications", href: "/notifications", icon: Bell },
         { name: "Settings", href: "/settings", icon: Settings },
     ];
 
@@ -199,10 +207,17 @@ export default function Navbar() {
                                         : "hover:bg-[#DFD8FF] hover:text-[#555EFF] text-gray-700"
                                 }`}
                             >
-                                <item.icon size={20} className="shrink-0" />
-                                <p className="text-sm font-medium">
-                                    {item.name}
-                                </p>
+                                <div className="flex items-center gap-4">
+                                    <item.icon size={20} className="shrink-0" />
+                                    <p className="text-sm font-medium">
+                                        {item.name}
+                                    </p>
+                                </div>
+                                {item.name === "Notifications" && unreadCount > 0 && (
+                                    <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
@@ -267,18 +282,33 @@ export default function Navbar() {
                             className={`flex flex-row items-center rounded-xl p-2 transition-colors duration-200 cursor-pointer ${
                                 isMinimized
                                     ? "justify-center w-10 h-10"
-                                    : "gap-4"
+                                    : "justify-between w-full px-3"
                             } ${
                                 isActive
                                     ? "bg-[#DFD8FF] text-[#555EFF]"
                                     : "hover:bg-[#DFD8FF] hover:text-[#555EFF] text-gray-700"
                             }`}
                         >
-                            <item.icon size={20} className="shrink-0" />
-                            {!isMinimized && (
-                                <p className="text-xs font-medium whitespace-nowrap animate-in fade-in duration-500">
-                                    {item.name}
-                                </p>
+                            <div className={`flex items-center ${isMinimized ? "" : "gap-4"}`}>
+                                <div className="relative">
+                                    <item.icon size={20} className="shrink-0" />
+                                    {isMinimized && item.name === "Notifications" && unreadCount > 0 && (
+                                        <span className="absolute -top-2 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-[#555EFF] text-white text-[9px] font-bold rounded-full px-1 border border-white shadow-sm animate-in zoom-in duration-300">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </div>
+                                {!isMinimized && (
+                                    <p className="text-xs font-medium whitespace-nowrap animate-in fade-in duration-500">
+                                        {item.name}
+                                    </p>
+                                )}
+                            </div>
+                            
+                            {!isMinimized && item.name === "Notifications" && unreadCount > 0 && (
+                                <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
                             )}
                         </Link>
                     );

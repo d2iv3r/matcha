@@ -175,8 +175,9 @@ class ProfileController:
             raw_payload["avatar"] = avatar
 
         pictures = request.files.getlist("pictures")
-        if pictures:
-            raw_payload["pictures"] = pictures
+        existing_pictures = request.form.getlist("pictures")
+        if pictures or existing_pictures:
+            raw_payload["pictures"] = pictures + existing_pictures
 
         payload = UpdateProfileMediaSchema.model_validate(raw_payload)
         data = payload.model_dump(exclude_none=True)
