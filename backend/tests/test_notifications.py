@@ -117,7 +117,7 @@ def test_mark_all_read_success(client, app, monkeypatch):
         assert user_id == 1
         mark_all_called["called"] = True
 
-    monkeypatch.setattr(NotificationsService, "mark_all_read", staticmethod(fake_mark_all_read))
+    monkeypatch.setattr("app.controllers.notifications_controller.NotificationsService.mark_all_read", staticmethod(fake_mark_all_read))
 
     response = client.patch(
         '/api/v1/notifications/read-all',
@@ -275,10 +275,13 @@ def test_chat_message_triggers_notification(app, monkeypatch):
         assert kwargs["notification_type"] == "MESSAGE"
         assert kwargs["actor_id"] == 2
         assert kwargs["message"] == "New message from sender_user"
-        assert kwargs["data"]["username"] == "sender_user"
+        assert kwargs["data"]["sender_username"] == "sender_user"
         assert kwargs["data"]["content"] == "Hello"
 
     monkeypatch.setattr(NotificationsService, "send_notification", fake_send_notification)
+    monkeypatch.setattr("app.services.chat_service.MessageModel.is_match", lambda s, r: True)
+    monkeypatch.setattr("app.services.chat_service.ConversationModel.get_or_create", lambda s, r: MagicMock(id=5))
+    monkeypatch.setattr("app.services.chat_service.MessageModel.create", lambda c, s, ct: MagicMock(id=10, to_dict=lambda: {}))
 
-    ChatService.send_message(sender_id=2, receiver_id=1, message_content="Hello", message_id=10)
+    ChatService.send_message(sender_id=2, receiver_id=1, content="Hello")
     assert notify_called["called"] is True

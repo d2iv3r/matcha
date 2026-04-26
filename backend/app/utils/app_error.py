@@ -74,8 +74,5 @@ def register_error_handlers(app) -> None:
         return error(exc.description, exc.code or 500)
 
     @app.errorhandler(Exception)
-    def handle_generic_exception(exc: Exception):
-        print(f"DEBUG: Unhandled exception: {exc}")
-        import traceback
-        traceback.print_exc()
+    def handle_generic_exception(_exc: Exception):
         return error("Internal server error", 500)

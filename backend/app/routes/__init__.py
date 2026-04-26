@@ -6,5 +6,6 @@ from .docs_routes import docs_bp
 from .profile_routes import profile_bp
 from .accounts_route import accounts_bp
 from .notifications_routes import notifications_bp
+from .chat_routes import chat_bp
 
-__all__ = ["api_bp", "auth_bp", "docs_bp", "profile_bp", "accounts_bp", "notifications_bp"]
+__all__ = ["api_bp", "auth_bp", "docs_bp", "profile_bp", "accounts_bp", "notifications_bp", "chat_bp"]

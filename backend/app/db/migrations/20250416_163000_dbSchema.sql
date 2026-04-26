@@ -84,3 +84,23 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+
+CREATE TABLE IF NOT EXISTS conversations (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user1_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user2_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user1_id, user2_id)
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at DESC);

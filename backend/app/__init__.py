@@ -11,7 +11,7 @@ from app.middlewares.middleware import register_middleware
 from app.extensions import register_extensions, socketio
 from app.utils.app_error import register_error_handlers
 
-from app.routes import api_bp, auth_bp, docs_bp, profile_bp, accounts_bp, notifications_bp
+from app.routes import api_bp, auth_bp, docs_bp, profile_bp, accounts_bp, notifications_bp, chat_bp
 
 
 logger = logging.getLogger(__name__)
@@ -73,6 +73,7 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         app.register_blueprint(accounts_bp)
         app.register_blueprint(profile_bp)
         app.register_blueprint(notifications_bp)
+        app.register_blueprint(chat_bp)
         
         logger.info("[APP] App created successfully!")
     except Exception as e:

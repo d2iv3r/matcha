@@ -1,8 +1,7 @@
 # utils/response.py
 from flask import jsonify, Response
 
-def success(data: dict | list | None, message: str = "Success", status: int = 200) -> tuple[Response, int]:
-    print("success")
+def success(data: dict | list | None = None, message: str = "Success", status: int = 200) -> tuple[Response, int]:
     return jsonify({
         "success": True,
         "message": message,
