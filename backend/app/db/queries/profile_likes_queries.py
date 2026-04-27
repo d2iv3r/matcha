@@ -44,3 +44,23 @@ WHERE pl.profile_user_id = %s
 ORDER BY pl.liked_at DESC
 LIMIT %s;
 """
+
+GET_PROFILE_MATCHES = """
+SELECT 
+    u.id as liker_id,
+    u.username as liker_username,
+    u.first_name as liker_first_name,
+    u.last_name as liker_last_name,
+    p.age as liker_age,
+    p.city as liker_city,
+    p.country as liker_country,
+    p.avatar as liker_avatar
+FROM profile_likes pl1
+JOIN profile_likes pl2 ON pl1.profile_user_id = pl2.liker_user_id 
+    AND pl1.liker_user_id = pl2.profile_user_id
+JOIN users u ON u.id = pl1.liker_user_id
+LEFT JOIN profiles p ON p.user_id = pl1.liker_user_id
+WHERE pl1.profile_user_id = %s
+ORDER BY pl1.liked_at DESC
+LIMIT %s;
+"""

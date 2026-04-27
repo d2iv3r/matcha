@@ -48,6 +48,14 @@ class BaseConfig:
         os.environ.get("SOCKETIO_MAX_HTTP_BUFFER_SIZE", 1000000)
     )
 
+    # 42 Intra OAuth2
+    INTRA42_CLIENT_ID = os.environ.get("INTRA42_CLIENT_ID")
+    INTRA42_CLIENT_SECRET = os.environ.get("INTRA42_CLIENT_SECRET")
+    INTRA42_AUTHORIZE_URL = os.environ.get("INTRA42_AUTHORIZE_URL", "https://api.intra.42.fr/oauth/authorize")
+    INTRA42_ACCESS_TOKEN_URL = os.environ.get("INTRA42_ACCESS_TOKEN_URL", "https://api.intra.42.fr/oauth/token")
+    INTRA42_USER_INFO_URL = os.environ.get("INTRA42_USER_INFO_URL", "https://api.intra.42.fr/v2/me")
+    INTRA42_REDIRECT_URI = os.environ.get("INTRA42_REDIRECT_URI", f"{BACKEND_URL}/api/auth/oauth2/42/callback")
+
 
 class DevConfig(BaseConfig):
     DEBUG = True

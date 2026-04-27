@@ -164,6 +164,62 @@ class AuthService:
             raise BadRequestError("Failed to update user password")
         PasswordResetTokenModel.delete_by_id(int(record.id))
 
+    @staticmethod
+    def handle_oauth_login(provider: str, user_data: dict) -> UserModel:
+        """
+        Handle OAuth login: find, create or link user.
+        
+        Args:
+            provider: OAuth provider name (e.g., 'intra42')
+            user_data: Normalized user data (email, username, avatar, provider_id)
+        Returns:
+            UserModel instance
+        """
+        email = user_data.get("email")
+        provider_id = str(user_data.get("provider_id"))
+        username = user_data.get("username")
+
+        # 1. Try to find user by OAuth account
+        user = UserModel.get_user_by_oauth(provider, provider_id)
+        if user:
+            return user
+
+        # 2. Try to find user by email
+        if email:
+            user = UserModel.get_user_by_email(email)
+            if user:
+                # Link existing user to this OAuth provider
+                UserModel.link_oauth_account(int(user.id), provider, provider_id)
+                return user
+
+        # 3. Create new user if not found
+        # For OAuth users, we can generate a random password or leave it empty if allowed
+        # Here we'll generate a placeholder password hash
+        placeholder_password = hash_password(generate_token(16))
+        
+        # Ensure username is unique
+        base_username = username or email.split("@")[0] if email else "user"
+        unique_username = base_username
+        counter = 1
+        while UserModel.is_username_existing(unique_username):
+            unique_username = f"{base_username}{counter}"
+            counter += 1
+
+        new_user = UserModel(
+            username=unique_username,
+            email=email,
+            password_hash=placeholder_password,
+            is_active=True # OAuth users are pre-verified
+        ).create_user()
+
+        if not new_user:
+            raise BadRequestError("Failed to create user from OAuth")
+
+        # Link the new user to the OAuth account
+        UserModel.link_oauth_account(int(new_user.id), provider, provider_id)
+        
+        return new_user
+
 
 
     # @staticmethod

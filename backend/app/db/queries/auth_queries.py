@@ -47,3 +47,17 @@ DELETE_PASSWORD_RESET_TOKEN_BY_ID = """
 DELETE FROM password_reset_tokens
 WHERE id = %s
 """
+
+GET_USER_BY_OAUTH = """
+SELECT u.id, u.username, u.email, u.is_active, u.is_profile_complete
+FROM users u
+JOIN oauth_accounts oa ON u.id = oa.user_id
+WHERE oa.provider = %s AND oa.provider_user_id = %s
+LIMIT 1
+"""
+
+LINK_OAUTH_ACCOUNT = """
+INSERT INTO oauth_accounts (user_id, provider, provider_user_id)
+VALUES (%s, %s, %s)
+ON CONFLICT (provider, provider_user_id) DO NOTHING
+"""

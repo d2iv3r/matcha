@@ -443,6 +443,34 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
+            "/api/auth/oauth2/42/login": {
+                "get": {
+                    "tags": ["Auth"],
+                    "summary": "Initiate 42 Intra OAuth2 login",
+                    "parameters": [
+                        {
+                            "name": "redirect_uri",
+                            "in": "query",
+                            "required": False,
+                            "description": "Frontend redirect URI after successful login",
+                            "schema": {"type": "string"}
+                        }
+                    ],
+                    "responses": {
+                        "302": {"description": "Redirect to 42 Intra authorization page"}
+                    },
+                }
+            },
+            "/api/auth/oauth2/42/callback": {
+                "get": {
+                    "tags": ["Auth"],
+                    "summary": "Handle 42 Intra OAuth2 callback",
+                    "responses": {
+                        "302": {"description": "Redirect to frontend dashboard with cookies set"},
+                        "400": {"description": "OAuth error or user creation failed"}
+                    },
+                }
+            },
             "/api/v1/accounts/complete-profile": {
                 "post": {
                     "tags": ["Accounts"],
@@ -931,6 +959,62 @@ def get_openapi_spec() -> dict:
                                                                 "liker_avatar": {"type": "string", "nullable": True},
                                                                 "is_match": {"type": "boolean"},
                                                                 "is_liked": {"type": "boolean"},
+                                                            },
+                                                        },
+                                                    },
+                                                    "count": {"type": "integer"},
+                                                },
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Profile completion required"},
+                    },
+                }
+            },
+            "/api/v1/profile/matches": {
+                "get": {
+                    "tags": ["Profile"],
+                    "summary": "Get list of users you have matched with (mutual likes)",
+                    "security": [{"bearerAuth": []}],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "default": 10, "minimum": 1, "maximum": 100},
+                            "description": "Maximum number of matches to return",
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "List of matches retrieved successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "matches": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "liker_id": {"type": "integer"},
+                                                                "liker_username": {"type": "string", "nullable": True},
+                                                                "liker_first_name": {"type": "string", "nullable": True},
+                                                                "liker_last_name": {"type": "string", "nullable": True},
+                                                                "liker_age": {"type": "integer", "nullable": True},
+                                                                "liker_city": {"type": "string", "nullable": True},
+                                                                "liker_country": {"type": "string", "nullable": True},
+                                                                "liker_avatar": {"type": "string", "nullable": True},
                                                             },
                                                         },
                                                     },

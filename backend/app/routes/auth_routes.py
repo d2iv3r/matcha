@@ -17,5 +17,9 @@ auth_bp.add_url_rule("/logout", view_func=jwt_required()(AuthController.logout),
 auth_bp.add_url_rule("/request-password-reset", view_func=AuthController.request_password_reset, methods=["POST"])
 auth_bp.add_url_rule("/confirm-password-reset", view_func=AuthController.reset_password, methods=["POST"])
 
+# OAuth2 Routes
+auth_bp.add_url_rule("/oauth2/42/login", view_func=AuthController.oauth_42_login, methods=["GET"])
+auth_bp.add_url_rule("/oauth2/42/callback", view_func=AuthController.oauth_42_callback, methods=["GET"])
+
 # auth_bp.add_url_rule("/refresh", view_func=AuthController.refresh, methods=["POST"])
 # auth_bp.add_url_rule("/me", view_func=AuthController.me, methods=["GET"])

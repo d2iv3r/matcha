@@ -10,6 +10,7 @@ from app.db.queries.profile_likes_queries import (
     GET_PROFILE_LIKES_COUNT,
     GET_PROFILE_RECENT_LIKES,
     HAS_PROFILE_LIKE,
+    GET_PROFILE_MATCHES,
 )
 from app.models.base_model import BaseModel
 
@@ -64,6 +65,11 @@ class ProfileLikesModel(BaseModel):
     def get_recent_likes(cls, profile_user_id: int, limit: int = 10) -> list["ProfileLikesModel"]:
         """Get recent profile likers with information."""
         return cls.from_rows(cls.db_manager().fetch_all(GET_PROFILE_RECENT_LIKES, (profile_user_id, limit)))
+
+    @classmethod
+    def get_matches(cls, profile_user_id: int, limit: int = 10) -> list["ProfileLikesModel"]:
+        """Get mutual likes (matches) with information."""
+        return cls.from_rows(cls.db_manager().fetch_all(GET_PROFILE_MATCHES, (profile_user_id, limit)))
 
     @classmethod
     def has_like(cls, profile_user_id: int, liker_user_id: int) -> bool:

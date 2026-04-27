@@ -125,6 +125,25 @@ class ProfileLikesService:
         return data
 
     @staticmethod
+    def get_matches(user_id: int, limit: int = 10) -> list[dict]:
+        """Get list of users who have a mutual match with the user.
+        
+        Args:
+            user_id: ID of the user
+            limit: Maximum number of matches to return (default 10)
+            
+        Returns:
+            List of match dictionaries
+        """
+        matches = ProfileLikesModel.get_matches(user_id, limit=limit)
+        if not matches:
+            return []
+        data = []
+        for match in matches:
+            data.append(match.to_dict())
+        return data
+
+    @staticmethod
     def has_liked_profile(profile_user_id: int, liker_user_id: int) -> bool:
         """Return True if liker_user_id has liked profile_user_id."""
         return ProfileLikesModel.has_like(profile_user_id, liker_user_id)

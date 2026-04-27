@@ -3,7 +3,7 @@
 from operator import is_
 
 from flask import make_response, request
-from flask_jwt_extended import create_access_token, create_refresh_token, create_refresh_token,set_refresh_cookies, set_access_cookies, unset_jwt_cookies
+from flask_jwt_extended import create_access_token, create_refresh_token, set_refresh_cookies, set_access_cookies, unset_jwt_cookies
 
 from app.schemas.auth_requests_schemas import (
     LoginSchema,
@@ -14,6 +14,7 @@ from app.schemas.auth_requests_schemas import (
 from app.utils.app_error import BadRequestError
 from app.services.auth_service import AuthService
 from app.utils.mail import MailService
+from app.extensions import oauth
 from app.utils.response import created, error, success
 
 
@@ -104,6 +105,53 @@ class AuthController:
         print(f"Received password reset request with token: {data.token}")
         AuthService.reset_password(data.token, data.new_password)
         return success(message="Password reset successful", data={})
+
+    @staticmethod
+    def oauth_42_login():
+        """Redirect to 42 Intra for authentication."""
+        from flask import current_app
+        redirect_uri = request.args.get("redirect_uri") or current_app.config["INTRA42_REDIRECT_URI"]
+        # Store redirect_uri in session if needed, but here we'll just use the default or one from config
+        return oauth.intra42.authorize_redirect(redirect_uri)
+
+    @staticmethod
+    def oauth_42_callback():
+        """Handle 42 Intra OAuth callback."""
+        try:
+            token = oauth.intra42.authorize_access_token()
+            resp = oauth.intra42.get("v2/me", token=token)
+            
+            if not resp.ok:
+                raise BadRequestError(f"Failed to fetch user info from 42 Intra: {resp.status_code} {resp.text}")
+                
+            user_info = resp.json()
+        except Exception as e:
+            if isinstance(e, BadRequestError):
+                raise e
+            raise BadRequestError(f"Error during OAuth callback: {str(e)}")
+
+        # Normalize user data
+        normalized_data = {
+            "email": user_info.get("email"),
+            "username": user_info.get("login"),
+            "avatar": user_info.get("image", {}).get("link"),
+            "provider_id": user_info.get("id"),
+        }
+        user = AuthService.handle_oauth_login("intra42", normalized_data)
+
+        # Issue JWT
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        # Redirect to frontend dashboard
+        frontend_url = request.args.get("frontend_url") or "http://localhost:3000/dashboard"
+        response = make_response("", 302)
+        response.headers["Location"] = frontend_url
+
+        set_refresh_cookies(response, refresh_token)
+        set_access_cookies(response, access_token)
+
+        return response
 
     # @staticmethod
     # @jwt_required()

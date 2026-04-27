@@ -74,6 +74,25 @@ class ProfileLikesController:
             message="Profile likers retrieved successfully",
             data=data
         )
+    
+    @staticmethod
+    def get_profile_matches():
+        """Get the list of users who have matched with the current user."""
+        user_id = int(get_jwt_identity())
+        
+        limit = request.args.get("limit", 10, type=int)
+        if limit < 1 or limit > 100:
+            limit = 10
+            
+        matches = ProfileLikesService.get_matches(user_id, limit=limit)
+        
+        return success(
+            message="Profile matches retrieved successfully",
+            data={
+                "matches": matches,
+                "count": len(matches)
+            }
+        )
 
     @staticmethod
     def get_like_count():

@@ -15,6 +15,8 @@ from app.db.queries import (
     MARK_PROFILE_COMPLETE,
     UPDATE_USER_PASSWORD_BY_ID,
     UPDATE_USER_BY_ID,
+    GET_USER_BY_OAUTH,
+    LINK_OAUTH_ACCOUNT,
 )
 from app.models.base_model import BaseModel
 
@@ -81,6 +83,15 @@ class UserModel(BaseModel):
                 ),
             )
         )
+
+    @classmethod
+    def get_user_by_oauth(cls, provider: str, oauth_id: str) -> Optional["UserModel"]:
+        return cls._from_row(cls.db_manager().fetch_one(GET_USER_BY_OAUTH, (provider, oauth_id)))
+
+    @classmethod
+    def link_oauth_account(cls, user_id: int, provider: str, oauth_id: str) -> bool:
+        affected_rows = cls.db_manager().execute(LINK_OAUTH_ACCOUNT, (user_id, provider, oauth_id))
+        return affected_rows > 0
     
     @classmethod
     def get_user_by_email(cls, email: str) -> Optional["UserModel"]:
