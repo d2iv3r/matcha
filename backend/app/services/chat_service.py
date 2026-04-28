@@ -10,7 +10,18 @@ class ChatService:
 
     @staticmethod
     def get_user_conversations(user_id: int) -> list[ConversationModel]:
-        return ConversationModel.get_user_conversations(user_id)
+        conversations = ConversationModel.get_user_conversations(user_id)
+        
+        from app.services.block_service import BlockService
+        blocked_ids = BlockService.get_blocked_users_ids(user_id)
+        
+        if not blocked_ids:
+            return conversations
+            
+        return [
+            conv for conv in conversations 
+            if conv.user1_id not in blocked_ids and conv.user2_id not in blocked_ids
+        ]
 
     @staticmethod
     def get_conversation_messages(user_id: int, conversation_id: int, limit: int = 20, offset: int = 0) -> list[MessageModel]:
@@ -23,6 +34,10 @@ class ChatService:
     def send_message(sender_id: int, receiver_id: int, content: str) -> MessageModel:
         if not content or not content.strip():
             raise BadRequestError("Message content cannot be empty")
+
+        from app.services.block_service import BlockService
+        if BlockService.is_blocked(sender_id, receiver_id):
+            raise ForbiddenError("You cannot message a blocked user or a user who has blocked you")
 
         # 1. Validate match
         if not MessageModel.is_match(sender_id, receiver_id):

@@ -13,7 +13,7 @@ def get_openapi_spec() -> dict:
         "info": {
             "title": "Matcha API",
             "version": "1.0.0",
-            "description": "API documentation for authentication, accounts, and profile interaction endpoints.",
+            "description": "API documentation for health, auth, accounts, profiles, notifications, and chat endpoints.",
         },
         "servers": [{"url": "/", "description": "Current server"}],
         "tags": [
@@ -221,7 +221,82 @@ def get_openapi_spec() -> dict:
                 "get": {
                     "tags": ["System"],
                     "summary": "API root",
-                    "responses": {"200": {"description": "API metadata"}},
+                    "responses": {
+                        "200": {
+                            "description": "API metadata",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "message": {"type": "string"},
+                                            "version": {"type": "string"},
+                                            "endpoints": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "health": {"type": "string"},
+                                                    "auth": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "register": {"type": "string"},
+                                                            "signup": {"type": "string"},
+                                                            "login": {"type": "string"},
+                                                            "logout": {"type": "string"},
+                                                            "verify_email": {"type": "string"},
+                                                            "request_password_reset": {"type": "string"},
+                                                            "confirm_password_reset": {"type": "string"},
+                                                            "oauth2_login": {"type": "string"},
+                                                            "oauth2_callback": {"type": "string"},
+                                                        },
+                                                    },
+                                                    "accounts": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "complete_profile": {"type": "string"},
+                                                            "profile": {"type": "string"},
+                                                            "profile_media": {"type": "string"},
+                                                            "profile_by_username": {"type": "string"},
+                                                            "profiles_search": {"type": "string"},
+                                                            "profiles": {"type": "string"},
+                                                        },
+                                                    },
+                                                    "profile": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "viewers": {"type": "string"},
+                                                            "like": {"type": "string"},
+                                                            "likes": {"type": "string"},
+                                                            "unlike": {"type": "string"},
+                                                            "matches": {"type": "string"},
+                                                            "block": {"type": "string"},
+                                                            "unblock": {"type": "string"},
+                                                            "blocks": {"type": "string"},
+                                                        },
+                                                    },
+                                                    "notifications": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "list": {"type": "string"},
+                                                            "mark_read": {"type": "string"},
+                                                            "mark_all_read": {"type": "string"},
+                                                        },
+                                                    },
+                                                    "chat": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "conversations": {"type": "string"},
+                                                            "messages": {"type": "string"},
+                                                            "mark_read": {"type": "string"},
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    }
+                                }
+                            },
+                        }
+                    },
                 }
             },
             "/api/auth/signup": {
@@ -1114,14 +1189,14 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/v1/notifications/{id}/read": {
+            "/api/v1/notifications/{notification_id}/read": {
                 "patch": {
                     "tags": ["Notifications"],
                     "summary": "Mark a notification as read",
                     "security": [{"bearerAuth": []}],
                     "parameters": [
                         {
-                            "name": "id",
+                            "name": "notification_id",
                             "in": "path",
                             "required": True,
                             "schema": {"type": "integer"},
@@ -1206,13 +1281,13 @@ def get_openapi_spec() -> dict:
                     },
                 }
             },
-            "/api/v1/chat/conversations/{id}/messages": {
+            "/api/v1/chat/conversations/{conversation_id}/messages": {
                 "get": {
                     "tags": ["Chat"],
                     "summary": "Get message history for a conversation",
                     "security": [{"bearerAuth": []}],
                     "parameters": [
-                        {"name": "id", "in": "path", "required": True, "schema": {"type": "integer"}},
+                        {"name": "conversation_id", "in": "path", "required": True, "schema": {"type": "integer"}},
                         {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer", "default": 20}},
                         {"name": "offset", "in": "query", "required": False, "schema": {"type": "integer", "default": 0}},
                     ],

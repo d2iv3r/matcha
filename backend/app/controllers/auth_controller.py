@@ -144,7 +144,8 @@ class AuthController:
         refresh_token = create_refresh_token(identity=str(user.id))
 
         # Redirect to frontend dashboard
-        frontend_url = request.args.get("frontend_url") or "http://localhost:3000/dashboard"
+        from flask import current_app
+        frontend_url = request.args.get("frontend_url") or current_app.config["INTRA42_FRONTEND_URL"]
         response = make_response("", 302)
         response.headers["Location"] = frontend_url
 
