@@ -9,6 +9,7 @@ from werkzeug.datastructures import MultiDict
 
 from app.services.profile_service import ProfileService
 from app.services.profile_views_service import ProfileViewsService
+from app.services.block_service import BlockService
 from app.utils.app_error import ForbiddenError
 
 
@@ -437,8 +438,9 @@ def test_get_profile_by_user_id_records_view(client, app, monkeypatch):
     monkeypatch.setattr(
         ProfileService,
         "get_profile_by_username",
-        lambda username: FakeProfile(2, username),
+        lambda username, requester_id=None: FakeProfile(2, username),
     )
+    monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
 
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileLikesService.is_mutual_like",
@@ -493,8 +495,9 @@ def test_get_profile_by_username_returns_is_match_flag(client, app, monkeypatch)
     monkeypatch.setattr(
         ProfileService,
         "get_profile_by_username",
-        lambda username: FakeProfile(2, username),
+        lambda username, requester_id=None: FakeProfile(2, username),
     )
+    monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
 
     monkeypatch.setattr(
         "app.controllers.profile_controller.ProfileViewsService.record_profile_view",

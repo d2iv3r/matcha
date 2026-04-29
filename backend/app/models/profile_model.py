@@ -108,7 +108,7 @@ class ProfileModel(BaseModel):
         """Return profiles of `gender` ordered by distance from (latitude, longitude)."""
         rows = cls.db_manager().fetch_all(
             GET_PROFILES_LIST,
-            (latitude, longitude, latitude, user_id, gender, limit, offset),
+            (latitude, longitude, latitude, user_id, gender, user_id, user_id, limit, offset),
         )
         return cls.from_rows(rows)
 
@@ -163,8 +163,10 @@ class ProfileModel(BaseModel):
                 AND p.gender = %s
                 AND p.latitude IS NOT NULL
                 AND p.longitude IS NOT NULL
+                AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)
+                AND u.id NOT IN (SELECT blocker_id FROM blocks WHERE blocked_id = %s)
         """
-        params = [latitude, longitude, latitude, user_id, gender]
+        params = [latitude, longitude, latitude, user_id, gender, user_id, user_id]
 
         if first_name:
             query += " AND u.first_name ILIKE %s"

@@ -11,7 +11,10 @@ from app.middlewares.middleware import register_middleware
 from app.extensions import register_extensions, socketio
 from app.utils.app_error import register_error_handlers
 
-from app.routes import api_bp, auth_bp, docs_bp, profile_bp, accounts_bp, notifications_bp, chat_bp
+from app.routes import (
+    api_bp, auth_bp, docs_bp, profile_bp, accounts_bp,
+    notifications_bp, chat_bp
+)
 
 
 logger = logging.getLogger(__name__)

@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 
 from flask_jwt_extended import create_access_token
+from app.extensions import socketio
 
 from app.models.notification_model import NotificationModel
 from app.models.profile_model import ProfileModel
@@ -10,6 +11,7 @@ from app.services.notifications_service import NotificationsService
 from app.services.profile_likes_service import ProfileLikesService
 from app.services.profile_views_service import ProfileViewsService
 from app.services.chat_service import ChatService
+from app.services.block_service import BlockService
 
 
 def test_get_notifications_requires_auth(client):
@@ -150,17 +152,18 @@ def test_notifications_service_send_notification(app, monkeypatch):
         assert args[1] == {"id": 1, "type": "VIEW"}
         assert kwargs["room"] == "user_1"
 
-    monkeypatch.setattr("app.services.notifications_service.socketio.start_background_task", fake_start_background_task)
+    monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
 
-    notification = NotificationsService.send_notification(
-        user_id=1,
-        notification_type="VIEW",
-        actor_id=2,
-        entity_id=2
-    )
+    with app.app_context():
+        notification = NotificationsService.send_notification(
+            user_id=1,
+            notification_type="VIEW",
+            actor_id=2,
+            entity_id=2
+        )
 
-    assert notification is not None
-    assert background_task_called["called"] is True
+        assert notification is not None
+        assert background_task_called["called"] is True
 
 
 def test_profile_view_triggers_notification(app, monkeypatch):
@@ -282,6 +285,8 @@ def test_chat_message_triggers_notification(app, monkeypatch):
     monkeypatch.setattr("app.services.chat_service.MessageModel.is_match", lambda s, r: True)
     monkeypatch.setattr("app.services.chat_service.ConversationModel.get_or_create", lambda s, r: MagicMock(id=5))
     monkeypatch.setattr("app.services.chat_service.MessageModel.create", lambda c, s, ct: MagicMock(id=10, to_dict=lambda: {}))
+    monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
 
-    ChatService.send_message(sender_id=2, receiver_id=1, content="Hello")
+    with app.app_context():
+        ChatService.send_message(sender_id=2, receiver_id=1, content="Hello")
     assert notify_called["called"] is True

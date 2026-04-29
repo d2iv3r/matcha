@@ -59,19 +59,51 @@ class ProfileService:
         return my_profile
 
     @staticmethod
-    def get_profile_by_username(username: str) -> ProfileModel:
+    def get_profile_by_user_id(user_id: int, requester_id: int | None = None) -> ProfileModel:
+        """
+        get the profile information for a user by their user ID.
+        Args:
+            user_id: The ID of the user whose profile information is being retrieved
+            requester_id: The ID of the user requesting the profile
+        Returns:
+            The ProfileModel instance containing the profile information
+        Raises:
+            NotFoundError: If no profile is found
+            ForbiddenError: If there is a block
+        """
+        profile = ProfileModel.get_my_profile_by_user_id(user_id)
+        if not profile:
+            raise NotFoundError("User", user_id)
+
+        if requester_id and requester_id != user_id:
+            from app.services.block_service import BlockService
+            if BlockService.is_blocked(requester_id, user_id):
+                raise ForbiddenError("You have blocked this user or been blocked by them")
+
+        return profile
+
+    @staticmethod
+    def get_profile_by_username(username: str, requester_id: int | None = None) -> ProfileModel:
         """
         get the profile information for a user by their username. This retrieves the profile data associated with the specified username and returns it.
         Args:
             username: The username of the user whose profile information is being retrieved
+            requester_id: The ID of the user requesting the profile
         Returns:
             The ProfileModel instance containing the profile information for the specified username
         Raises:
             NotFoundError: If no profile is found for the specified username
+            ForbiddenError: If there is a block between the users
         """
         profile = ProfileModel.get_profile_by_username(username)
         if not profile:
             raise NotFoundError("User", username)
+
+        if requester_id:
+            from app.services.block_service import BlockService
+            if BlockService.is_blocked(requester_id, profile.user_id):
+                raise ForbiddenError("You have blocked this user or been blocked by them")
+
         return profile
 
     @staticmethod

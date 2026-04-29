@@ -77,6 +77,8 @@ WHERE u.id != %s
   AND p.gender = %s
   AND p.latitude IS NOT NULL
   AND p.longitude IS NOT NULL
+  AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)
+  AND u.id NOT IN (SELECT blocker_id FROM blocks WHERE blocked_id = %s)
 ORDER BY distance_km ASC
 LIMIT %s OFFSET %s
 """
@@ -109,3 +111,5 @@ RETURNING user_id, gender, age, date_of_birth, city, country, ip_address, latitu
 # RETURNING user_id, gender, age, date_of_birth, location, bio, interests, avatar, pictures
 # """
 
+
+COUNT_PROFILES = "SELECT COUNT(*) as count FROM profiles;"

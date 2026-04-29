@@ -6,14 +6,15 @@ import logging
 import click
 from flask import current_app
 from app.db.queries.users_queries import SEED_USERS
-from app.db.queries.profile_queries import SEED_PROFILES
+from app.db.queries.profile_queries import SEED_PROFILES, COUNT_PROFILES
 
 logger = logging.getLogger(__name__)
 
 
 @click.command("seed-db")
 @click.option("--count", default=40, type=int, help="Number of mock users to generate (default: 40)",)
-def seed_db(count):
+@click.option("--force", is_flag=True, help="Force seeding even if database is not empty")
+def seed_db(count, force):
     """
     Seed the database with mock data.
 
@@ -26,6 +27,16 @@ def seed_db(count):
     try:
         if count <= 0:
             raise click.BadParameter("count must be greater than 0", param_hint="--count")
+
+        # Check if profiles already exist
+        if not force:
+            result = current_app.db_manager.fetch_one(COUNT_PROFILES)
+            if result and result['count'] > 0:
+                click.secho(f"Database already contains {result['count']} profiles.", fg="yellow")
+                if not click.confirm("Do you want to continue seeding?"):
+                    click.echo("Seeding cancelled.")
+                    return
+
         click.echo(f"Seeding database with {count} mock users...")
         seeder = DataSeeder(count=count)
         users = seeder.generate_users()

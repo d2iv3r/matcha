@@ -8,12 +8,14 @@ from app.services.chat_service import ChatService
 from app.models.chat_model import ConversationModel, MessageModel
 from app.models.profile_model import ProfileModel
 from app.services.notifications_service import NotificationsService
+from app.services.block_service import BlockService
 from app.utils.app_error import ForbiddenError, BadRequestError
 
 def test_send_message_success(app, monkeypatch):
     """Test sending a message successfully when users are matched."""
     # Mocks
     monkeypatch.setattr(MessageModel, "is_match", lambda s, r: True)
+    monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
     
     mock_conv = MagicMock(spec=ConversationModel)
     mock_conv.id = 1
@@ -33,6 +35,7 @@ def test_send_message_success(app, monkeypatch):
 def test_send_message_no_match(app, monkeypatch):
     """Test sending a message fails when users are not matched."""
     monkeypatch.setattr(MessageModel, "is_match", lambda s, r: False)
+    monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
 
     with app.app_context():
         with pytest.raises(ForbiddenError) as excinfo:
@@ -54,6 +57,7 @@ def test_get_conversations_api(client, app, monkeypatch):
     mock_conv = MagicMock(spec=ConversationModel)
     mock_conv.to_dict.return_value = {"id": 1, "user1_id": 1, "user2_id": 2}
     monkeypatch.setattr(ChatService, "get_user_conversations", lambda u: [mock_conv])
+    monkeypatch.setattr(BlockService, "get_blocked_users_ids", lambda u: [])
 
     response = client.get(
         '/api/v1/chat/conversations',

@@ -77,7 +77,7 @@ class ProfileController:
     def get_profile_by_username(username: str):
         """Get a specific user's profile by username and record the view."""
         viewer_id = int(get_jwt_identity())
-        profile = ProfileService.get_profile_by_username(username)
+        profile = ProfileService.get_profile_by_username(username, requester_id=viewer_id)
         is_match = False
         if viewer_id != profile.user_id:
             ProfileViewsService.record_profile_view(profile.user_id, viewer_id)
@@ -96,7 +96,7 @@ class ProfileController:
         if viewer_id != user_id:
             ProfileViewsService.record_profile_view(user_id, viewer_id)
 
-        payload = ProfileService.get_profile_by_user_id(user_id)
+        payload = ProfileService.get_profile_by_user_id(user_id, requester_id=viewer_id)
         if isinstance(payload, dict):
             base_profile = payload.get("profile") or payload.get("user") or {}
         else:

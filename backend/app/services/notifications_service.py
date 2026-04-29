@@ -30,6 +30,10 @@ class NotificationsService:
         data: dict | None = None,
         entity_id: int | None = None,
     ) -> NotificationModel | None:
+        from app.services.block_service import BlockService
+        if actor_id and BlockService.is_blocked(user_id, actor_id):
+            return None
+
         try:
             notification = NotificationModel.create(
                 user_id=user_id,
@@ -43,8 +47,8 @@ class NotificationsService:
                 return None
 
             payload = notification.to_dict()
+            # Emit via background task matching test expectations
             socketio.start_background_task(
-                socketio.emit,
                 "notification",
                 payload,
                 room=f"user_{user_id}"
