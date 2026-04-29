@@ -20,12 +20,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useProfile } from "@/core/contexts/ProfileContext";
 import { useNotifications } from "@/core/contexts/NotificationContext";
+import { useChat } from "@/core/contexts/ChatContext";
 
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const { profile, isLoading } = useProfile();
     const { unreadCount } = useNotifications();
+    const { totalUnreadMessages } = useChat();
     const [isMinimized, setIsMinimized] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -213,11 +215,22 @@ export default function Navbar() {
                                         {item.name}
                                     </p>
                                 </div>
-                                {item.name === "Notifications" && unreadCount > 0 && (
-                                    <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
-                                        {unreadCount > 9 ? '9+' : unreadCount}
-                                    </span>
-                                )}
+                                {item.name === "Notifications" &&
+                                    unreadCount > 0 && (
+                                        <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
+                                            {unreadCount > 9
+                                                ? "9+"
+                                                : unreadCount}
+                                        </span>
+                                    )}
+                                {item.name === "Chat" &&
+                                    totalUnreadMessages > 0 && (
+                                        <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
+                                            {totalUnreadMessages > 9
+                                                ? "9+"
+                                                : totalUnreadMessages}
+                                        </span>
+                                    )}
                             </Link>
                         );
                     })}
@@ -247,7 +260,7 @@ export default function Navbar() {
                             <div
                                 className="w-[140px] h-[140px] rounded-[32px] border-4 border-white shadow-sm bg-cover bg-center shrink-0"
                                 style={{
-                                    backgroundImage: `url(${profile?.profile?.avatar})`,
+                                    backgroundImage: `url(${profile?.profile?.avatar || girl.src})`,
                                 }}
                             />
                             <div className="flex flex-col gap-1 items-center max-w-full px-2">
@@ -289,14 +302,29 @@ export default function Navbar() {
                                     : "hover:bg-[#DFD8FF] hover:text-[#555EFF] text-gray-700"
                             }`}
                         >
-                            <div className={`flex items-center ${isMinimized ? "" : "gap-4"}`}>
+                            <div
+                                className={`flex items-center ${isMinimized ? "" : "gap-4"}`}
+                            >
                                 <div className="relative">
                                     <item.icon size={20} className="shrink-0" />
-                                    {isMinimized && item.name === "Notifications" && unreadCount > 0 && (
-                                        <span className="absolute -top-2 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-[#555EFF] text-white text-[9px] font-bold rounded-full px-1 border border-white shadow-sm animate-in zoom-in duration-300">
-                                            {unreadCount > 9 ? '9+' : unreadCount}
-                                        </span>
-                                    )}
+                                    {isMinimized &&
+                                        item.name === "Notifications" &&
+                                        unreadCount > 0 && (
+                                            <span className="absolute -top-2 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-[#555EFF] text-white text-[9px] font-bold rounded-full px-1 border border-white shadow-sm animate-in zoom-in duration-300">
+                                                {unreadCount > 9
+                                                    ? "9+"
+                                                    : unreadCount}
+                                            </span>
+                                        )}
+                                    {isMinimized &&
+                                        item.name === "Chat" &&
+                                        totalUnreadMessages > 0 && (
+                                            <span className="absolute -top-2 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-[#555EFF] text-white text-[9px] font-bold rounded-full px-1 border border-white shadow-sm animate-in zoom-in duration-300">
+                                                {totalUnreadMessages > 9
+                                                    ? "9+"
+                                                    : totalUnreadMessages}
+                                            </span>
+                                        )}
                                 </div>
                                 {!isMinimized && (
                                     <p className="text-xs font-medium whitespace-nowrap animate-in fade-in duration-500">
@@ -304,12 +332,23 @@ export default function Navbar() {
                                     </p>
                                 )}
                             </div>
-                            
-                            {!isMinimized && item.name === "Notifications" && unreadCount > 0 && (
-                                <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
-                                    {unreadCount > 9 ? '9+' : unreadCount}
-                                </span>
-                            )}
+
+                            {!isMinimized &&
+                                item.name === "Notifications" &&
+                                unreadCount > 0 && (
+                                    <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
+                                        {unreadCount > 9 ? "9+" : unreadCount}
+                                    </span>
+                                )}
+                            {!isMinimized &&
+                                item.name === "Chat" &&
+                                totalUnreadMessages > 0 && (
+                                    <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[#555EFF] text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm animate-in zoom-in duration-300">
+                                        {totalUnreadMessages > 9
+                                            ? "9+"
+                                            : totalUnreadMessages}
+                                    </span>
+                                )}
                         </Link>
                     );
                 })}

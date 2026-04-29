@@ -51,8 +51,8 @@ class ChatService:
             data={
                 "conversation_id": conversation.id,
                 "content": content[:50] + ("..." if len(content) > 50 else ""),
-                "sender_username": sender_name,
-                "sender_avatar": sender_profile.avatar if sender_profile else None
+                "username": sender_name,
+                "avatar": sender_profile.avatar if sender_profile else None
             },
             entity_id=message.id
         )
@@ -62,3 +62,7 @@ class ChatService:
     @staticmethod
     def mark_as_read(user_id: int, conversation_id: int) -> None:
         MessageModel.mark_as_read(conversation_id, user_id)
+
+    @staticmethod
+    def get_total_unread_count(user_id: int) -> int:
+        return ConversationModel.get_total_unread_count(user_id)

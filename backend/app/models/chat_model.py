@@ -10,7 +10,8 @@ from app.db.queries.chat_queries import (
     CREATE_MESSAGE,
     GET_MESSAGES,
     MARK_MESSAGES_READ,
-    CHECK_MUTUAL_LIKE
+    CHECK_MUTUAL_LIKE,
+    GET_TOTAL_UNREAD_MESSAGES
 )
 
 class ConversationModel(BaseModel):
@@ -28,6 +29,7 @@ class ConversationModel(BaseModel):
     user2_avatar: str | None = None
     last_message: str | None = None
     last_message_at: Any | None = None
+    unread_count: int = 0
 
     @classmethod
     def get_or_create(cls, user1_id: int, user2_id: int) -> ConversationModel | None:
@@ -44,8 +46,13 @@ class ConversationModel(BaseModel):
 
     @classmethod
     def get_user_conversations(cls, user_id: int) -> list[ConversationModel]:
-        rows = cls.db_manager().fetch_all(GET_USER_CONVERSATIONS, (user_id, user_id))
+        rows = cls.db_manager().fetch_all(GET_USER_CONVERSATIONS, (user_id, user_id, user_id))
         return cls.from_rows(rows)
+
+    @classmethod
+    def get_total_unread_count(cls, user_id: int) -> int:
+        row = cls.db_manager().fetch_one(GET_TOTAL_UNREAD_MESSAGES, (user_id, user_id, user_id))
+        return row.get("total_unread", 0) if row else 0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -59,6 +66,7 @@ class ConversationModel(BaseModel):
             "user2_avatar": self.user2_avatar,
             "last_message": self.last_message,
             "last_message_at": self.last_message_at.isoformat() if hasattr(self.last_message_at, 'isoformat') else self.last_message_at,
+            "unread_count": self.unread_count,
         }
 
 class MessageModel(BaseModel):
@@ -83,8 +91,6 @@ class MessageModel(BaseModel):
 
     @classmethod
     def mark_as_read(cls, conversation_id: int, reader_id: int) -> None:
-        cls.db_manager().execute(MARK_ALL_NOTIFICATIONS_READ, (conversation_id, reader_id)) # Wait, I should use the right query
-        # Let me re-check my query name
         cls.db_manager().execute(MARK_MESSAGES_READ, (conversation_id, reader_id))
 
     @staticmethod

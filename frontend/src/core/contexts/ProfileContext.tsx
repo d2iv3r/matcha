@@ -48,18 +48,21 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await fetch("http://localhost:5001/api/v1/accounts/profile", {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-            
+            const res = await fetch(
+                "http://localhost:5001/api/v1/accounts/profile",
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                },
+            );
+
             if (!res.ok) {
                 throw new Error("Failed to fetch profile");
             }
-            
+
             const jsonResponse = await res.json();
             const data = jsonResponse.data;
 
@@ -76,13 +79,14 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             };
 
             const parsePostgresArray = (str: any) => {
-                if (!str || typeof str !== "string") return Array.isArray(str) ? str : [];
+                if (!str || typeof str !== "string")
+                    return Array.isArray(str) ? str : [];
                 if (!str.startsWith("{") || !str.endsWith("}")) return [str];
-                
+
                 const content = str.slice(1, -1);
                 if (!content) return [];
 
-                return content.split(',').map(item => {
+                return content.split(",").map((item) => {
                     item = item.trim();
                     if (item.startsWith('"') && item.endsWith('"')) {
                         return item.slice(1, -1).replace(/\\"/g, '"');
@@ -94,9 +98,13 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             if (data?.profile) {
                 data.profile.avatar = formatUrl(data.profile.avatar);
                 if (data.profile.pictures) {
-                    data.profile.pictures = parsePostgresArray(data.profile.pictures).map(formatUrl);
+                    data.profile.pictures = parsePostgresArray(
+                        data.profile.pictures,
+                    ).map(formatUrl);
                 }
-                data.profile.interests = parsePostgresArray(data.profile.interests);
+                data.profile.interests = parsePostgresArray(
+                    data.profile.interests,
+                );
             }
 
             setProfile(data);
@@ -114,7 +122,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <ProfileContext.Provider value={{ profile, isLoading, error, refetchProfile: fetchProfile }}>
+        <ProfileContext.Provider
+            value={{ profile, isLoading, error, refetchProfile: fetchProfile }}
+        >
             {children}
         </ProfileContext.Provider>
     );

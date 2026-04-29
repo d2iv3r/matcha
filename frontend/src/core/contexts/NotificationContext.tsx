@@ -10,7 +10,6 @@ import React, {
 import { io, Socket } from "socket.io-client";
 import {
     Notification,
-    NotificationType,
     NotificationsResponse,
 } from "@/core/types/notification";
 
@@ -54,7 +53,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     const fetchNotifications = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/notifications/?limit=20&offset=0`, {
+            const response = await fetch(`${API_BASE_URL}/notifications/?limit=10&offset=0`, {
                 credentials: "include",
             });
             if (response.ok) {
@@ -64,7 +63,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
                 setUnreadCount(
                     data.notifications.filter((n) => !n.is_read).length,
                 );
-                setHasMore(data.notifications.length === 20);
+                setHasMore(data.notifications.length === 10);
             }
         } catch (error) {
             console.error("Failed to fetch notifications:", error);

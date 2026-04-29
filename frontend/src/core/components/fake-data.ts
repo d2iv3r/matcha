@@ -20,7 +20,7 @@ export const status = [
     {
         name: "👑 Iconic",
         color: "#A855F7",
-    }
+    },
 ];
 
 export const users = [
@@ -206,3 +206,33 @@ export const users = [
     },
 ];
 
+//------------------------------------- in chat --------------------------------------//
+
+{
+    /* <h1 className="text-lg font-semibold">Now active</h1>
+                    <div className="flex gap-2 bg-[#E9E8FF] p-1 rounded-lg items-center text-[#6367FF] mb-2">
+                        <Search size={20} />
+                        <input
+                            type="search"
+                            placeholder="Search..."
+                            className="w-full bg-[#E9E8FF] outline-none text-[#6367FF]"
+                        />
+                    </div>
+                    <div className="flex flex-row gap-2 w-full overflow-x-auto overflow-y-hidden max-w-full pb-2 shrink-0 scrollbar-hide">
+                        {onlineprofiles.map((profile, index) => (
+                            <div
+                                key={index}
+                                className="relative flex flex-col gap-1 shrink-0"
+                            >
+                                <Image
+                                    src={profile.image}
+                                    alt="Profile"
+                                    width={50}
+                                    height={50}
+                                    className="aspect-square rounded-full"
+                                />
+                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                            </div>
+                        ))}
+                    </div> */
+}

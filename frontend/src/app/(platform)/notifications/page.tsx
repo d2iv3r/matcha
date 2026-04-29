@@ -2,11 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
+import girl from "@/public/girl1.png";
 import { useNotifications } from "@/core/contexts/NotificationContext";
 import { NotificationType } from "@/core/types/notification";
-import { format } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns";
 import { useRouter } from "next/navigation";
-import girl from "@/public/girl1.png";
 import MatchOverlay from "@/core/components/MatchOverlay";
 import { useProfile } from "@/core/contexts/ProfileContext";
 
@@ -70,7 +70,7 @@ export default function NotificationsPage() {
                     description:
                         "A potential soulmate just reached out. Open the chat to see what they have to say!",
                     primaryAction: "Let’s Chat",
-                    primaryActionUrl: () => "/chat",
+                    primaryActionUrl: (username: string) => `/chat?user=${username}`,
                 };
             default:
                 return {
@@ -85,19 +85,14 @@ export default function NotificationsPage() {
     const formatUrl = (url: string | null) => {
         if (!url) return null;
         if (url.startsWith("http")) return url;
-
-        const cleanUrl = url.startsWith("/") ? url : `/${url}`;
-        if (cleanUrl.startsWith("/static")) {
-            return `http://localhost:5001${cleanUrl}`;
-        }
-        // If it doesn't start with http or /static, but might be a local path
-        if (
-            !url.startsWith("http") &&
-            (url.includes("avatars/") || url.includes("media/"))
-        ) {
-            return `http://localhost:5001${cleanUrl}`;
-        }
-        return url;
+        
+        // Ensure the URL starts with /static/
+        const cleanPath = url.startsWith("/") ? url : `/${url}`;
+        const finalPath = cleanPath.startsWith("/static") 
+            ? cleanPath 
+            : `/static${cleanPath}`;
+            
+        return `http://localhost:5001${finalPath}`;
     };
 
     const handleAction = (id: number, url: string) => {
@@ -143,14 +138,14 @@ export default function NotificationsPage() {
     }
 
     return (
-        <div className="w-full h-full flex flex-col p-4">
-            <div className="w-full min-h-full gap-5 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl p-6 overflow-y-auto scrollbar-hide">
-                <div className="flex flex-row items-center justify-between w-full gap-3 mb-2">
+        <div className="w-full h-full flex flex-col p-4 gap-5">
+            <div className="w-full gap-5 flex px-4">
+                <div className="flex flex-row items-center justify-between w-full gap-3">
                     <div className="flex items-center gap-3 flex-1">
-                        <h4 className="text-md text-[#AEB0FF] font-medium whitespace-nowrap uppercase tracking-wider">
+                        <h4 className="text-md text-[#6367FF] font-medium whitespace-nowrap uppercase tracking-wider">
                             Activity
                         </h4>
-                        <hr className="w-full h-px text-[#AEB0FF]" />
+                        <hr className="w-full h-px text-[#6367FF]" />
                     </div>
                     {notifications.length > 0 && (
                         <button
@@ -161,7 +156,8 @@ export default function NotificationsPage() {
                         </button>
                     )}
                 </div>
-
+            </div>
+            <div className="w-full h-fit min-h-fit md:min-h-[calc(100vh-12rem)] gap-5 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl p-6 overflow-y-auto scrollbar-hide">
                 {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
                         <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
@@ -172,86 +168,113 @@ export default function NotificationsPage() {
                         </p>
                     </div>
                 ) : (
-                    notifications.map((notif) => {
-                        const config = getNotificationConfig(notif.type);
-                        const actor = notif.data;
-                        const avatarUrl = formatUrl(actor?.avatar || null);
+                    Object.entries(
+                        notifications.reduce(
+                            (groups, notif) => {
+                                const date = new Date(notif.created_at);
+                                let label = "";
+                                if (isToday(date)) label = "Today";
+                                else if (isYesterday(date)) label = "Yesterday";
+                                else label = format(date, "MMMM d, yyyy");
 
-                        let time = "00:00";
-                        try {
-                            if (notif.created_at) {
-                                time = format(
-                                    new Date(notif.created_at),
-                                    "hh:mm a",
-                                );
-                            }
-                        } catch (e) {}
-
-                        return (
-                            <div
-                                key={notif.id}
-                                className={`flex items-start justify-between gap-4 w-full min-h-[100px] transition-all relative ${notif.is_read ? "opacity-60" : ""}`}
-                            >
-                                <div className="w-[100px] h-[100px] rounded-3xl border-3 shadow-md shadow-gray-500/30 border-[#F5F3FF] overflow-hidden shrink-0">
-                                    <Image
-                                        src={avatarUrl || girl}
-                                        alt={actor?.username || "user"}
-                                        width={100}
-                                        height={100}
-                                        className="w-full h-full object-cover"
-                                        unoptimized
-                                    />
-                                </div>
-                                <div className="w-full h-full flex flex-1 flex-col justify-center gap-1">
-                                    <div className="flex items-center gap-2">
-                                        <h6 className="text-xs font-bold text-black">
-                                            {config.title}
-                                        </h6>
-                                        {!notif.is_read && (
-                                            <span className="w-2 h-2 bg-[#6367FF] rounded-full"></span>
-                                        )}
-                                    </div>
-                                    <p className="text-xs mb-2 text-gray-500 font-medium leading-tight max-w-[85%]">
-                                        {notif.message || config.description}
-                                    </p>
-                                    <div className="w-full flex gap-3 mt-1">
-                                        <button
-                                            onClick={() =>
-                                                handleAction(
-                                                    notif.id,
-                                                    config.primaryActionUrl(
-                                                        actor?.username || "",
-                                                    ),
-                                                )
-                                            }
-                                            className="w-fit py-1.5 px-5 bg-linear-to-r from-[#6367FF] to-[#3B3E99] font-medium text-[10px] tracking-tighter text-white rounded-lg hover:opacity-90 transition-opacity shadow-lg shadow-[#6367FF]/20"
-                                        >
-                                            {config.primaryAction}
-                                        </button>
-                                        {config.secondaryAction && (
-                                            <button
-                                                onClick={() =>
-                                                    handleSecondaryAction(
-                                                        actor,
-                                                        config.secondaryAction ||
-                                                            "",
-                                                    )
-                                                }
-                                                className="w-fit py-1.5 px-5 border-[#3B3E99] border font-medium text-[10px] tracking-tighter text-[#3B3E99] rounded-lg hover:bg-[#3B3E99]/5 transition-colors"
-                                            >
-                                                {config.secondaryAction}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="shrink-0 pt-1 absolute top-0 right-0">
-                                    <span className="text-[10px] md:text-xs text-[#AEB0FF] font-bold">
-                                        {time}
-                                    </span>
-                                </div>
+                                if (!groups[label]) groups[label] = [];
+                                groups[label].push(notif);
+                                return groups;
+                            },
+                            {} as Record<string, typeof notifications>,
+                        ),
+                    ).map(([label, groupItems]) => (
+                        <div key={label} className="w-full flex flex-col gap-5">
+                            <div className="flex items-center gap-3 w-full opacity-60">
+                                <span className="text-[10px] font-bold text-[#AEB0FF] uppercase tracking-widest whitespace-nowrap">
+                                    {label}
+                                </span>
+                                <hr className="w-full h-px text-[#AEB0FF]" />
                             </div>
-                        );
-                    })
+
+                            {groupItems.map((notif) => {
+                                const config = getNotificationConfig(
+                                    notif.type,
+                                );
+                                const actor = notif.data;
+                                const avatarUrl = formatUrl(
+                                    (actor as any)?.avatar || (actor as any)?.sender_avatar || null,
+                                );
+
+                                let time = "00:00";
+                                try {
+                                    if (notif.created_at) {
+                                        time = format(
+                                            new Date(notif.created_at),
+                                            "hh:mm a",
+                                        );
+                                    }
+                                } catch (e) {}
+
+                                return (
+                                    <div
+                                        key={notif.id}
+                                        className={`flex items-start justify-between gap-4 w-full min-h-[100px] transition-all relative ${notif.is_read ? "opacity-60" : ""}`}
+                                    >
+                                        <div className="w-[100px] h-[100px] rounded-3xl border-3 shadow-md shadow-gray-500/30 border-[#F5F3FF] overflow-hidden shrink-0">
+                                            <Image
+                                                src={avatarUrl || girl}
+                                                alt={actor?.username || "user"}
+                                                width={100}
+                                                height={100}
+                                                className="w-full h-full object-cover"
+                                                unoptimized
+                                            />
+                                        </div>
+                                        <div className="w-full h-full flex flex-1 flex-col justify-center gap-1">
+                                            <div className="flex flex-row justify-between items-center w-full">
+                                                <p className="text-sm font-extrabold">
+                                                    {config.title}
+                                                </p>
+                                                <p className="text-[#AEB0FF] text-[10px] font-bold">
+                                                    {time}
+                                                </p>
+                                            </div>
+                                            <h3 className="text-[#131313] text-sm">
+                                                {notif.message ||
+                                                    config.description}
+                                            </h3>
+                                            <div className="flex flex-row items-center gap-3 mt-1">
+                                                <button
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            notif.id,
+                                                            config.primaryActionUrl(
+                                                                (actor as any)?.username || 
+                                                                (actor as any)?.sender_username || 
+                                                                "",
+                                                            ),
+                                                        )
+                                                    }
+                                                    className="bg-[#6367FF] text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-[#5255e6] transition-colors"
+                                                >
+                                                    {config.primaryAction}
+                                                </button>
+                                                {config.secondaryAction && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleSecondaryAction(
+                                                                actor,
+                                                                config.secondaryAction!,
+                                                            )
+                                                        }
+                                                        className="text-[#6367FF] text-[10px] font-bold px-4 py-1.5 rounded-full border border-[#6367FF] hover:bg-[#d3d4fb] transition-all"
+                                                    >
+                                                        {config.secondaryAction}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))
                 )}
                 {notifications.length > 0 && hasMore && (
                     <div className="w-full flex justify-center py-4">

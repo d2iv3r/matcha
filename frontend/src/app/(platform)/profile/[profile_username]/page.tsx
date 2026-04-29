@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import girl from "@/public/girl1.png";
 import {
     MapPin,
     GalleryVertical,
@@ -21,6 +20,7 @@ import {
 import { useProfile } from "@/core/contexts/ProfileContext";
 import MatchOverlay from "@/core/components/MatchOverlay";
 import { INTERESTS } from "@/core/constants/interests";
+import girl from "@/public/girl1.png";
 
 // --- Sub-components ---
 
@@ -148,8 +148,15 @@ function MyProfileView({
 
     const formatAvatar = (url: string | null) => {
         if (!url) return girl.src;
-        if (url.startsWith("/static")) return `http://localhost:5001${url}`;
-        return url;
+        if (url.startsWith("http")) return url;
+        
+        // Ensure the URL starts with /static/
+        const cleanPath = url.startsWith("/") ? url : `/${url}`;
+        const finalPath = cleanPath.startsWith("/static") 
+            ? cleanPath 
+            : `/static${cleanPath}`;
+            
+        return `http://localhost:5001${finalPath}`;
     };
 
     // Combine avatar and pictures for the gallery
@@ -300,11 +307,7 @@ function MyProfileView({
                                             }
                                         >
                                             <Image
-                                                src={
-                                                    item.startsWith("/")
-                                                        ? `http://localhost:5001${item}`
-                                                        : item
-                                                }
+                                                src={formatAvatar(item)}
                                                 alt="Gallery"
                                                 fill
                                                 unoptimized
@@ -493,11 +496,7 @@ function MyProfileView({
                             <X size={32} strokeWidth={2.5} />
                         </button>
                         <Image
-                            src={
-                                expandedImage.startsWith("/")
-                                    ? `http://localhost:5001${expandedImage}`
-                                    : expandedImage
-                            }
+                            src={formatAvatar(expandedImage)}
                             alt="Expanded"
                             width={800}
                             height={800}
@@ -526,6 +525,7 @@ function OtherProfileView({
     const [reportReasons, setReportReasons] = useState<string[]>([]);
     const [expandedImage, setExpandedImage] = useState<any>(null);
     const menuRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     const toggleLike = async () => {
         const newLikedState = !isLiked;
@@ -560,8 +560,15 @@ function OtherProfileView({
 
     const formatAvatar = (url: string | null) => {
         if (!url) return girl.src;
-        if (url.startsWith("/static")) return `http://localhost:5001${url}`;
-        return url;
+        if (url.startsWith("http")) return url;
+        
+        // Ensure the URL starts with /static/
+        const cleanPath = url.startsWith("/") ? url : `/${url}`;
+        const finalPath = cleanPath.startsWith("/static") 
+            ? cleanPath 
+            : `/static${cleanPath}`;
+            
+        return `http://localhost:5001${finalPath}`;
     };
 
     useEffect(() => {
@@ -602,7 +609,14 @@ function OtherProfileView({
                         <div className="absolute bottom-0 w-full h-1/2 bg-linear-to-t from-[#555DFF] to-transparent rounded-b-2xl"></div>
                         <div className="absolute flex flex-col gap-2 bottom-3 left-3">
                             {isMatch && (
-                                <div className="flex gap-2 items-center cursor-pointer">
+                                <div
+                                    className="flex gap-2 items-center cursor-pointer"
+                                    onClick={() =>
+                                        router.push(
+                                            `/chat?user=${profileData.username}`,
+                                        )
+                                    }
+                                >
                                     <MessageCircleMore
                                         size={20}
                                         className="text-white"
@@ -747,11 +761,7 @@ function OtherProfileView({
                                 .map((item: string, index: number) => (
                                     <Image
                                         key={index}
-                                        src={
-                                            item.startsWith("/")
-                                                ? `http://localhost:5001${item}`
-                                                : item
-                                        }
+                                        src={formatAvatar(item)}
                                         alt={`Gallery image ${index + 1}`}
                                         width={180}
                                         height={280}
