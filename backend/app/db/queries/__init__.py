@@ -1,5 +1,10 @@
 """SQL query constants grouped by domain."""
 
+# SEED QUERY
+from .seed_mock_users_query import (
+    SEED_MOCK_USERS_AND_PROFILES,
+    COUNT_USERS,
+)
 
 # AUTH QUERIES
 from .auth_queries import (
@@ -15,7 +20,6 @@ from .auth_queries import (
     
 # USER QUERIES
 from .users_queries import (
-    SEED_USERS, 
     IS_EMAIL_EXISTING,
     IS_USERNAME_EXISTING,
     CREATE_USER,
@@ -31,7 +35,6 @@ from .users_queries import (
 
 # PROFILE QUERIES
 from .profile_queries import (
-    SEED_PROFILES,
     CREATE_PROFILE,
     GET_MY_PROFILE_BY_USER_ID,
     GET_PROFILE_BY_USERNAME,
@@ -46,6 +49,9 @@ from .notifications_queries import (
 )
 
 __all__ = [
+    # SEED QUERY
+    "SEED_MOCK_USERS_AND_PROFILES",
+    "COUNT_USERS",
     # AUTH QUERIES
     "STORE_EMAIL_VERIFICATION_TOKEN",
     "GET_EMAIL_VERIFICATION_TOKEN_BY_HASH",
@@ -56,7 +62,6 @@ __all__ = [
     "GET_USER_BY_OAUTH",
     "LINK_OAUTH_ACCOUNT",
     # USER QUERIES
-    "SEED_USERS",
     "IS_EMAIL_EXISTING",
     "IS_USERNAME_EXISTING",
     "CREATE_USER",
@@ -68,7 +73,6 @@ __all__ = [
     "UPDATE_USER_PASSWORD_BY_ID",
     "UPDATE_USER_BY_ID",
     # PROFILE QUERIES
-    "SEED_PROFILES",
     "CREATE_PROFILE",
     "GET_MY_PROFILE_BY_USER_ID",
     "GET_PROFILE_BY_USERNAME",

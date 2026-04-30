@@ -1,26 +1,5 @@
 """Profile-related SQL query constants."""
 
-SEED_PROFILES = """
-INSERT INTO profiles (
-	user_id,
-	gender,
-	age,
-	date_of_birth,
-	city,
-	country,
-	ip_address,
-	latitude,
-	longitude,
-	bio,
-	interests,
-	avatar,
-	pictures,
-	rating
-)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::TEXT[], %s, %s::TEXT[], %s)
-ON CONFLICT DO NOTHING;
-"""
-
 CREATE_PROFILE = """
 INSERT INTO profiles (user_id, gender, age, date_of_birth, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures)
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::TEXT[], %s, %s::TEXT[])
@@ -110,6 +89,3 @@ RETURNING user_id, gender, age, date_of_birth, city, country, ip_address, latitu
 # 	pictures = EXCLUDED.pictures
 # RETURNING user_id, gender, age, date_of_birth, location, bio, interests, avatar, pictures
 # """
-
-
-COUNT_PROFILES = "SELECT COUNT(*) as count FROM profiles;"

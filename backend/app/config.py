@@ -47,6 +47,8 @@ class BaseConfig:
     SOCKETIO_MAX_HTTP_BUFFER_SIZE = int(
         os.environ.get("SOCKETIO_MAX_HTTP_BUFFER_SIZE", 1000000)
     )
+    MOCK_USERS_PASS = os.environ.get("MOCK_USERS_PASS")
+    PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY")
 
     # 42 Intra OAuth2
     INTRA42_CLIENT_ID = os.environ.get("INTRA42_CLIENT_ID")
