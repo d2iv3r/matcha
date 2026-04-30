@@ -128,7 +128,7 @@ function BasicInfo({
 
     return (
         <div className="w-full h-full p-4">
-            <div className="w-full flex flex-col gap-4 pb-10">
+            <div className="w-full flex flex-col gap-4 pb-20">
                 <div className="w-full flex flex-col gap-3">
                     <div className="w-full flex flex-col gap-1">
                         <h2 className="text-md font-semibold">

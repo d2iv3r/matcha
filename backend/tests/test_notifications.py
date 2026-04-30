@@ -146,12 +146,13 @@ def test_notifications_service_send_notification(app, monkeypatch):
 
     background_task_called = {"called": False}
 
-    def fake_start_background_task(func, *args, **kwargs):
+    def fake_emit(event, *args, **kwargs):
         background_task_called["called"] = True
-        assert args[0] == "notification"
-        assert args[1] == {"id": 1, "type": "VIEW"}
+        assert event == "notification"
+        assert args[0] == {"id": 1, "type": "VIEW"}
         assert kwargs["room"] == "user_1"
 
+    monkeypatch.setattr(socketio, "emit", fake_emit)
     monkeypatch.setattr(BlockService, "is_blocked", lambda u1, u2: False)
 
     with app.app_context():

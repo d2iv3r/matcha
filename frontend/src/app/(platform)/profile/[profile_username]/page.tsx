@@ -352,7 +352,7 @@ function MyProfileView({
                                             />
                                             {item.is_match && (
                                                 <div className="absolute top-2 right-2 bg-[#E2DCFF]/90 backdrop-blur-sm px-2 py-1 rounded-lg">
-                                                    <p className="text-[8px] text-[#555EFF] font-bold uppercase tracking-wider">
+                                                    <p className="text-[8px] text-[#555EFF] font-semibold tracking-wider">
                                                         Matching
                                                     </p>
                                                 </div>
@@ -364,7 +364,7 @@ function MyProfileView({
                                                     {item.viewer_first_name},{" "}
                                                     {item.viewer_age}
                                                 </p>
-                                                <p className="text-[10px] text-gray-500 truncate">
+                                                <p className="text-[10px] text-gray-500 truncate max-w-[140px]">
                                                     {item.viewer_city},{" "}
                                                     {item.viewer_country}
                                                 </p>
@@ -439,7 +439,7 @@ function MyProfileView({
                                                     {item.liker_first_name},{" "}
                                                     {item.liker_age}
                                                 </p>
-                                                <p className="text-[10px] text-gray-500 truncate">
+                                                <p className="text-[10px] text-gray-500 truncate max-w-[140px]">
                                                     {item.liker_city},{" "}
                                                     {item.liker_country}
                                                 </p>

@@ -47,8 +47,8 @@ class NotificationsService:
                 return None
 
             payload = notification.to_dict()
-            # Emit via background task matching test expectations
-            socketio.start_background_task(
+            # Emit via socketio matching test expectations
+            socketio.emit(
                 "notification",
                 payload,
                 room=f"user_{user_id}"

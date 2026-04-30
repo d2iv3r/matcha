@@ -422,9 +422,16 @@ export default function ChatPage() {
                 >
                     <div className="flex items-center justify-between">
                         <h1 className="text-lg font-semibold">Messages</h1>
-                        {conversations.reduce((acc, c) => acc + (c.unread_count ?? 0), 0) > 0 && (
+                        {conversations.reduce(
+                            (acc, c) => acc + (c.unread_count ?? 0),
+                            0,
+                        ) > 0 && (
                             <span className="bg-[#6367FF] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                {conversations.reduce((acc, c) => acc + (c.unread_count ?? 0), 0)} new
+                                {conversations.reduce(
+                                    (acc, c) => acc + (c.unread_count ?? 0),
+                                    0,
+                                )}{" "}
+                                new
                             </span>
                         )}
                     </div>
@@ -440,119 +447,132 @@ export default function ChatPage() {
                     <hr className="border-[#C6BAFF] py-1" />
                     <div className="flex-1 overflow-y-auto pr-2">
                         <div className="flex flex-col gap-3 w-full">
-                            {matches.filter(m => 
-                                m.username.toLowerCase().includes(searchQuery.toLowerCase())
+                            {matches.filter((m) =>
+                                m.username
+                                    .toLowerCase()
+                                    .includes(searchQuery.toLowerCase()),
                             ).length === 0 ? (
                                 <p className="text-center text-[10px] text-gray-500 py-10">
-                                    {searchQuery ? "No matches found" : "No matches yet"}
+                                    {searchQuery
+                                        ? "No matches found"
+                                        : "No matches yet"}
                                 </p>
                             ) : (
                                 matches
-                                    .filter(m => 
-                                        m.username.toLowerCase().includes(searchQuery.toLowerCase())
+                                    .filter((m) =>
+                                        m.username
+                                            .toLowerCase()
+                                            .includes(
+                                                searchQuery.toLowerCase(),
+                                            ),
                                     )
                                     .map((match) => {
-                                    const conv = conversations.find(
-                                        (c) =>
-                                            c.user1_id === match.user_id ||
-                                            c.user2_id === match.user_id,
-                                    );
-                                    const isSelected =
-                                        selectedConversation?.user2_id ===
-                                            match.user_id ||
-                                        selectedConversation?.user1_id ===
-                                            match.user_id;
-                                    return (
-                                        <div
-                                            key={match.user_id}
-                                            className="w-full flex flex-row gap-2 items-center cursor-pointer p-1"
-                                            onClick={() => {
-                                                if (conv)
-                                                    handleSelectConversation(
-                                                        conv,
-                                                    );
-                                                else {
-                                                    setActiveRecipientId(
-                                                        match.user_id,
-                                                    );
-                                                    const temp: Conversation = {
-                                                        id: -match.user_id,
-                                                        user1_id: myId || 0,
-                                                        user2_id: match.user_id,
-                                                        user1_username:
-                                                            myProfileData
-                                                                ?.profile
-                                                                ?.username ||
-                                                            "",
-                                                        user2_username:
-                                                            match.username,
-                                                        user1_avatar:
-                                                            myProfileData
-                                                                ?.profile
-                                                                ?.avatar ||
-                                                            null,
-                                                        user2_avatar:
-                                                            match.avatar,
-                                                        created_at:
-                                                            new Date().toISOString(),
-                                                        last_message: null,
-                                                        last_message_at: null,
-                                                    };
-                                                    setSelectedConversation(
-                                                        temp,
-                                                    );
-                                                    setMessages([]);
-                                                    setMobileView("chat");
-                                                }
-                                            }}
-                                        >
-                                            <div className="relative">
-                                                <Image
-                                                    src={
-                                                        formatUrl(
-                                                            match.avatar,
-                                                        ) || girl
+                                        const conv = conversations.find(
+                                            (c) =>
+                                                c.user1_id === match.user_id ||
+                                                c.user2_id === match.user_id,
+                                        );
+                                        const isSelected =
+                                            selectedConversation?.user2_id ===
+                                                match.user_id ||
+                                            selectedConversation?.user1_id ===
+                                                match.user_id;
+                                        return (
+                                            <div
+                                                key={match.user_id}
+                                                className="w-full flex flex-row gap-2 items-center cursor-pointer p-1"
+                                                onClick={() => {
+                                                    if (conv)
+                                                        handleSelectConversation(
+                                                            conv,
+                                                        );
+                                                    else {
+                                                        setActiveRecipientId(
+                                                            match.user_id,
+                                                        );
+                                                        const temp: Conversation =
+                                                            {
+                                                                id: -match.user_id,
+                                                                user1_id:
+                                                                    myId || 0,
+                                                                user2_id:
+                                                                    match.user_id,
+                                                                user1_username:
+                                                                    myProfileData
+                                                                        ?.profile
+                                                                        ?.username ||
+                                                                    "",
+                                                                user2_username:
+                                                                    match.username,
+                                                                user1_avatar:
+                                                                    myProfileData
+                                                                        ?.profile
+                                                                        ?.avatar ||
+                                                                    null,
+                                                                user2_avatar:
+                                                                    match.avatar,
+                                                                created_at:
+                                                                    new Date().toISOString(),
+                                                                last_message:
+                                                                    null,
+                                                                last_message_at:
+                                                                    null,
+                                                            };
+                                                        setSelectedConversation(
+                                                            temp,
+                                                        );
+                                                        setMessages([]);
+                                                        setMobileView("chat");
                                                     }
-                                                    alt="Profile"
-                                                    width={50}
-                                                    height={50}
-                                                    className="aspect-square object-cover rounded-full"
-                                                    unoptimized
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-2 flex-1 min-w-0 justify-between">
-                                                <h3 className="text-xs font-bold truncate">
-                                                    {match.username}
-                                                </h3>
-                                                <p className="text-[10px] text-gray-500 truncate max-w-[100px]">
-                                                    {conv?.last_message ||
-                                                        "New Match ✨"}
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-col h-full gap-1 justify-between items-end">
-                                                <p className="text-[10px] text-gray-500">
-                                                    {conv?.last_message_at
-                                                        ? formatMessageTime(
-                                                              conv.last_message_at,
-                                                          )
-                                                        : ""}
-                                                </p>
-                                                <div className="flex flex-col gap-1 h-5">
-                                                    {conv?.unread_count ? (
-                                                        <div className="flex flex-col gap-1 bg-[#6367FF] w-4 h-4 rounded-full justify-center items-center">
-                                                            <p className="text-[10px] text-white">
-                                                                {conv.unread_count >
-                                                                9
-                                                                    ? "+9"
-                                                                    : conv.unread_count}
-                                                            </p>
-                                                        </div>
-                                                    ) : null}
+                                                }}
+                                            >
+                                                <div className="relative">
+                                                    <Image
+                                                        src={
+                                                            formatUrl(
+                                                                match.avatar,
+                                                            ) || girl
+                                                        }
+                                                        alt="Profile"
+                                                        width={50}
+                                                        height={50}
+                                                        className="aspect-square object-cover rounded-full"
+                                                        unoptimized
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col gap-2 flex-1 min-w-0 justify-between">
+                                                    <h3 className="text-xs font-bold truncate">
+                                                        {match.username}
+                                                    </h3>
+                                                    <p className="text-[10px] text-gray-500 truncate max-w-[100px]">
+                                                        {conv?.last_message ||
+                                                            "New Match ✨"}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col h-full gap-1 justify-between items-end">
+                                                    <p className="text-[10px] text-gray-500">
+                                                        {conv?.last_message_at
+                                                            ? formatMessageTime(
+                                                                  conv.last_message_at,
+                                                              )
+                                                            : ""}
+                                                    </p>
+                                                    <div className="flex flex-col gap-1 h-5">
+                                                        {conv?.unread_count ? (
+                                                            <div className="flex flex-col gap-1 bg-[#6367FF] w-4 h-4 rounded-full justify-center items-center">
+                                                                <p className="text-[10px] text-white">
+                                                                    {conv.unread_count >
+                                                                    9
+                                                                        ? "+9"
+                                                                        : conv.unread_count}
+                                                                </p>
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    })
                             )}
                         </div>
                     </div>
