@@ -2,32 +2,10 @@
 import {
     ChevronDown,
     X,
-    Utensils,
-    Gamepad2,
-    Tv,
-    Plane,
-    Coffee,
-    GlassWater,
-    Dumbbell,
-    Trophy,
-    Waves,
-    Music,
-    Film,
-    Camera,
-    BookOpen,
-    CupSoda,
-    Heart,
-    Mic2,
-    Brush,
-    Tent,
-    ShoppingBag,
-    Map,
-    Theater,
-    GraduationCap,
     Eye,
     MessageCircleMore,
     CircleOff,
-    Search
+    Heart,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -35,31 +13,7 @@ import { status } from "@/core/components/fake-data";
 import { useProfile } from "@/core/contexts/ProfileContext";
 import MatchOverlay from "@/core/components/MatchOverlay";
 import { INTERESTS } from "@/core/constants/interests";
-
-// const INTERESTS = [
-//     { id: "food", label: "Food & Cooking", icon: <Utensils size={16} /> },
-//     { id: "coffee", label: "Coffee", icon: <Coffee size={16} /> },
-//     { id: "tea", label: "Moroccan Tea", icon: <CupSoda size={16} /> },
-//     { id: "nightlife", label: "Nightlife", icon: <GlassWater size={16} /> },
-//     { id: "gaming", label: "Gaming", icon: <Gamepad2 size={16} /> },
-//     { id: "anime", label: "Anime", icon: <Tv size={16} /> },
-//     { id: "fitness", label: "Fitness", icon: <Dumbbell size={16} /> },
-//     { id: "football", label: "Football", icon: <Trophy size={16} /> },
-//     { id: "swimming", label: "Swimming", icon: <Waves size={16} /> },
-//     { id: "camping", label: "Camping", icon: <Tent size={16} /> },
-//     { id: "music", label: "Music", icon: <Music size={16} /> },
-//     { id: "movies", label: "Movies", icon: <Film size={16} /> },
-//     { id: "photography", label: "Photography", icon: <Camera size={16} /> },
-//     { id: "reading", label: "Reading", icon: <BookOpen size={16} /> },
-//     { id: "art", label: "Painting & Art", icon: <Brush size={16} /> },
-//     { id: "karaoke", label: "Karaoke", icon: <Mic2 size={16} /> },
-//     { id: "theater", label: "Theater", icon: <Theater size={16} /> },
-//     { id: "travel", label: "Travel", icon: <Plane size={16} /> },
-//     { id: "adventure", label: "Adventure", icon: <Map size={16} /> },
-//     { id: "fashion", label: "Fashion", icon: <ShoppingBag size={16} /> },
-//     { id: "education", label: "Learning", icon: <GraduationCap size={16} /> },
-//     { id: "dating", label: "Romance", icon: <Heart size={16} /> },
-// ];
+import girl from "@/public/girl1.png";
 
 export interface ApiProfile {
     username: string;
@@ -78,19 +32,27 @@ export interface ApiProfile {
     bio?: string;
 }
 
-const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: ApiProfile) => void }) => {
+const SearchProfileCard = ({
+    user,
+    onMatch,
+}: {
+    user: ApiProfile;
+    onMatch: (u: ApiProfile) => void;
+}) => {
     const [isLiked, setIsLiked] = useState(user.is_liked || user.is_match);
     const [isMatch, setIsMatch] = useState(user.is_match);
     const router = useRouter();
-    
-    const statusObj = status.find((s) => s.name.toLowerCase().includes(user.rating.toLowerCase()));
+
+    const statusObj = status.find((s) =>
+        s.name.toLowerCase().includes(user.rating.toLowerCase()),
+    );
     const ratingColor = statusObj ? statusObj.color : "#4B4B4B";
 
     const imageUrl = user.avatar
-        ? (user.avatar.startsWith("/") && !user.avatar.startsWith("http")
-            ? `http://localhost:5001${user.avatar}`
-            : user.avatar)
-        : "/girl1.png";
+        ? user.avatar.startsWith("/") && !user.avatar.startsWith("http")
+            ? `http://localhost:5001${user.avatar.startsWith("/static") ? user.avatar : "/static" + (user.avatar.startsWith("/") ? "" : "/") + user.avatar}`
+            : user.avatar
+        : girl.src;
 
     const toggleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -100,11 +62,14 @@ const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: A
 
         try {
             const action = newState ? "like" : "unlike";
-            const res = await fetch(`http://localhost:5001/api/v1/profile/${user.username}/${action}`, {
-                method: "POST",
-                credentials: "include"
-            });
-            
+            const res = await fetch(
+                `http://localhost:5001/api/v1/profile/${user.username}/${action}`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                },
+            );
+
             if (!res.ok) {
                 setIsLiked(previousState);
             } else {
@@ -123,7 +88,7 @@ const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: A
     };
 
     return (
-        <div 
+        <div
             onClick={() => router.push(`/profile/${user.username}`)}
             className="flex flex-row gap-2 bg-[#F5F3FF] shadow-xl p-3 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 cursor-pointer hover:bg-white transition-colors group"
         >
@@ -144,10 +109,12 @@ const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: A
                 <div className="flex flex-row justify-between gap-2 min-w-0">
                     <div className="flex flex-col gap-1 min-w-0">
                         <span className="text-xs font-bold truncate text-gray-900">
-                            {user.first_name || user.username}, {user.age || "N/A"}
+                            {user.first_name || user.username},{" "}
+                            {user.age || "N/A"}
                         </span>
                         <span className="text-[10px] text-gray-500 truncate font-medium">
-                            {user.city || "Unknown"}{user.country ? `, ${user.country}` : ""}
+                            {user.city || "Unknown"}
+                            {user.country ? `, ${user.country}` : ""}
                         </span>
                         <span
                             className="text-[10px] font-bold truncate mt-1"
@@ -156,7 +123,7 @@ const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: A
                             {statusObj?.name || user.rating}
                         </span>
                     </div>
-                    <div 
+                    <div
                         onClick={(e) => {
                             e.stopPropagation();
                             router.push(`/profile/${user.username}`);
@@ -176,15 +143,11 @@ const SearchProfileCard = ({ user, onMatch }: { user: ApiProfile, onMatch: (u: A
                         <Heart
                             size={18}
                             className="text-[#6367FF] transition-colors"
-                            fill={
-                                isLiked
-                                    ? "#6367FF"
-                                    : "transparent"
-                            }
+                            fill={isLiked ? "#6367FF" : "transparent"}
                         />
                     </div>
                     {isMatch && (
-                        <div 
+                        <div
                             className="flex gap-2 items-center cursor-pointer hover:scale-105 transition-transform"
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -209,9 +172,12 @@ export default function AdvanceSearchPage() {
     const [isFetching, setIsFetching] = useState(false);
     const [searchResults, setSearchResults] = useState<ApiProfile[]>([]);
     const { profile } = useProfile();
-    const [matchModal, setMatchModal] = useState<{isOpen: boolean, user: ApiProfile | null}>({
+    const [matchModal, setMatchModal] = useState<{
+        isOpen: boolean;
+        user: ApiProfile | null;
+    }>({
         isOpen: false,
-        user: null
+        user: null,
     });
     const router = useRouter();
     // const [isViewed, setIsViewed] = useState(false);
@@ -294,33 +260,37 @@ export default function AdvanceSearchPage() {
             if (fullName.trim()) {
                 const parts = fullName.trim().split(" ");
                 params.append("first_name", parts[0]);
-                if (parts.length > 1) params.append("last_name", parts.slice(1).join(" "));
+                if (parts.length > 1)
+                    params.append("last_name", parts.slice(1).join(" "));
             }
             if (city.trim()) params.append("city", city.trim());
             if (ageMin) params.append("min_age", ageMin);
             if (ageMax) params.append("max_age", ageMax);
             if (sorting) params.append("sorting", sorting.toLowerCase());
-            
-            fameRatings.forEach(r => {
-                const rating = r.split(' ').pop();
+
+            fameRatings.forEach((r) => {
+                const rating = r.split(" ").pop();
                 if (rating) params.append("rating", rating);
             });
-            
-            tags.forEach(t => params.append("interests", t));
-            console.log("params",params);
 
-            const res = await fetch(`http://localhost:5001/api/v1/accounts/profiles/search?${params.toString()}`, {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
+            tags.forEach((t) => params.append("interests", t));
+            console.log("params", params);
+
+            const res = await fetch(
+                `http://localhost:5001/api/v1/accounts/profiles/search?${params.toString()}`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                 },
-            });
+            );
 
             if (!res.ok) throw new Error("Search failed");
-            
+
             const json = await res.json();
-            console.log("json",json);
+            console.log("json", json);
             setSearchResults(json.data?.profiles || []);
             setAdvanceSearch(false);
         } catch (error) {
@@ -631,13 +601,21 @@ export default function AdvanceSearchPage() {
             {isSearch && !isFetching && searchResults.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto scrollbar-hide pb-10 px-4">
                     {searchResults.map((user, index) => (
-                        <SearchProfileCard key={index} user={user} onMatch={(u) => setMatchModal({isOpen: true, user: u})} />
+                        <SearchProfileCard
+                            key={index}
+                            user={user}
+                            onMatch={(u) =>
+                                setMatchModal({ isOpen: true, user: u })
+                            }
+                        />
                     ))}
                 </div>
             ) : isFetching ? (
                 <div className="w-full flex-1 flex flex-col justify-center items-center gap-4 py-20">
                     <div className="w-12 h-12 border-4 border-[#6367FF]/20 border-t-[#6367FF] rounded-full animate-spin"></div>
-                    <p className="text-[#6367FF] font-bold animate-pulse">Finding your perfect match...</p>
+                    <p className="text-[#6367FF] font-bold animate-pulse">
+                        Finding your perfect match...
+                    </p>
                 </div>
             ) : (
                 <div className="w-full flex-1 flex flex-col justify-center items-center gap-5 text-center px-4 py-16">
@@ -659,14 +637,18 @@ export default function AdvanceSearchPage() {
                 </div>
             )}
 
-            <MatchOverlay 
+            <MatchOverlay
                 isOpen={matchModal.isOpen}
-                onClose={() => setMatchModal({isOpen: false, user: null})}
+                onClose={() => setMatchModal({ isOpen: false, user: null })}
                 myAvatar={profile?.profile?.avatar || null}
                 matchAvatar={matchModal.user?.avatar || null}
-                matchName={matchModal.user?.first_name || matchModal.user?.username || ""}
+                matchName={
+                    matchModal.user?.first_name ||
+                    matchModal.user?.username ||
+                    ""
+                }
                 onChat={() => {
-                    setMatchModal({isOpen: false, user: null});
+                    setMatchModal({ isOpen: false, user: null });
                     router.push(`/chat?user=${matchModal.user?.username}`);
                 }}
             />

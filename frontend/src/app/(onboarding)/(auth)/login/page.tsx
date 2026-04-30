@@ -66,22 +66,15 @@ export default function Login() {
                             className="w-35 h-10"
                         />
                     </div>
-                    <div className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleLogin();
+                        }}
+                        className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm"
+                    >
                         <h1 className="pl-3 text-2xl font-bold">Login</h1>
                         <div className="flex flex-col gap-4">
-                            {/* <div className="flex flex-col gap-2">
-                                <h3 className="pl-4 text-black">Email</h3>
-                                <div className="flex flex-row items-center gap-4 p-3 bg-[#EDEDED] rounded-xl">
-                                    <Mail />
-                                    <input
-                                        type="email"
-                                        placeholder="Email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="bg-transparent outline-none w-full text-black placeholder-black/50"
-                                    />
-                                </div>
-                            </div> */}
                             <div className="flex flex-col gap-2">
                                 <h3 className="pl-4 text-black">Username</h3>
                                 <div className="flex flex-row items-center gap-4 p-3 bg-[#EDEDED] rounded-xl">
@@ -139,8 +132,7 @@ export default function Login() {
                                 </p>
                             )}
                             <button
-                                type="button"
-                                onClick={handleLogin}
+                                type="submit"
                                 disabled={loading}
                                 className="w-full text-center bg-[#6367FF] text-white py-3 rounded-xl font-bold cursor-pointer disabled:opacity-50 transition-opacity"
                             >
@@ -185,7 +177,7 @@ export default function Login() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
                 <div className="hidden lg:flex flex-1/4 w-full h-full flex-col bg-[url('/login-image.png')] bg-cover bg-center rounded-2xl p-6 text-white items-end justify-between">
                     <div className="flex flex-row items-center gap-4 text-sm">

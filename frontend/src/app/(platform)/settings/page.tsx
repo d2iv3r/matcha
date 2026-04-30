@@ -38,16 +38,22 @@ interface User {
 
 import { INTERESTS } from "@/core/constants/interests";
 
-function BasicInfo({ profileData, onUpdate }: { profileData: any; onUpdate: (data: any) => void }) {
+function BasicInfo({
+    profileData,
+    onUpdate,
+}: {
+    profileData: any;
+    onUpdate: (data: any) => void;
+}) {
     const profile = profileData?.profile || {};
-    
+
     const [formData, setFormData] = useState({
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
         email: profile.email || "",
         bio: profile.bio || "",
         gender: profile.gender || "male",
-        interests: profile.interests || []
+        interests: profile.interests || [],
     });
 
     const [tagInput, setTagInput] = useState("");
@@ -63,7 +69,7 @@ function BasicInfo({ profileData, onUpdate }: { profileData: any; onUpdate: (dat
                 email: profile.email || "",
                 bio: profile.bio || "",
                 gender: profile.gender || "male",
-                interests: profile.interests || []
+                interests: profile.interests || [],
             });
         }
     }, [profile.user_id]);
@@ -93,12 +99,16 @@ function BasicInfo({ profileData, onUpdate }: { profileData: any; onUpdate: (dat
     };
 
     const removeTag = (tagToRemove: string) => {
-        const newInterests = formData.interests.filter((tag: string) => tag !== tagToRemove);
+        const newInterests = formData.interests.filter(
+            (tag: string) => tag !== tagToRemove,
+        );
         setFormData({ ...formData, interests: newInterests });
         onUpdate({ interests: newInterests });
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
         const { name, value } = e.target;
         const newData = { ...formData, [name]: value };
         setFormData(newData);
@@ -118,7 +128,7 @@ function BasicInfo({ profileData, onUpdate }: { profileData: any; onUpdate: (dat
 
     return (
         <div className="w-full h-full p-4">
-            <div className="w-full flex flex-col gap-4 pb-10">
+            <div className="w-full flex flex-col gap-4 pb-20">
                 <div className="w-full flex flex-col gap-3">
                     <div className="w-full flex flex-col gap-1">
                         <h2 className="text-md font-semibold">
@@ -276,8 +286,9 @@ function Security() {
     const [locationAccess, setLocationAccess] = useState<boolean | null>(true);
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-    
+    const [showConfirmPassword, setShowConfirmPassword] =
+        useState<boolean>(false);
+
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -391,13 +402,17 @@ function Security() {
                     </div>
                     <div className="flex flex-col gap-2 w-full lg:w-1/2">
                         <h3 className="pl-4 text-sm">Re-write new password</h3>
-                        <div className={`flex flex-row items-center gap-2 px-3 py-[7px] bg-white border rounded-xl transition-colors ${confirmPassword && newPassword !== confirmPassword ? "border-red-500" : confirmPassword && newPassword === confirmPassword ? "border-green-500" : "border-[#6367FF]"}`}>
+                        <div
+                            className={`flex flex-row items-center gap-2 px-3 py-[7px] bg-white border rounded-xl transition-colors ${confirmPassword && newPassword !== confirmPassword ? "border-red-500" : confirmPassword && newPassword === confirmPassword ? "border-green-500" : "border-[#6367FF]"}`}
+                        >
                             <Lock className="w-5 h-5" />
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="********"
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e) =>
+                                    setConfirmPassword(e.target.value)
+                                }
                                 className="text-xs bg-transparent outline-none w-full placeholder-black"
                             />
                             <button
@@ -415,16 +430,18 @@ function Security() {
                             </button>
                         </div>
                         <div className="flex flex-col gap-1 px-1 h-4">
-                            {confirmPassword && newPassword !== confirmPassword && (
-                                <p className="text-xs font-medium text-red-500">
-                                    Passwords do not match
-                                </p>
-                            )}
-                            {confirmPassword && newPassword === confirmPassword && (
-                                <p className="text-xs font-medium text-green-500">
-                                    Passwords match
-                                </p>
-                            )}
+                            {confirmPassword &&
+                                newPassword !== confirmPassword && (
+                                    <p className="text-xs font-medium text-red-500">
+                                        Passwords do not match
+                                    </p>
+                                )}
+                            {confirmPassword &&
+                                newPassword === confirmPassword && (
+                                    <p className="text-xs font-medium text-green-500">
+                                        Passwords match
+                                    </p>
+                                )}
                         </div>
                     </div>
                 </div>
@@ -479,7 +496,7 @@ function Blocked() {
                 return (
                     <div key={index} className="w-full px-1 py-1 mt-auto">
                         <div className="flex gap-3 flex-row min-w-0 bg-white flex-1 p-3 rounded-3xl">
-                            <NextImage 
+                            <NextImage
                                 src={user.image}
                                 alt="Profile"
                                 width={100}
@@ -517,14 +534,27 @@ function Blocked() {
     );
 }
 
-function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data: any) => void }) {
+function Gallery({
+    profileData,
+    onUpdate,
+}: {
+    profileData: any;
+    onUpdate: (data: any) => void;
+}) {
     const profile = profileData?.profile || {};
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar || null);
-    const [allPictures, setAllPictures] = useState<any[]>(profile.pictures || []);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(
+        profile.avatar || null,
+    );
+    const [allPictures, setAllPictures] = useState<any[]>(
+        profile.pictures || [],
+    );
     const [isDragging, setIsDragging] = useState(false);
-    
+
     // Editor State
-    const [editingImage, setEditingImage] = useState<{ index: number, src: string } | null>(null);
+    const [editingImage, setEditingImage] = useState<{
+        index: number;
+        src: string;
+    } | null>(null);
     const [rotation, setRotation] = useState(0);
     const [filter, setFilter] = useState("none");
     const [flip, setFlip] = useState({ h: 1, v: 1 });
@@ -575,7 +605,11 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
 
     const getPreview = (item: any) => {
         if (typeof item === "string") return item;
-        try { return URL.createObjectURL(item); } catch (e) { return ""; }
+        try {
+            return URL.createObjectURL(item);
+        } catch (e) {
+            return "";
+        }
     };
 
     const startEditing = (index: number, src: string) => {
@@ -594,12 +628,15 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDraggingImage || !imgNaturalSize.w) return;
-        
+
         const previewSize = 400;
-        const fitScale = Math.max(previewSize / imgNaturalSize.w, previewSize / imgNaturalSize.h);
+        const fitScale = Math.max(
+            previewSize / imgNaturalSize.w,
+            previewSize / imgNaturalSize.h,
+        );
         const w = imgNaturalSize.w * fitScale * zoom;
         const h = imgNaturalSize.h * fitScale * zoom;
-        
+
         const maxX = Math.max(0, (w - previewSize) / 2);
         const maxY = Math.max(0, (h - previewSize) / 2);
 
@@ -608,7 +645,7 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
 
         setPosition({
             x: Math.max(-maxX, Math.min(maxX, newX)),
-            y: Math.max(-maxY, Math.min(maxY, newY))
+            y: Math.max(-maxY, Math.min(maxY, newY)),
         });
     };
 
@@ -616,7 +653,7 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
 
     const applyEdits = async () => {
         if (!editingImage) return;
-        
+
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -624,43 +661,65 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
         const img = new window.Image();
         img.crossOrigin = "anonymous";
         img.src = editingImage.src;
-        
-        await new Promise((resolve) => { img.onload = resolve; });
-        
+
+        await new Promise((resolve) => {
+            img.onload = resolve;
+        });
+
         // Match high quality square output
         const size = 1024;
         canvas.width = size;
         canvas.height = size;
-        
+
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, size, size);
 
-        ctx.filter = filter === "none" ? "none" : 
-                    filter === "grayscale" ? "grayscale(1)" :
-                    filter === "sepia" ? "sepia(1)" :
-                    filter === "invert" ? "invert(1)" : "none";
-        
+        ctx.filter =
+            filter === "none"
+                ? "none"
+                : filter === "grayscale"
+                  ? "grayscale(1)"
+                  : filter === "sepia"
+                    ? "sepia(1)"
+                    : filter === "invert"
+                      ? "invert(1)"
+                      : "none";
+
         // Base scale to COVER the preview container (400px)
         const previewSize = 400;
-        const fitScale = Math.max(previewSize / img.width, previewSize / img.height);
-        
+        const fitScale = Math.max(
+            previewSize / img.width,
+            previewSize / img.height,
+        );
+
         const outputScale = size / previewSize;
         ctx.translate(size / 2, size / 2);
         ctx.translate(position.x * outputScale, position.y * outputScale);
         ctx.rotate((rotation * Math.PI) / 180);
-        ctx.scale(flip.h * zoom * outputScale * fitScale, flip.v * zoom * outputScale * fitScale);
+        ctx.scale(
+            flip.h * zoom * outputScale * fitScale,
+            flip.v * zoom * outputScale * fitScale,
+        );
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        
-        canvas.toBlob((blob) => {
-            if (blob) {
-                const editedFile = new File([blob], `edited_${Date.now()}.jpg`, { type: "image/jpeg" });
-                const updatedList = [...allPictures];
-                updatedList[editingImage.index] = editedFile;
-                setAllPictures(updatedList);
-                onUpdate({ allPictures: updatedList });
-                setEditingImage(null);
-            }
-        }, "image/jpeg", 0.9);
+
+        canvas.toBlob(
+            (blob) => {
+                if (blob) {
+                    const editedFile = new File(
+                        [blob],
+                        `edited_${Date.now()}.jpg`,
+                        { type: "image/jpeg" },
+                    );
+                    const updatedList = [...allPictures];
+                    updatedList[editingImage.index] = editedFile;
+                    setAllPictures(updatedList);
+                    onUpdate({ allPictures: updatedList });
+                    setEditingImage(null);
+                }
+            },
+            "image/jpeg",
+            0.9,
+        );
     };
 
     return (
@@ -668,18 +727,31 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
             {/* Avatar Section */}
             <div className="flex flex-col gap-2">
                 <h2 className="text-lg font-semibold">Avatar</h2>
-                <p className="text-xs text-gray-500">How you appear to others.</p>
+                <p className="text-xs text-gray-500">
+                    How you appear to others.
+                </p>
                 <div className="relative w-32 h-32 mt-2 group">
                     <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-[#6367FF] shadow-md bg-white">
                         {avatarPreview ? (
-                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                            <img
+                                src={avatarPreview}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300"><User size={48} /></div>
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                <User size={48} />
+                            </div>
                         )}
                     </div>
                     <label className="absolute -bottom-2 -right-2 p-2 bg-[#6367FF] text-white rounded-xl cursor-pointer shadow-lg hover:scale-105 transition-all">
                         <Camera size={18} />
-                        <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+                        <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                        />
                     </label>
                 </div>
             </div>
@@ -688,33 +760,64 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-lg font-semibold">Gallery</h2>
-                    <p className="text-xs text-gray-500">Drag and drop up to 4 photos.</p>
+                    <p className="text-xs text-gray-500">
+                        Drag and drop up to 4 photos.
+                    </p>
                 </div>
-                
-                <div 
+
+                <div
                     className={`grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-3xl transition-all ${isDragging ? "bg-[#6367FF]/10 ring-2 ring-[#6367FF] ring-dashed" : ""}`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                    }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
                 >
                     {allPictures.map((pic, index) => {
                         const preview = getPreview(pic);
                         return (
-                            <div key={index} className="relative aspect-square rounded-2xl overflow-hidden group bg-gray-100 shadow-sm border border-gray-100">
-                                <img src={preview} className="w-full h-full object-cover" />
+                            <div
+                                key={index}
+                                className="relative aspect-square rounded-2xl overflow-hidden group bg-gray-100 shadow-sm border border-gray-100"
+                            >
+                                <img
+                                    src={preview}
+                                    className="w-full h-full object-cover"
+                                />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                    <button onClick={() => startEditing(index, preview)} className="p-2 bg-white text-[#6367FF] rounded-lg hover:scale-110 transition-all"><Crop size={16} /></button>
-                                    <button onClick={() => removePicture(index)} className="p-2 bg-red-500 text-white rounded-lg hover:scale-110 transition-all"><Trash2 size={16} /></button>
+                                    <button
+                                        onClick={() =>
+                                            startEditing(index, preview)
+                                        }
+                                        className="p-2 bg-white text-[#6367FF] rounded-lg hover:scale-110 transition-all"
+                                    >
+                                        <Crop size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => removePicture(index)}
+                                        className="p-2 bg-red-500 text-white rounded-lg hover:scale-110 transition-all"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
                         );
                     })}
-                    
+
                     {allPictures.length < 4 && (
                         <label className="aspect-square rounded-2xl border-2 border-dashed border-[#AEB0FF] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white transition-all text-[#6367FF]">
                             <Upload size={24} />
-                            <span className="text-[10px] font-medium">Click or Drag</span>
-                            <input type="file" className="hidden" accept="image/*" multiple onChange={handlePicturesChange} />
+                            <span className="text-[10px] font-medium">
+                                Click or Drag
+                            </span>
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                multiple
+                                onChange={handlePicturesChange}
+                            />
                         </label>
                     )}
                 </div>
@@ -726,25 +829,34 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
                     <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
                         {/* Preview Area */}
                         <div className="flex-1 bg-black/5 flex flex-col items-center justify-center p-8 min-h-[450px]">
-                            <div 
+                            <div
                                 className="relative w-full aspect-square max-w-[400px] overflow-hidden rounded-xl bg-white shadow-lg cursor-move select-none"
                                 onMouseDown={handleMouseDown}
                                 onMouseMove={handleMouseMove}
                                 onMouseUp={handleMouseUp}
                                 onMouseLeave={handleMouseUp}
                             >
-                                <img 
-                                    src={editingImage.src} 
+                                <img
+                                    src={editingImage.src}
                                     onLoad={(e) => {
                                         const img = e.currentTarget;
-                                        setImgNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+                                        setImgNaturalSize({
+                                            w: img.naturalWidth,
+                                            h: img.naturalHeight,
+                                        });
                                     }}
-                                    style={{ 
+                                    style={{
                                         transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${flip.h * zoom}, ${flip.v * zoom})`,
-                                        filter: filter === "none" ? "none" : 
-                                               filter === "grayscale" ? "grayscale(1)" :
-                                               filter === "sepia" ? "sepia(1)" :
-                                               filter === "invert" ? "invert(1)" : "none",
+                                        filter:
+                                            filter === "none"
+                                                ? "none"
+                                                : filter === "grayscale"
+                                                  ? "grayscale(1)"
+                                                  : filter === "sepia"
+                                                    ? "sepia(1)"
+                                                    : filter === "invert"
+                                                      ? "invert(1)"
+                                                      : "none",
                                     }}
                                     className="min-w-full min-h-full object-cover transition-transform duration-75 pointer-events-none"
                                 />
@@ -756,13 +868,15 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
                                     <span>Zoom</span>
                                     <span>{Math.round(zoom * 100)}%</span>
                                 </div>
-                                <input 
-                                    type="range" 
-                                    min="1" 
-                                    max="3" 
-                                    step="0.1" 
-                                    value={zoom} 
-                                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="3"
+                                    step="0.1"
+                                    value={zoom}
+                                    onChange={(e) =>
+                                        setZoom(parseFloat(e.target.value))
+                                    }
                                     className="w-full accent-[#6367FF] h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
                             </div>
@@ -770,39 +884,95 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
 
                         {/* Toolbar */}
                         <div className="w-full md:w-64 p-6 flex flex-col gap-6 border-l border-gray-100 bg-white">
-                            <h3 className="font-bold flex items-center gap-2 text-gray-800"><Maximize2 size={18} /> Edit Image</h3>
-                            
+                            <h3 className="font-bold flex items-center gap-2 text-gray-800">
+                                <Maximize2 size={18} /> Edit Image
+                            </h3>
+
                             <div className="flex flex-col gap-3">
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Adjustment</p>
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                    Adjustment
+                                </p>
                                 <div className="flex gap-2">
-                                    <button onClick={() => setRotation(r => r - 90)} className="flex-1 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"><RotateCcw size={16} className="mx-auto" /></button>
-                                    <button onClick={() => setRotation(r => r + 90)} className="flex-1 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"><RotateCw size={16} className="mx-auto" /></button>
-                                    <button onClick={() => setFlip(f => ({ ...f, h: f.h * -1 }))} className="flex-1 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"><FlipHorizontal size={16} className="mx-auto" /></button>
+                                    <button
+                                        onClick={() =>
+                                            setRotation((r) => r - 90)
+                                        }
+                                        className="flex-1 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                                    >
+                                        <RotateCcw
+                                            size={16}
+                                            className="mx-auto"
+                                        />
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            setRotation((r) => r + 90)
+                                        }
+                                        className="flex-1 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                                    >
+                                        <RotateCw
+                                            size={16}
+                                            className="mx-auto"
+                                        />
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            setFlip((f) => ({
+                                                ...f,
+                                                h: f.h * -1,
+                                            }))
+                                        }
+                                        className="flex-1 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                                    >
+                                        <FlipHorizontal
+                                            size={16}
+                                            className="mx-auto"
+                                        />
+                                    </button>
                                 </div>
                             </div>
 
                             <div className="flex flex-col gap-3">
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Filters</p>
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                    Filters
+                                </p>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {["none", "grayscale", "sepia", "invert"].map(f => (
-                                        <button 
-                                            key={f} 
+                                    {[
+                                        "none",
+                                        "grayscale",
+                                        "sepia",
+                                        "invert",
+                                    ].map((f) => (
+                                        <button
+                                            key={f}
                                             onClick={() => setFilter(f)}
                                             className={`py-1.5 px-3 text-[10px] rounded-lg border font-medium transition-all ${filter === f ? "bg-[#6367FF] border-[#6367FF] text-white shadow-md shadow-[#6367FF]/20" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}
                                         >
-                                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                                            {f.charAt(0).toUpperCase() +
+                                                f.slice(1)}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
                             <p className="text-[10px] text-gray-400 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                <b>Tip:</b> Drag the image to pan and use the slider to zoom for the perfect square crop.
+                                <b>Tip:</b> Drag the image to pan and use the
+                                slider to zoom for the perfect square crop.
                             </p>
 
                             <div className="mt-auto flex gap-3 pt-4">
-                                <button onClick={() => setEditingImage(null)} className="flex-1 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-                                <button onClick={applyEdits} className="flex-1 py-3 px-4 bg-[#6367FF] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#555DFF] text-nowrap shadow-lg shadow-[#6367FF]/30 transition-all"><Check size={14} /> Save Profile</button>
+                                <button
+                                    onClick={() => setEditingImage(null)}
+                                    className="flex-1 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={applyEdits}
+                                    className="flex-1 py-3 px-4 bg-[#6367FF] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#555DFF] text-nowrap shadow-lg shadow-[#6367FF]/30 transition-all"
+                                >
+                                    <Check size={14} /> Save Profile
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -814,7 +984,9 @@ function Gallery({ profileData, onUpdate }: { profileData: any; onUpdate: (data:
 
 export default function SettingsPage() {
     const { profile: profileData, isLoading, refetchProfile } = useProfile();
-    const [activeTab, setActiveTab] = useState<"basic" | "gallery" | "security" | "blocked">("basic");
+    const [activeTab, setActiveTab] = useState<
+        "basic" | "gallery" | "security" | "blocked"
+    >("basic");
     const [pendingChanges, setPendingChanges] = useState<any>({});
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState({ text: "", type: "" });
@@ -830,22 +1002,37 @@ export default function SettingsPage() {
         setSaveMessage({ text: "", type: "" });
 
         try {
-            const profileFields = ["first_name", "last_name", "email", "bio", "gender", "interests"];
-            const hasProfileChanges = profileFields.some(key => key in pendingChanges);
-            const hasMediaChanges = ("avatar" in pendingChanges) || ("allPictures" in pendingChanges);
+            const profileFields = [
+                "first_name",
+                "last_name",
+                "email",
+                "bio",
+                "gender",
+                "interests",
+            ];
+            const hasProfileChanges = profileFields.some(
+                (key) => key in pendingChanges,
+            );
+            const hasMediaChanges =
+                "avatar" in pendingChanges || "allPictures" in pendingChanges;
 
             if (hasProfileChanges) {
                 const profileData = Object.fromEntries(
-                    Object.entries(pendingChanges).filter(([key]) => profileFields.includes(key))
+                    Object.entries(pendingChanges).filter(([key]) =>
+                        profileFields.includes(key),
+                    ),
                 );
-                const res = await fetch("http://localhost:5001/api/v1/accounts/profile", {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
+                const res = await fetch(
+                    "http://localhost:5001/api/v1/accounts/profile",
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(profileData),
+                        credentials: "include",
                     },
-                    body: JSON.stringify(profileData),
-                    credentials: "include",
-                });
+                );
                 if (!res.ok) throw new Error("Failed to update profile info");
             }
 
@@ -854,32 +1041,48 @@ export default function SettingsPage() {
                 if (pendingChanges.avatar) {
                     formData.append("avatar", pendingChanges.avatar);
                 }
-                
+
                 if (pendingChanges.allPictures) {
                     pendingChanges.allPictures.forEach((pic: any) => {
                         // Clean the URL if it's a string from our backend
-                        const value = typeof pic === "string" ? pic.replace("http://localhost:5001", "") : pic;
+                        const value =
+                            typeof pic === "string"
+                                ? pic.replace("http://localhost:5001", "")
+                                : pic;
                         formData.append("pictures", value);
                     });
                 }
-                
-                const res = await fetch("http://localhost:5001/api/v1/accounts/profile/media", {
-                    method: "PATCH",
-                    body: formData,
-                    credentials: "include",
-                });
+
+                const res = await fetch(
+                    "http://localhost:5001/api/v1/accounts/profile/media",
+                    {
+                        method: "PATCH",
+                        body: formData,
+                        credentials: "include",
+                    },
+                );
                 if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
-                    throw new Error(errorData.message || "Failed to update profile media");
+                    throw new Error(
+                        errorData.message || "Failed to update profile media",
+                    );
                 }
             }
 
-            setSaveMessage({ text: "Changes saved successfully!", type: "success" });
+            setSaveMessage({
+                text: "Changes saved successfully!",
+                type: "success",
+            });
             setPendingChanges({});
             await refetchProfile();
         } catch (error: any) {
             console.error("Save error:", error);
-            setSaveMessage({ text: error.message || "Failed to save changes. Please try again.", type: "error" });
+            setSaveMessage({
+                text:
+                    error.message ||
+                    "Failed to save changes. Please try again.",
+                type: "error",
+            });
         } finally {
             setIsSaving(false);
             setTimeout(() => setSaveMessage({ text: "", type: "" }), 3000);
@@ -900,14 +1103,18 @@ export default function SettingsPage() {
                 <div className="flex justify-between items-center px-4 py-2">
                     <h1 className="font-semibold text-xl">Settings</h1>
                     {saveMessage.text && (
-                        <div className={`text-xs px-4 py-2 rounded-xl animate-in fade-in slide-in-from-top-2 ${
-                            saveMessage.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}>
+                        <div
+                            className={`text-xs px-4 py-2 rounded-xl animate-in fade-in slide-in-from-top-2 ${
+                                saveMessage.type === "success"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                            }`}
+                        >
                             {saveMessage.text}
                         </div>
                     )}
                 </div>
-                
+
                 <div className="w-full flex-1 min-h-0 flex flex-col -space-y-0.5">
                     <div className="flex w-fit z-10 text-sm">
                         <button
@@ -938,21 +1145,21 @@ export default function SettingsPage() {
                     <div className="w-full flex-1 min-h-0 bg-[#E9E8FF] border-t-2 border-[#AEB0FF] rounded-b-3xl flex flex-col">
                         <div className="w-full flex-1 min-h-0 overflow-y-auto scrollbar-hide">
                             {activeTab === "basic" && (
-                                <BasicInfo 
-                                    profileData={profileData} 
-                                    onUpdate={handleUpdate} 
+                                <BasicInfo
+                                    profileData={profileData}
+                                    onUpdate={handleUpdate}
                                 />
                             )}
                             {activeTab === "gallery" && (
-                                <Gallery 
-                                    profileData={profileData} 
-                                    onUpdate={handleUpdate} 
+                                <Gallery
+                                    profileData={profileData}
+                                    onUpdate={handleUpdate}
                                 />
                             )}
                             {activeTab === "security" && <Security />}
                         </div>
                         <div className="flex justify-end p-4 gap-5 text-xs">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setPendingChanges({});
                                     refetchProfile();
@@ -961,11 +1168,17 @@ export default function SettingsPage() {
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={handleSave}
-                                disabled={isSaving || Object.keys(pendingChanges).length === 0}
+                                disabled={
+                                    isSaving ||
+                                    Object.keys(pendingChanges).length === 0
+                                }
                                 className={`bg-[#6367FF] text-white px-6 py-1.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                                    (isSaving || Object.keys(pendingChanges).length === 0) ? "opacity-50 cursor-not-allowed" : "hover:bg-[#555DFF] cursor-pointer"
+                                    isSaving ||
+                                    Object.keys(pendingChanges).length === 0
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-[#555DFF] cursor-pointer"
                                 }`}
                             >
                                 {isSaving ? (
@@ -973,7 +1186,9 @@ export default function SettingsPage() {
                                         <div className="w-3 h-3 border-2 border-white/30 border-b-white rounded-full animate-spin" />
                                         Saving...
                                     </>
-                                ) : "Save Changes"}
+                                ) : (
+                                    "Save Changes"
+                                )}
                             </button>
                         </div>
                     </div>

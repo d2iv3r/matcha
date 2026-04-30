@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { X, Heart, MessageCircleMore } from "lucide-react";
+import girl from "@/public/girl1.png";
 
 interface MatchOverlayProps {
     isOpen: boolean;
@@ -29,9 +30,16 @@ export default function MatchOverlay({
     if (!shouldRender) return null;
 
     const formatAvatar = (url: string | null) => {
-        if (!url) return "/girl1.png";
-        if (url.startsWith("/static")) return `http://localhost:5001${url}`;
-        return url;
+        if (!url) return girl.src;
+        if (url.startsWith("http")) return url;
+        
+        // Ensure the URL starts with /static/
+        const cleanPath = url.startsWith("/") ? url : `/${url}`;
+        const finalPath = cleanPath.startsWith("/static") 
+            ? cleanPath 
+            : `/static${cleanPath}`;
+            
+        return `http://localhost:5001${finalPath}`;
     };
 
     return (
@@ -91,7 +99,7 @@ export default function MatchOverlay({
                     {/* Glow effect behind avatars */}
                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#6367FF]/20 blur-3xl rounded-full transition-opacity duration-1000 ${isOpen ? "opacity-100" : "opacity-0"}`} />
 
-                    <div className={`relative w-32 h-32 md:w-44 md:h-44 rounded-3xl border-4 border-white/20 overflow-hidden shadow-2xl transition-all duration-700 delay-500 ${isOpen ? "translate-x-0 rotate-[-8deg] opacity-100 scale-100" : "-translate-x-20 -rotate-[30deg] opacity-0 scale-50"}`}>
+                    <div className={`relative w-32 h-32 md:w-44 md:h-44 rounded-3xl border-4 border-white/20 overflow-hidden shadow-2xl transition-all duration-700 delay-500 ${isOpen ? "translate-x-0 rotate-[-8deg] opacity-100 scale-100" : "-translate-x-20 -rotate-30 opacity-0 scale-50"}`}>
                         <Image
                             src={formatAvatar(myAvatar)}
                             alt="Me"
@@ -105,7 +113,7 @@ export default function MatchOverlay({
                         <Heart size={32} fill="#6367FF" color="#6367FF" className="animate-heart-pop" />
                     </div>
 
-                    <div className={`relative w-32 h-32 md:w-44 md:h-44 rounded-3xl border-4 border-white/20 overflow-hidden shadow-2xl transition-all duration-700 delay-500 ${isOpen ? "translate-x-0 rotate-[8deg] opacity-100 scale-100" : "translate-x-20 rotate-[30deg] opacity-0 scale-50"}`}>
+                    <div className={`relative w-32 h-32 md:w-44 md:h-44 rounded-3xl border-4 border-white/20 overflow-hidden shadow-2xl transition-all duration-700 delay-500 ${isOpen ? "translate-x-0 rotate-[8deg] opacity-100 scale-100" : "translate-x-20 rotate-30 opacity-0 scale-50"}`}>
                         <Image
                             src={formatAvatar(matchAvatar)}
                             alt={matchName}
