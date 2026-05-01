@@ -183,8 +183,7 @@ class AuthService:
         user = UserModel.get_user_by_oauth(provider, provider_id)
         if user:
             if not user.is_active:
-                user.is_active = True
-                user.save()
+                UserModel.activate_user_by_id(int(user.id))
             return user
 
         # 2. Try to find user by email
@@ -195,8 +194,7 @@ class AuthService:
                 UserModel.link_oauth_account(int(user.id), provider, provider_id)
                 # Mark as active since they authenticated via OAuth
                 if not user.is_active:
-                    user.is_active = True
-                    user.save()
+                    UserModel.activate_user_by_id(int(user.id))
                 return user
 
         # 3. Create new user if not found

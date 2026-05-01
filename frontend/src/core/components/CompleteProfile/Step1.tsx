@@ -26,6 +26,9 @@ export default function Step1() {
             const firstName = searchParams.get("first_name");
             const lastName = searchParams.get("last_name");
             const avatar = searchParams.get("avatar");
+            const username = searchParams.get("username");
+            
+            if (username) localStorage.setItem("username", username);
             
             const existingData = JSON.parse(localStorage.getItem("profile_data") || "{}");
             localStorage.setItem("profile_data", JSON.stringify({

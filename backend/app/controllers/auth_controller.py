@@ -153,6 +153,7 @@ class AuthController:
             # Pass OAuth info to onboarding to skip avatar etc.
             params = {
                 "oauth": "intra42",
+                "username": normalized_data["username"] or "",
                 "first_name": normalized_data["first_name"] or "",
                 "last_name": normalized_data["last_name"] or "",
                 "avatar": normalized_data["avatar"] or ""
