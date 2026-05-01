@@ -4,7 +4,7 @@ import Image from "next/image";
 import man from "@/public/men-icone.svg";
 import woman from "@/public/women-icone.svg";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Step1() {
@@ -16,6 +16,27 @@ export default function Step1() {
     const [openDropdown, setOpenDropdown] = useState<
         "day" | "month" | "year" | null
     >(null);
+    const [isOAuth, setIsOAuth] = useState(false);
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const oauth = searchParams.get("oauth");
+        if (oauth === "intra42") {
+            setIsOAuth(true);
+            const firstName = searchParams.get("first_name");
+            const lastName = searchParams.get("last_name");
+            const avatar = searchParams.get("avatar");
+            
+            const existingData = JSON.parse(localStorage.getItem("profile_data") || "{}");
+            localStorage.setItem("profile_data", JSON.stringify({
+                ...existingData,
+                oauth: "intra42",
+                first_name: firstName,
+                last_name: lastName,
+                avatar: avatar
+            }));
+        }
+    }, []);
 
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
     const months = Array.from({ length: 12 }, (_, i) => i + 1);

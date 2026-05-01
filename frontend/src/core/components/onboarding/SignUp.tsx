@@ -80,6 +80,10 @@ export default function SignUp() {
             setLoading(false);
         }
     };
+
+    const handleIntraLogin = () => {
+        window.location.href = "http://localhost:5001/api/auth/oauth2/42/login";
+    };
     return (
         <div className="w-full h-screen flex items-center justify-center p-3 bg-transparent">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
@@ -170,7 +174,9 @@ export default function SignUp() {
                                 <div className="flex flex-row items-center gap-4 px-3 py-2 bg-[#EDEDED] rounded-lg">
                                     <LockKeyhole />
                                     <input
-                                        type={showPassword ? "text" : "password"}
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
                                         placeholder="Enter your password"
                                         value={password}
                                         onChange={(e) =>
@@ -178,7 +184,19 @@ export default function SignUp() {
                                         }
                                         className="bg-transparent outline-none w-full text-xs text-black placeholder-black/50"
                                     />
-                                    {showPassword ? <EyeOff onClick={() => setShowPassword(false)} /> : <Eye onClick={() => setShowPassword(true)} />}
+                                    {showPassword ? (
+                                        <EyeOff
+                                            onClick={() =>
+                                                setShowPassword(false)
+                                            }
+                                        />
+                                    ) : (
+                                        <Eye
+                                            onClick={() =>
+                                                setShowPassword(true)
+                                            }
+                                        />
+                                    )}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 px-1">
@@ -265,15 +283,21 @@ export default function SignUp() {
                                 </p>
                                 <hr className="w-full" />
                             </div>
-                            <div className="flex flex-row items-center gap-4">
-                                <div className="w-full h-full flex flex-row items-center justify-center gap-2 bg-[#EDEDED] hover:bg-[#e7e6e6] cursor-pointer p-2 rounded-xl">
-                                    <p className="text-sm whitespace-nowrap">
-                                        Google
-                                    </p>
-                                </div>
-                                <div className="w-full h-full flex flex-row items-center justify-center gap-2 bg-[#EDEDED] hover:bg-[#e7e6e6] cursor-pointer p-2 rounded-xl">
-                                    <Image src="/42.png" alt="42" width={24} height={24}/>
-                                </div>
+                            <div
+                                onClick={handleIntraLogin}
+                                className="w-full h-full flex flex-row items-center justify-center gap-4 bg-gray-50 border border-[#EDEDED] hover:bg-gray-100 cursor-pointer p-2 rounded-xl"
+                            >
+                                <Image
+                                    src="/42.png"
+                                    alt="42"
+                                    width={22}
+                                    height={22}
+                                    className="pt-1"
+                                    unoptimized
+                                />
+                                <p className="text-sm font-medium whitespace-nowrap">
+                                    Sign up with Intra 42
+                                </p>
                             </div>
                         </div>
                     </div>

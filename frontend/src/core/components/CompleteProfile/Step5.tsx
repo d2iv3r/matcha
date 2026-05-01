@@ -1,14 +1,22 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { Check, Wallpaper, X, Plus, Loader2 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function Step5() {
     const router = useRouter();
     const [images, setImages] = useState<{ file: File; url: string }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
+    const [oauthAvatar, setOauthAvatar] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const data = JSON.parse(localStorage.getItem("profile_data") || "{}");
+        if (data.oauth === "intra42" && data.avatar) {
+            setOauthAvatar(data.avatar);
+        }
+    }, []);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files || []);
@@ -78,11 +86,17 @@ export default function Step5() {
                 });
             }
 
-            if (images.length > 0) {
-                formData.append("avatar", images[0].file);
-            }
-            for (let i = 1; i < images.length; i++) {
-                formData.append("pictures", images[i].file);
+            if (oauthAvatar) {
+                formData.append("avatar", oauthAvatar);
+                // If we have an oauth avatar, all uploaded images are treated as secondary pictures
+                images.forEach((img) => formData.append("pictures", img.file));
+            } else {
+                if (images.length > 0) {
+                    formData.append("avatar", images[0].file);
+                }
+                for (let i = 1; i < images.length; i++) {
+                    formData.append("pictures", images[i].file);
+                }
             }
 
             const res = await fetch(
@@ -186,8 +200,29 @@ export default function Step5() {
                         </p>
                     </div>
 
-                    {/* Primary uploaded file */}
-                    {images[0] ? (
+                    {/* Primary uploaded file or OAuth avatar */}
+                    {oauthAvatar ? (
+                        <div className="w-full h-[88px] flex items-center justify-between p-3 border border-[#6367FF] rounded-xl bg-transparent">
+                            <div className="flex items-center gap-4 w-full h-full overflow-hidden">
+                                <div
+                                    className="w-16 h-16 rounded-xl bg-cover bg-center shrink-0"
+                                    style={{
+                                        backgroundImage: `url(${oauthAvatar})`,
+                                    }}
+                                />
+                                <div className="flex flex-col gap-1 overflow-hidden h-full justify-center w-[calc(100%-80px)]">
+                                    <p className="font-semibold text-sm truncate">
+                                        Profile Picture (from 42)
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-2 py-0.5 bg-[#C6BAFF] text-[10px] font-semibold rounded-md uppercase">
+                                            42 Intra
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : images[0] ? (
                         <div className="w-full h-[88px] flex items-center justify-between p-3 border border-[#6367FF] rounded-xl bg-transparent">
                             <div className="flex items-center gap-4 w-full h-full overflow-hidden">
                                 <div
@@ -237,12 +272,15 @@ export default function Step5() {
 
                     {/* Secondary files grid */}
                     <div className="w-full flex flex-col md:flex-row gap-3 mt-1 h-[300px] md:h-[150px]">
-                        {[1, 2, 3, 4].map((index) => {
-                            const image = images[index];
+                        {[1, 2, 3, 4].map((slotIndex) => {
+                            // If we have an oauthAvatar, images[0] is the first secondary picture (slotIndex 1)
+                            // If we don't have an oauthAvatar, images[1] is the first secondary picture (slotIndex 1)
+                            const imageIndex = oauthAvatar ? slotIndex - 1 : slotIndex;
+                            const image = images[imageIndex];
                             if (image) {
                                 return (
                                     <div
-                                        key={index}
+                                        key={slotIndex}
                                         className="flex-1 min-w-0 rounded-xl border border-[#6367FF] bg-transparent flex flex-col p-1.5 cursor-pointer"
                                     >
                                         <div
@@ -259,7 +297,7 @@ export default function Step5() {
                                                 size={12}
                                                 className="cursor-pointer shrink-0"
                                                 onClick={() =>
-                                                    removeImage(index)
+                                                    removeImage(imageIndex)
                                                 }
                                             />
                                         </div>
@@ -275,7 +313,7 @@ export default function Step5() {
                             } else {
                                 return (
                                     <div
-                                        key={index}
+                                        key={slotIndex}
                                         onClick={() =>
                                             fileInputRef.current?.click()
                                         }
@@ -303,7 +341,7 @@ export default function Step5() {
                     <p className="font-semibold text-black/50">Back</p>
                 </button>
                 <button
-                    disabled={images.length === 0}
+                    disabled={!oauthAvatar && images.length === 0}
                     onClick={handleFinish}
                     className="w-full flex-2 flex flex-col items-center justify-center p-3 bg-[#6367FF] rounded-2xl disabled:opacity-50"
                 >

@@ -89,6 +89,10 @@ class CreateProfileSchema(BaseModel):
     def validate_avatar(cls, value):
         if value is None:
             raise ValueError("avatar is required")
+        if isinstance(value, str):
+            if not value.strip():
+                 raise ValueError("avatar URL cannot be empty")
+            return value
         _validate_image_file(value, "avatar")
         return value
 
@@ -140,7 +144,8 @@ class CreateProfileSchema(BaseModel):
         if self.avatar is None and not self.pictures:
             return self
 
-        self.avatar = save_image(self.avatar, subfolder="avatars")
+        if self.avatar is not None and not isinstance(self.avatar, str):
+            self.avatar = save_image(self.avatar, subfolder="avatars")
 
         resolved_pictures: list[str] = []
         for picture in self.pictures or []:

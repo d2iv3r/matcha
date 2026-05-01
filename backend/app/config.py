@@ -57,7 +57,7 @@ class BaseConfig:
     INTRA42_ACCESS_TOKEN_URL = os.environ.get("INTRA42_ACCESS_TOKEN_URL", "https://api.intra.42.fr/oauth/token")
     INTRA42_USER_INFO_URL = os.environ.get("INTRA42_USER_INFO_URL", "https://api.intra.42.fr/v2/me")
     INTRA42_REDIRECT_URI = os.environ.get("INTRA42_REDIRECT_URI", f"{BACKEND_URL}/api/auth/oauth2/42/callback")
-    INTRA42_FRONTEND_URL = os.environ.get("INTRA42_FRONTEND_URL", "http://localhost:3000/dashboard")
+    INTRA42_FRONTEND_URL = os.environ.get("INTRA42_FRONTEND_URL", "http://localhost:3000/complete-profile")
 
 
 class DevConfig(BaseConfig):

@@ -51,7 +51,7 @@ def test_oauth_42_callback_success(client, monkeypatch):
         
         # Should redirect to dashboard
         assert response.status_code == 302
-        assert "http://localhost:3000/dashboard" in response.headers["Location"]
+        assert "http://localhost:3000/complete-profile" in response.headers["Location"]
         
         # Check if cookies are set
         cookies = response.headers.getlist("Set-Cookie")

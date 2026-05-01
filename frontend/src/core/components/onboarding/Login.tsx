@@ -51,6 +51,10 @@ export default function Login() {
             setLoading(false);
         }
     };
+    // https://api.intra.42.fr/oauth/authorize?response_type=code&client_id=None&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fapi%2Fauth%2Foauth2%2F42%2Fcallback&scope=public&state=eimM00cTLfmbIiRTLwFXZt133bOu2v
+    const handleIntraLogin = () => {
+        window.location.href = "http://localhost:5001/api/auth/oauth2/42/login";
+    };
 
     return (
         <div className="w-full h-screen flex items-center justify-center p-3 bg-transparent">
@@ -164,20 +168,21 @@ export default function Login() {
                                 </p>
                                 <hr className="w-full" />
                             </div>
-                            <div className="flex flex-row items-center gap-4">
-                                <div className="w-full h-full flex flex-row items-center justify-center gap-2 bg-[#EDEDED] hover:bg-[#e7e6e6] cursor-pointer p-2 rounded-xl">
-                                    <p className="text-sm whitespace-nowrap">
-                                        Google
-                                    </p>
-                                </div>
-                                <div className="w-full h-full flex flex-row items-center justify-center gap-2 bg-[#EDEDED] hover:bg-[#e7e6e6] cursor-pointer p-2 rounded-xl">
-                                    <Image
-                                        src="/42.png"
-                                        alt="42"
-                                        width={24}
-                                        height={24}
-                                    />
-                                </div>
+                            <div
+                                onClick={handleIntraLogin}
+                                className="w-full h-full flex flex-row items-center justify-center gap-4 bg-gray-50 border border-[#EDEDED] hover:bg-gray-100 cursor-pointer p-2 rounded-xl"
+                            >
+                                <Image
+                                    src="/42.png"
+                                    alt="42"
+                                    width={22}
+                                    height={22}
+                                    className="pt-1"
+                                    unoptimized
+                                />
+                                <p className="text-sm font-medium whitespace-nowrap">
+                                    Login with Intra 42
+                                </p>
                             </div>
                         </div>
                     </form>

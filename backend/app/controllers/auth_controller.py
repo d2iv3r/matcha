@@ -134,6 +134,8 @@ class AuthController:
         normalized_data = {
             "email": user_info.get("email"),
             "username": user_info.get("login"),
+            "first_name": user_info.get("first_name"),
+            "last_name": user_info.get("last_name"),
             "avatar": user_info.get("image", {}).get("link"),
             "provider_id": user_info.get("id"),
         }
@@ -143,9 +145,23 @@ class AuthController:
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
 
-        # Redirect to frontend dashboard
+        # Determine redirect target based on profile completeness
         from flask import current_app
-        frontend_url = request.args.get("frontend_url") or current_app.config["INTRA42_FRONTEND_URL"]
+        import urllib.parse
+        base_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
+        if not user.is_profile_complete:
+            # Pass OAuth info to onboarding to skip avatar etc.
+            params = {
+                "oauth": "intra42",
+                "first_name": normalized_data["first_name"] or "",
+                "last_name": normalized_data["last_name"] or "",
+                "avatar": normalized_data["avatar"] or ""
+            }
+            query = urllib.parse.urlencode({k: v for k, v in params.items() if v})
+            frontend_url = f"{base_url}/step1?{query}"
+        else:
+            frontend_url = f"{base_url}/home"
+            
         response = make_response("", 302)
         response.headers["Location"] = frontend_url
 

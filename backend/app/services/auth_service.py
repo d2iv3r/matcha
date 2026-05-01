@@ -175,13 +175,16 @@ class AuthService:
         Returns:
             UserModel instance
         """
-        email = user_data.get("email")
         provider_id = str(user_data.get("provider_id"))
+        email = user_data.get("email")
         username = user_data.get("username")
 
         # 1. Try to find user by OAuth account
         user = UserModel.get_user_by_oauth(provider, provider_id)
         if user:
+            if not user.is_active:
+                user.is_active = True
+                user.save()
             return user
 
         # 2. Try to find user by email
@@ -190,11 +193,13 @@ class AuthService:
             if user:
                 # Link existing user to this OAuth provider
                 UserModel.link_oauth_account(int(user.id), provider, provider_id)
+                # Mark as active since they authenticated via OAuth
+                if not user.is_active:
+                    user.is_active = True
+                    user.save()
                 return user
 
         # 3. Create new user if not found
-        # For OAuth users, we can generate a random password or leave it empty if allowed
-        # Here we'll generate a placeholder password hash
         placeholder_password = hash_password(generate_token(16))
         
         # Ensure username is unique
@@ -209,7 +214,9 @@ class AuthService:
             username=unique_username,
             email=email,
             password_hash=placeholder_password,
-            is_active=True # OAuth users are pre-verified
+            is_active=True, # OAuth users are pre-verified
+            first_name=user_data.get("first_name"),
+            last_name=user_data.get("last_name"),
         ).create_user()
 
         if not new_user:

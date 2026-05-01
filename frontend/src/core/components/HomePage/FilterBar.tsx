@@ -24,6 +24,7 @@ interface FilterBarProps {
         setState: React.Dispatch<React.SetStateAction<string[]>>,
     ) => void;
     handleSearch: () => void;
+    handleClear: () => void;
 }
 
 export default function FilterBar({
@@ -42,6 +43,7 @@ export default function FilterBar({
     toggleDropdown,
     toggleSelection,
     handleSearch,
+    handleClear,
 }: FilterBarProps) {
     return (
         <div className="flex flex-row flex-wrap justify-end items-center font-semibold text-sm gap-3">
@@ -205,7 +207,7 @@ export default function FilterBar({
                 {activeDropdown === "age" && (
                     <div className="absolute top-full right-0 mt-3 p-3 bg-white rounded-3xl shadow-xl shadow-black/10 z-20 border border-gray-100 w-25">
                         <div className="flex flex-col gap-2">
-                            {["18-25", "26-35", "36+"].map((age) => {
+                            {["18-25", "26-35", "36-45", "46+"].map((age) => {
                                 const isSelected = selectedAges.includes(age);
                                 return (
                                     <button
@@ -236,12 +238,20 @@ export default function FilterBar({
                 )}
             </div>
 
-            <button
-                onClick={handleSearch}
-                className="bg-linear-to-r from-[#6367FF] to-[#1f27c2] active:scale-95 transition-transform text-white px-8 py-2 rounded-xl shadow-[0_4px_12px_rgba(99,103,255,0.4)] cursor-pointer font-semibold shadow-md"
-            >
-                Show
-            </button>
+            <div className="flex gap-2">
+                <button
+                    onClick={handleClear}
+                    className="bg-white text-[#6367FF] border border-[#6367FF] active:scale-95 transition-transform px-6 py-2 rounded-xl cursor-pointer font-semibold"
+                >
+                    Clear
+                </button>
+                <button
+                    onClick={handleSearch}
+                    className="bg-linear-to-r from-[#6367FF] to-[#1f27c2] active:scale-95 transition-transform text-white px-8 py-2 rounded-xl shadow-[0_4px_12px_rgba(99,103,255,0.4)] cursor-pointer font-semibold shadow-md"
+                >
+                    Show
+                </button>
+            </div>
         </div>
     );
 }

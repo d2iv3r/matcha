@@ -1,24 +1,33 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useProfile } from "@/core/contexts/ProfileContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import rating from "@/core/constants/Rating";
-
 import MatchOverlay from "@/core/constants/MatchOverlay";
 import { ApiProfile } from "./types";
 import UserCard from "./UserCard";
 import FilterBar from "./FilterBar";
+import { INTERESTS } from "@/core/constants/interests";
 
-export default function HomePage() {
+function HomePageContent() {
     const [cityFilter, setCityFilter] = useState("");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
     const [selectedAges, setSelectedAges] = useState<string[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [tagSearch, setTagSearch] = useState("");
+    
+    // Applied filters (synced with URL)
+    const [appliedFilters, setAppliedFilters] = useState({
+        city: "",
+        tags: [] as string[],
+        ratings: [] as string[],
+        ages: [] as string[],
+    });
 
     const { profile } = useProfile();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const [rawProfiles, setRawProfiles] = useState<ApiProfile[]>([]);
     const [userList, setUserList] = useState<ApiProfile[]>([]);
@@ -37,55 +46,71 @@ export default function HomePage() {
     const limit = 10;
     const observer = useRef<IntersectionObserver | null>(null);
 
-    const applyFilters = useCallback(
-        (profilesToFilter: ApiProfile[]) => {
-            let filtered = profilesToFilter;
+    const applyCurrentFilters = useCallback((profiles: ApiProfile[], filters: typeof appliedFilters) => {
+        let filtered = profiles;
 
-            if (cityFilter.trim() !== "") {
-                filtered = filtered.filter(
-                    (u) =>
-                        (u.city &&
-                            u.city
-                                .toLowerCase()
-                                .includes(cityFilter.toLowerCase())) ||
-                        (u.country &&
-                            u.country
-                                .toLowerCase()
-                                .includes(cityFilter.toLowerCase())),
-                );
-            }
+        if (filters.city.trim() !== "") {
+            filtered = filtered.filter(
+                (u) =>
+                    (u.city && u.city.toLowerCase().includes(filters.city.toLowerCase())) ||
+                    (u.country && u.country.toLowerCase().includes(filters.city.toLowerCase())),
+            );
+        }
 
-            if (selectedAges.length > 0) {
-                filtered = filtered.filter((u) => {
-                    if (!u.age) return false;
-                    if (
-                        selectedAges.includes("18-25") &&
-                        u.age >= 18 &&
-                        u.age <= 25
-                    )
-                        return true;
-                    if (
-                        selectedAges.includes("26-35") &&
-                        u.age >= 26 &&
-                        u.age <= 35
-                    )
-                        return true;
-                    if (selectedAges.includes("36+") && u.age >= 36)
-                        return true;
-                    return false;
-                });
-            }
+        if (filters.ages.length > 0) {
+            filtered = filtered.filter((u) => {
+                if (!u.age) return false;
+                if (filters.ages.includes("18-25") && u.age >= 18 && u.age <= 25) return true;
+                if (filters.ages.includes("26-35") && u.age >= 26 && u.age <= 35) return true;
+                if (filters.ages.includes("36-45") && u.age >= 36 && u.age <= 45) return true;
+                if (filters.ages.includes("46+") && u.age >= 46) return true;
+                return false;
+            });
+        }
 
-            if (selectedRatings.length > 0) {
-                filtered = filtered.filter((u) =>
-                    selectedRatings.some((r) => r.includes(u.rating)),
-                );
-            }
+        if (filters.ratings.length > 0) {
+            filtered = filtered.filter((u) =>
+                filters.ratings.some((r) => r.includes(u.rating)),
+            );
+        }
 
-            setUserList(filtered);
-        },
-        [cityFilter, selectedAges, selectedRatings],
-    );
+        if (filters.tags.length > 0) {
+            filtered = filtered.filter((u) =>
+                filters.tags.every((selectedTagName) => {
+                    const interestObj = INTERESTS.find(i => i.label === selectedTagName || i.id === selectedTagName);
+                    return u.interests?.some(userInterest => 
+                        userInterest.toLowerCase() === interestObj?.id.toLowerCase() ||
+                        userInterest.toLowerCase() === interestObj?.label.toLowerCase() ||
+                        userInterest.toLowerCase() === selectedTagName.toLowerCase()
+                    );
+                })
+            );
+        }
+
+        setUserList(filtered);
+    }, []);
+
+    // Initial load from URL and sync URL changes to applied filters
+    useEffect(() => {
+        const city = searchParams.get("city") || "";
+        const tags = searchParams.get("tags")?.split(",").filter(Boolean) || [];
+        const ratings = searchParams.get("ratings")?.split(",").filter(Boolean) || [];
+        const ages = searchParams.get("ages")?.split(",").filter(Boolean) || [];
+
+        const newFilters = { city, tags, ratings, ages };
+        setAppliedFilters(newFilters);
+        
+        // Also sync drafts to match the URL (for back button behavior)
+        setCityFilter(city);
+        setSelectedTags(tags);
+        setSelectedRatings(ratings);
+        setSelectedAges(ages);
+    }, [searchParams]);
+
+    // Re-filter when applied filters or raw data change
+    useEffect(() => {
+        applyCurrentFilters(rawProfiles, appliedFilters);
+    }, [rawProfiles, appliedFilters, applyCurrentFilters]);
 
     const fetchProfiles = useCallback(
         async (currentOffset: number, append: boolean = false) => {
@@ -107,11 +132,7 @@ export default function HomePage() {
 
                 if (data && data.profiles) {
                     setRawProfiles((prev) => {
-                        const newRaw = append
-                            ? [...prev, ...data.profiles]
-                            : data.profiles;
-                        applyFilters(newRaw);
-                        return newRaw;
+                        return append ? [...prev, ...data.profiles] : data.profiles;
                     });
                     setHasMore(data.profiles.length === limit);
                 }
@@ -121,7 +142,7 @@ export default function HomePage() {
                 setIsFetching(false);
             }
         },
-        [limit, applyFilters],
+        [limit],
     );
 
     const handleLoadMore = useCallback(() => {
@@ -152,7 +173,22 @@ export default function HomePage() {
     }, [fetchProfiles]);
 
     const handleSearch = () => {
-        applyFilters(rawProfiles);
+        const params = new URLSearchParams();
+        if (cityFilter) params.set("city", cityFilter);
+        if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+        if (selectedRatings.length > 0) params.set("ratings", selectedRatings.join(","));
+        if (selectedAges.length > 0) params.set("ages", selectedAges.join(","));
+        
+        router.push(`/home?${params.toString()}`);
+    };
+
+    const handleClear = () => {
+        setCityFilter("");
+        setSelectedTags([]);
+        setSelectedRatings([]);
+        setSelectedAges([]);
+        setTagSearch("");
+        router.push("/home");
     };
 
     const toggleSelection = (
@@ -189,6 +225,7 @@ export default function HomePage() {
                 toggleDropdown={toggleDropdown}
                 toggleSelection={toggleSelection}
                 handleSearch={handleSearch}
+                handleClear={handleClear}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -260,5 +297,13 @@ export default function HomePage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function HomePage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <HomePageContent />
+        </Suspense>
     );
 }

@@ -30,3 +30,10 @@ class UserService:
         if not user:
             raise NotFoundError("User", user_id)
         return user
+
+    @staticmethod
+    def get_user_by_id(user_id: int) -> UserModel:
+        user = UserModel.get_user_by_id(user_id)
+        if not user:
+            raise NotFoundError("User", user_id)
+        return user

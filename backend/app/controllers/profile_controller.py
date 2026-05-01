@@ -25,7 +25,7 @@ class ProfileController:
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
             raw_payload = request.form.to_dict(flat=True)
-        avatar = request.files.get("avatar")
+        avatar = request.files.get("avatar") or request.form.get("avatar")
         pictures = request.files.getlist("pictures")
         raw_payload["user_id"] = user_id
         raw_payload["avatar"] = avatar
@@ -138,6 +138,11 @@ class ProfileController:
     @staticmethod
     def update_my_profile():
         user_id = int(get_jwt_identity())
+
+        # Check if user is verified
+        user = UserService.get_user_by_id(user_id)
+        if not user or not user.is_active:
+             return {"status": "error", "message": "Only verified users can update profile."}, 403
 
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
