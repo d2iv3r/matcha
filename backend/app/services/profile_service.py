@@ -129,12 +129,14 @@ class ProfileService:
 
         latitude = caller_profile.latitude or 0.0
         longitude = caller_profile.longitude or 0.0
+        interests = caller_profile.interests or []
 
         return ProfileModel.get_profiles_list(
             user_id=user_id,
             gender=opposite_gender,
             latitude=latitude,
             longitude=longitude,
+            interests=interests,
             limit=limit,
             offset=offset,
         )

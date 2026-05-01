@@ -12,6 +12,9 @@ class ChatService:
     def get_user_conversations(user_id: int) -> list[ConversationModel]:
         conversations = ConversationModel.get_user_conversations(user_id)
         
+        for conv in conversations:
+            print(f"+++++++=== ==> {conv.to_dict()}")
+
         from app.services.block_service import BlockService
         blocked_ids = BlockService.get_blocked_users_ids(user_id)
         

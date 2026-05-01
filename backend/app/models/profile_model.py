@@ -34,6 +34,7 @@ class ProfileModel(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     distance_km: float | None = None
+    shared_tags_count: int | None = None
     bio: str | None = None
     interests: Any | None = None
     avatar: str | None = None
@@ -84,6 +85,7 @@ class ProfileModel(BaseModel):
             # "latitude": self.latitude,
             # "longitude": self.longitude,
             "distance_km": getattr(self, "distance_km", None),
+            "shared_tags_count": getattr(self, "shared_tags_count", 0),
             "bio": self.bio,
             "interests": self.interests,
             "avatar": self.avatar,
@@ -102,13 +104,14 @@ class ProfileModel(BaseModel):
         gender: str,
         latitude: float,
         longitude: float,
+        interests: list[str],
         limit: int = 20,
         offset: int = 0,
     ) -> list["ProfileModel"]:
-        """Return profiles of `gender` ordered by distance from (latitude, longitude)."""
+        """Return profiles of `gender` ordered by distance, tags, rating."""
         rows = cls.db_manager().fetch_all(
             GET_PROFILES_LIST,
-            (latitude, longitude, latitude, user_id, gender, user_id, user_id, limit, offset),
+            (latitude, longitude, latitude, interests, user_id, gender, user_id, user_id, limit, offset),
         )
         return cls.from_rows(rows)
 
