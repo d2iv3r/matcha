@@ -130,6 +130,7 @@ class ProfileController:
             distance_km = getattr(p, "distance_km", None)
             if distance_km is not None:
                 entry["distance_km"] = round(float(distance_km), 1)
+            entry["shared_tags_count"] = getattr(p, "shared_tags_count", 0)
             result.append(entry)
 
         return success({"profiles": result, "count": len(result)}, 200)

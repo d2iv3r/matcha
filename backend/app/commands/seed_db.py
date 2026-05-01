@@ -30,19 +30,23 @@ def seed_db(count):
         result = current_app.db_manager.fetch_one(COUNT_USERS)
         if result and result['count'] > 0:
             click.secho(f"Database already contains {result['count']} users.", fg="yellow")
+            exit(0)
 
-        click.echo(f"Seeding database with {count // 2} males and {count // 2} females.")
+        click.echo(f"Seeding database with {count} mock users ({count // 2} male / {count // 2} female) …")
         password_hash = hash_password(current_app.config["MOCK_USERS_PASS"])
-        male_seeder = DataSeeder(count=count // 2, gender="male", users_password=password_hash, pexels_api_key=current_app.config["PEXELS_API_KEY"])
-        female_seeder = DataSeeder(count=count // 2, gender="female", users_password=password_hash, pexels_api_key=current_app.config["PEXELS_API_KEY"])
-        male_users_data = male_seeder.get_mock_users()
-        female_users_data = female_seeder.get_mock_users()
+        seeder = DataSeeder(
+            count=count,
+            users_password=password_hash,
+            pexels_api_key=current_app.config["PEXELS_API_KEY"],
+        )
+        data = seeder.get_mock_users()
+        click.echo(f"  {len(data)} records assembled — inserting into DB …")
         users_rows = current_app.db_manager.execute_values_returning(
-            SEED_MOCK_USERS_AND_PROFILES, male_users_data + female_users_data)
+            SEED_MOCK_USERS_AND_PROFILES, data)
         click.secho("Seeding completed successfully!", fg="green", bold=True)
         click.echo("-" * 50)
         click.echo("Summary:")
-        click.echo(f"  Users created: {users_rows}")
+        click.echo(f"  Profiles inserted: {len(users_rows)}")
 
     except click.BadParameter as e:
         click.secho(f"Invalid parameter: {e.message}", fg="red")

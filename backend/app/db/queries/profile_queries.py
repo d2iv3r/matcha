@@ -49,7 +49,12 @@ SELECT
             cos(radians(p.longitude) - radians(%s)) +
             sin(radians(%s)) * sin(radians(p.latitude))
         ))
-    )) AS distance_km
+    )) AS distance_km,
+    (
+        SELECT count(*)
+        FROM unnest(p.interests) AS i
+        JOIN unnest(%s::TEXT[]) AS j ON i = j
+    ) AS shared_tags_count
 FROM users u
 JOIN profiles p ON p.user_id = u.id
 WHERE u.id != %s
@@ -58,7 +63,17 @@ WHERE u.id != %s
   AND p.longitude IS NOT NULL
   AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)
   AND u.id NOT IN (SELECT blocker_id FROM blocks WHERE blocked_id = %s)
-ORDER BY distance_km ASC
+ORDER BY
+  distance_km ASC,
+  shared_tags_count DESC,
+  CASE p.rating
+    WHEN 'Iconic' THEN 5
+    WHEN 'Elite' THEN 4
+    WHEN 'Popular' THEN 3
+    WHEN 'Rising' THEN 2
+    WHEN 'Ghost' THEN 1
+    ELSE 0
+  END DESC
 LIMIT %s OFFSET %s
 """
 
