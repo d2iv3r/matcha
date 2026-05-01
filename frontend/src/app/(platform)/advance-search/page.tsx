@@ -11,7 +11,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { status } from "@/core/components/fake-data";
 import { useProfile } from "@/core/contexts/ProfileContext";
-import MatchOverlay from "@/core/components/MatchOverlay";
+import MatchOverlay from "@/core/constants/MatchOverlay";
 import { INTERESTS } from "@/core/constants/interests";
 import girl from "@/public/girl1.png";
 

@@ -7,7 +7,7 @@ import { useNotifications } from "@/core/contexts/NotificationContext";
 import { NotificationType } from "@/core/types/notification";
 import { format, isToday, isYesterday } from "date-fns";
 import { useRouter } from "next/navigation";
-import MatchOverlay from "@/core/components/MatchOverlay";
+import MatchOverlay from "@/core/constants/MatchOverlay";
 import { useProfile } from "@/core/contexts/ProfileContext";
 
 export default function NotificationsPage() {
@@ -70,7 +70,8 @@ export default function NotificationsPage() {
                     description:
                         "A potential soulmate just reached out. Open the chat to see what they have to say!",
                     primaryAction: "Let’s Chat",
-                    primaryActionUrl: (username: string) => `/chat?user=${username}`,
+                    primaryActionUrl: (username: string) =>
+                        `/chat?user=${username}`,
                 };
             default:
                 return {
@@ -85,13 +86,13 @@ export default function NotificationsPage() {
     const formatUrl = (url: string | null) => {
         if (!url) return null;
         if (url.startsWith("http")) return url;
-        
+
         // Ensure the URL starts with /static/
         const cleanPath = url.startsWith("/") ? url : `/${url}`;
-        const finalPath = cleanPath.startsWith("/static") 
-            ? cleanPath 
+        const finalPath = cleanPath.startsWith("/static")
+            ? cleanPath
             : `/static${cleanPath}`;
-            
+
         return `http://localhost:5001${finalPath}`;
     };
 
@@ -198,7 +199,9 @@ export default function NotificationsPage() {
                                 );
                                 const actor = notif.data;
                                 const avatarUrl = formatUrl(
-                                    (actor as any)?.avatar || (actor as any)?.sender_avatar || null,
+                                    (actor as any)?.avatar ||
+                                        (actor as any)?.sender_avatar ||
+                                        null,
                                 );
 
                                 let time = "00:00";
@@ -245,9 +248,13 @@ export default function NotificationsPage() {
                                                         handleAction(
                                                             notif.id,
                                                             config.primaryActionUrl(
-                                                                (actor as any)?.username || 
-                                                                (actor as any)?.sender_username || 
-                                                                "",
+                                                                (actor as any)
+                                                                    ?.username ||
+                                                                    (
+                                                                        actor as any
+                                                                    )
+                                                                        ?.sender_username ||
+                                                                    "",
                                                             ),
                                                         )
                                                     }

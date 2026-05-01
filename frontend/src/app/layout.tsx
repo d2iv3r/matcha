@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${plusJakartaSans.className} antialiased h-full bg-background1 w-full`}
+        className={`${plusJakartaSans.className} antialiased bg-background1 w-full`}
       >
         {children}
       </body>

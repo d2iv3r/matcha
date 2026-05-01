@@ -2,41 +2,33 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import girl1 from "@/public/girl1.png";
+import girl3 from "@/public/girl3.png";
+import girl4 from "@/public/girl4.png";
+import girl5 from "@/public/girl5.png";
 
 const testimonials = [
     {
         quote: "This platform gave me the confidence to put myself back out there. It really does maximize your chances of meeting someone special.",
-        name: "John Doe",
-        location: "New York",
-        image: girl1,
+        name: "Elina",
+        location: "Madrid",
+        image: girl3,
     },
     {
         quote: "I never thought I'd find my soulmate online, but MatchVibe made it so easy and authentic. The process feels deeply personal.",
-        name: "Jane Smith",
-        location: "London",
-        image: girl1,
+        name: "Isabella",
+        location: "Rome",
+        image: girl5,
     },
     {
         quote: "The smart AI matching actually works. It filtered out the noise and introduced me to someone I instantly connected with.",
-        name: "Michael Chen",
-        location: "San Francisco",
-        image: girl1,
+        name: "Aria",
+        location: "Berlin",
+        image: girl4,
     },
 ];
 
 export default function TestimonialsCarousel() {
     const [currentIndex, setCurrentIndex] = useState(0);
-
-    // const nextTestimonial = () => {
-    //     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-    // };
-
-    // const prevTestimonial = () => {
-    //     setCurrentIndex(
-    //         (prev) => (prev - 1 + testimonials.length) % testimonials.length,
-    //     );
-    // };
 
     useEffect(() => {
         const timer = setInterval(() => {

@@ -1,4 +1,4 @@
-const status = [
+const rating = [
     {
         name: "👻 Ghost",
         color: "#94A3B8",
@@ -21,4 +21,4 @@ const status = [
     }
 ];
 
-export default status;
+export default rating;
