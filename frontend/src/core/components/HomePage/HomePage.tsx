@@ -16,7 +16,7 @@ function HomePageContent() {
     const [selectedAges, setSelectedAges] = useState<string[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [tagSearch, setTagSearch] = useState("");
-    
+
     // Applied filters (synced with URL)
     const [appliedFilters, setAppliedFilters] = useState({
         city: "",
@@ -46,60 +46,94 @@ function HomePageContent() {
     const limit = 10;
     const observer = useRef<IntersectionObserver | null>(null);
 
-    const applyCurrentFilters = useCallback((profiles: ApiProfile[], filters: typeof appliedFilters) => {
-        let filtered = profiles;
+    const applyCurrentFilters = useCallback(
+        (profiles: ApiProfile[], filters: typeof appliedFilters) => {
+            let filtered = profiles;
 
-        if (filters.city.trim() !== "") {
-            filtered = filtered.filter(
-                (u) =>
-                    (u.city && u.city.toLowerCase().includes(filters.city.toLowerCase())) ||
-                    (u.country && u.country.toLowerCase().includes(filters.city.toLowerCase())),
-            );
-        }
+            if (filters.city.trim() !== "") {
+                filtered = filtered.filter(
+                    (u) =>
+                        (u.city &&
+                            u.city
+                                .toLowerCase()
+                                .includes(filters.city.toLowerCase())) ||
+                        (u.country &&
+                            u.country
+                                .toLowerCase()
+                                .includes(filters.city.toLowerCase())),
+                );
+            }
 
-        if (filters.ages.length > 0) {
-            filtered = filtered.filter((u) => {
-                if (!u.age) return false;
-                if (filters.ages.includes("18-25") && u.age >= 18 && u.age <= 25) return true;
-                if (filters.ages.includes("26-35") && u.age >= 26 && u.age <= 35) return true;
-                if (filters.ages.includes("36-45") && u.age >= 36 && u.age <= 45) return true;
-                if (filters.ages.includes("46+") && u.age >= 46) return true;
-                return false;
-            });
-        }
+            if (filters.ages.length > 0) {
+                filtered = filtered.filter((u) => {
+                    if (!u.age) return false;
+                    if (
+                        filters.ages.includes("18-25") &&
+                        u.age >= 18 &&
+                        u.age <= 25
+                    )
+                        return true;
+                    if (
+                        filters.ages.includes("26-35") &&
+                        u.age >= 26 &&
+                        u.age <= 35
+                    )
+                        return true;
+                    if (
+                        filters.ages.includes("36-45") &&
+                        u.age >= 36 &&
+                        u.age <= 45
+                    )
+                        return true;
+                    if (filters.ages.includes("46+") && u.age >= 46)
+                        return true;
+                    return false;
+                });
+            }
 
-        if (filters.ratings.length > 0) {
-            filtered = filtered.filter((u) =>
-                filters.ratings.some((r) => r.includes(u.rating)),
-            );
-        }
+            if (filters.ratings.length > 0) {
+                filtered = filtered.filter((u) =>
+                    filters.ratings.some((r) => r.includes(u.rating)),
+                );
+            }
 
-        if (filters.tags.length > 0) {
-            filtered = filtered.filter((u) =>
-                filters.tags.every((selectedTagName) => {
-                    const interestObj = INTERESTS.find(i => i.label === selectedTagName || i.id === selectedTagName);
-                    return u.interests?.some(userInterest => 
-                        userInterest.toLowerCase() === interestObj?.id.toLowerCase() ||
-                        userInterest.toLowerCase() === interestObj?.label.toLowerCase() ||
-                        userInterest.toLowerCase() === selectedTagName.toLowerCase()
-                    );
-                })
-            );
-        }
+            if (filters.tags.length > 0) {
+                filtered = filtered.filter((u) =>
+                    filters.tags.every((selectedTagName) => {
+                        const interestObj = INTERESTS.find(
+                            (i) =>
+                                i.label === selectedTagName ||
+                                i.id === selectedTagName,
+                        );
+                        return u.interests?.some(
+                            (userInterest) =>
+                                userInterest.toLowerCase() ===
+                                    interestObj?.id.toLowerCase() ||
+                                userInterest.toLowerCase() ===
+                                    interestObj?.label.toLowerCase() ||
+                                userInterest.toLowerCase() ===
+                                    selectedTagName.toLowerCase(),
+                        );
+                    }),
+                );
+            }
 
-        setUserList(filtered);
-    }, []);
+            setUserList(filtered);
+        },
+        [],
+    );
 
     // Initial load from URL and sync URL changes to applied filters
     useEffect(() => {
         const city = searchParams.get("city") || "";
         const tags = searchParams.get("tags")?.split(",").filter(Boolean) || [];
-        const ratings = searchParams.get("ratings")?.split(",").filter(Boolean) || [];
+        const ratings =
+            searchParams.get("ratings")?.split(",").filter(Boolean) || [];
         const ages = searchParams.get("ages")?.split(",").filter(Boolean) || [];
 
         const newFilters = { city, tags, ratings, ages };
         setAppliedFilters(newFilters);
-        
+
         // Also sync drafts to match the URL (for back button behavior)
         setCityFilter(city);
         setSelectedTags(tags);
@@ -129,10 +163,13 @@ function HomePageContent() {
                 );
                 const json = await res.json();
                 const data = json.data;
+                // console.log("====================>data", data.profiles.map((p: ApiProfile) => p.user_id));
 
                 if (data && data.profiles) {
                     setRawProfiles((prev) => {
-                        return append ? [...prev, ...data.profiles] : data.profiles;
+                        return append
+                            ? [...prev, ...data.profiles]
+                            : data.profiles;
                     });
                     setHasMore(data.profiles.length === limit);
                 }
@@ -176,9 +213,10 @@ function HomePageContent() {
         const params = new URLSearchParams();
         if (cityFilter) params.set("city", cityFilter);
         if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
-        if (selectedRatings.length > 0) params.set("ratings", selectedRatings.join(","));
+        if (selectedRatings.length > 0)
+            params.set("ratings", selectedRatings.join(","));
         if (selectedAges.length > 0) params.set("ages", selectedAges.join(","));
-        
+
         router.push(`/home?${params.toString()}`);
     };
 
@@ -206,6 +244,8 @@ function HomePageContent() {
     const toggleDropdown = (name: string) => {
         setActiveDropdown((prev) => (prev === name ? null : name));
     };
+    console.log("===================>ids of profiles:", rawProfiles.map((p: ApiProfile) => p.user_id));
+
 
     return (
         <div className="w-full h-full flex flex-col p-4 md:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">

@@ -22,6 +22,12 @@ class ProfileController:
         """complete profile fields for authenticated verified user."""
 
         user_id = int(get_jwt_identity())
+
+        # Check if user is verified
+        user = UserService.get_user_by_id(user_id)
+        if not user or not user.is_active:
+             return {"status": "error", "message": "Only verified users can complete profile."}, 403
+
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
             raw_payload = request.form.to_dict(flat=True)
