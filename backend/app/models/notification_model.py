@@ -10,6 +10,7 @@ from app.db.queries.notifications_queries import (
     GET_USER_NOTIFICATIONS,
     MARK_NOTIFICATION_READ,
     MARK_ALL_NOTIFICATIONS_READ,
+    CHECK_UNREAD_MESSAGE_NOTIFICATION,
 )
 from app.models.base_model import BaseModel
 
@@ -78,6 +79,14 @@ class NotificationModel(BaseModel):
             (user_id,),
             commit=True,
         )
+
+    @classmethod
+    def has_unread_message_notification(cls, user_id: int, actor_id: int) -> bool:
+        row = cls.db_manager().fetch_one(
+            CHECK_UNREAD_MESSAGE_NOTIFICATION,
+            (user_id, actor_id)
+        )
+        return row is not None
 
     def to_dict(self) -> Dict[str, Any]:
         # Ensure data is a dict (in case it was returned as a JSON string)
