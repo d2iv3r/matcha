@@ -6,7 +6,7 @@ from flask import request, g
 from flask_jwt_extended import get_jwt_identity
 
 from app.schemas.profile_schemas import CreateProfileSchema
-from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema, UpdateProfileMediaSchema
+from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema, UpdateProfileMediaSchema, UpdateSecuritySettingsSchema
 from app.services.profile_service import ProfileService
 from app.services.user_service import UserService
 from app.services.profile_views_service import ProfileViewsService
@@ -198,6 +198,23 @@ class ProfileController:
         if data:
             ProfileService.update_profile_fields(user_id, data)
         return success(message="Profile media updated successfully", data={})
+
+    @staticmethod
+    def update_security_settings():
+        user_id = int(get_jwt_identity())
+        raw_payload = request.get_json(silent=True)
+        if raw_payload is None:
+            raw_payload = request.form.to_dict(flat=True)
+        if not raw_payload:
+            raw_payload = {}
+
+        payload = UpdateSecuritySettingsSchema.model_validate(raw_payload)
+        UserService.update_password(
+            user_id=user_id,
+            current_password=payload.current_password,
+            new_password=payload.new_password
+        )
+        return success(message="Password updated successfully", data={})
 
     @staticmethod
     def search_profiles():

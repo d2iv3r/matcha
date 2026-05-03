@@ -128,6 +128,15 @@ def get_openapi_spec() -> dict:
                         "pictures": {"type": "array", "items": {"type": "string", "format": "binary"}},
                     },
                 },
+                "UpdateSecuritySettingsRequest": {
+                    "type": "object",
+                    "required": ["current_password", "new_password", "password_confirm"],
+                    "properties": {
+                        "current_password": {"type": "string", "minLength": 1},
+                        "new_password": {"type": "string", "minLength": 8},
+                        "password_confirm": {"type": "string", "minLength": 8},
+                    },
+                },
                 "ErrorResponse": {
                     "type": "object",
                     "properties": {
@@ -255,6 +264,7 @@ def get_openapi_spec() -> dict:
                                                             "complete_profile": {"type": "string"},
                                                             "profile": {"type": "string"},
                                                             "profile_media": {"type": "string"},
+                                                            "security": {"type": "string"},
                                                             "profile_by_username": {"type": "string"},
                                                             "profiles_search": {"type": "string"},
                                                             "profiles": {"type": "string"},
@@ -1137,7 +1147,40 @@ def get_openapi_spec() -> dict:
                         },
                         "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
                         "401": {"description": "Unauthorized"},
+                    },
+                }
+            },
+            "/api/v1/accounts/security": {
+                "patch": {
+                    "tags": ["Accounts"],
+                    "summary": "Update authenticated user password",
+                    "security": [{"bearerAuth": []}],
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            APP_JSON: {"schema": {"$ref": "#/components/schemas/UpdateSecuritySettingsRequest"}},
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Password updated successfully",
+                            "content": {
+                                APP_JSON: {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {"type": "boolean"},
+                                            "message": {"type": "string"},
+                                            "data": {"type": "object"},
+                                        },
+                                    }
+                                }
+                            },
+                        },
+                        "400": {"description": "Validation error", "content": {APP_JSON: {"schema": {"$ref": ERROR_SCHEMA_REF}}}},
+                        "401": {"description": "Unauthorized"},
                         "403": {"description": "Profile completion required"},
+                        "404": {"description": NOT_FOUND},
                     },
                 }
             },

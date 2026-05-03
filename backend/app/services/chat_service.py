@@ -56,24 +56,27 @@ class ChatService:
         if not message:
             raise BadRequestError("Could not store message")
 
-        # 4. Trigger notification
+        # 4. Trigger notification only if there is no existing unread message notification
         from app.models.profile_model import ProfileModel
-        sender_profile = ProfileModel.get_my_profile_by_user_id(sender_id)
-        sender_name = sender_profile.username if sender_profile else "Someone"
+        from app.models.notification_model import NotificationModel
         
-        NotificationsService.send_notification(
-            user_id=receiver_id,
-            notification_type="MESSAGE",
-            actor_id=sender_id,
-            message=f"New message from {sender_name}",
-            data={
-                "conversation_id": conversation.id,
-                "content": content[:50] + ("..." if len(content) > 50 else ""),
-                "username": sender_name,
-                "avatar": sender_profile.avatar if sender_profile else None
-            },
-            entity_id=message.id
-        )
+        if not NotificationModel.has_unread_message_notification(user_id=receiver_id, actor_id=sender_id):
+            sender_profile = ProfileModel.get_my_profile_by_user_id(sender_id)
+            sender_name = sender_profile.username if sender_profile else "Someone"
+            
+            NotificationsService.send_notification(
+                user_id=receiver_id,
+                notification_type="MESSAGE",
+                actor_id=sender_id,
+                message=f"New message from {sender_name}",
+                data={
+                    "conversation_id": conversation.id,
+                    "content": content[:50] + ("..." if len(content) > 50 else ""),
+                    "username": sender_name,
+                    "avatar": sender_profile.avatar if sender_profile else None
+                },
+                entity_id=message.id
+            )
 
         return message
 
