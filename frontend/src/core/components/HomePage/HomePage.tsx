@@ -163,7 +163,7 @@ function HomePageContent() {
                 );
                 const json = await res.json();
                 const data = json.data;
-                // console.log("====================>data", data.profiles.map((p: ApiProfile) => p.user_id));
+                console.log("====================>data", data.profiles);
 
                 if (data && data.profiles) {
                     setRawProfiles((prev) => {
@@ -244,8 +244,7 @@ function HomePageContent() {
     const toggleDropdown = (name: string) => {
         setActiveDropdown((prev) => (prev === name ? null : name));
     };
-    console.log("===================>ids of profiles:", rawProfiles.map((p: ApiProfile) => p.user_id));
-
+    // console.log("===================>ids of profiles:", rawProfiles.map((p: ApiProfile) => p.user_id));
 
     return (
         <div className="w-full h-full flex flex-col p-4 md:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">

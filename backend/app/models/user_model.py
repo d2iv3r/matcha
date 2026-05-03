@@ -40,6 +40,7 @@ class UserModel(BaseModel):
         last_name: str | None = None,
         email: str | None = None,
         password_hash: str | None = None,
+        is_active: bool | None = False,
         **kwargs,
     ):
         self.username = username if username is not None else kwargs.get("username")
@@ -47,6 +48,7 @@ class UserModel(BaseModel):
         self.last_name = last_name if last_name is not None else kwargs.get("last_name")
         self.email = email if email is not None else kwargs.get("email")
         self.password_hash = password_hash if password_hash is not None else kwargs.get("password_hash")
+        self.is_active = is_active if is_active is not None else kwargs.get("is_active")
 
         for field_name in self.__class__.__annotations__:
             if field_name not in self.__dict__:
@@ -80,6 +82,7 @@ class UserModel(BaseModel):
                     self.last_name,
                     self.email,
                     self.password_hash,
+                    self.is_active,
                 ),
             )
         )

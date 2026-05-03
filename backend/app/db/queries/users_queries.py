@@ -15,8 +15,8 @@ LIMIT 1;
 """
 
 CREATE_USER = """
-INSERT INTO users (username, first_name, last_name, email, password_hash)
-VALUES (%s, %s, %s, %s, %s)
+INSERT INTO users (username, first_name, last_name, email, password_hash, is_active)
+VALUES (%s, %s, %s, %s, %s, %s)
 RETURNING id, username, email, is_active, is_profile_complete
 """
 
