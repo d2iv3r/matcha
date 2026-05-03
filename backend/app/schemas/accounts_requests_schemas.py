@@ -161,3 +161,21 @@ class UpdateProfileMediaSchema(BaseModel):
 
         self.pictures = resolved_pictures
         return self
+
+
+class UpdateSecuritySettingsSchema(BaseModel):
+    """Schema for updating user security settings (password)."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+    password_confirm: str = Field(..., min_length=8)
+
+    @model_validator(mode="after")
+    def validate_passwords(self):
+        if self.new_password != self.password_confirm:
+            raise ValueError("new_password and password_confirm must match")
+        if self.current_password == self.new_password:
+            raise ValueError("new_password must be different from current_password")
+        return self
