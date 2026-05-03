@@ -21,6 +21,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useProfile } from "@/core/contexts/ProfileContext";
 import { useNotifications } from "@/core/contexts/NotificationContext";
 import { useChat } from "@/core/contexts/ChatContext";
+import rating from "@/core/constants/Rating";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -46,18 +47,12 @@ export default function Navbar() {
         { name: "Settings", href: "/settings", icon: Settings },
     ];
 
-    const renderRating = (rating: string) => {
-        const ratingMap: Record<string, { label: string; color: string }> = {
-            Ghost: { label: "👻 Ghost", color: "#94A3B8" },
-            Rising: { label: "📈 Rising", color: "#34D399" },
-            Popular: { label: "🔥 Popular", color: "#FB923C" },
-            Elite: { label: "💎 Elite", color: "#3B82F6" },
-            Iconic: { label: "👑 Iconic", color: "#A855F7" },
-        };
-        const style = ratingMap[rating] || ratingMap.Ghost;
+    const renderRating = (userRating: string) => {
+        const ratingObj =
+            rating.find((r) => r.name.includes(userRating)) || rating[0];
         return (
-            <span style={{ color: style.color }} className="font-bold">
-                {style.label}
+            <span style={{ color: ratingObj.color }} className="font-bold">
+                {ratingObj.name}
             </span>
         );
     };

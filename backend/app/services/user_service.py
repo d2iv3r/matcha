@@ -32,6 +32,11 @@ class UserService:
         return user
 
     @staticmethod
+    def get_user_by_id(user_id: int) -> UserModel:
+        user = UserModel.get_user_by_id(user_id)
+        if not user:
+            raise NotFoundError("User", user_id)
+        return user
     def update_password(user_id: int, current_password: str, new_password: str) -> None:
         from app.utils.utils import verify_password, hash_password
         from app.utils.app_error import BadRequestError
