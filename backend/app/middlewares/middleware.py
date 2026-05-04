@@ -30,65 +30,53 @@ def _validate_and_refresh_token() -> None:
     if request.path in public_routes or request.method == 'OPTIONS':
         return
 
+    from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, decode_token
+    
     try:
-        # Try to get access token from cookies
-        access_token = request.cookies.get('access_token_cookie')
+        # 1. Try to verify the existing token
+        try:
+            verify_jwt_in_request(optional=True)
+            user_id = get_jwt_identity()
+            if user_id:
+                # Update last connection time and set online status
+                from app.models.user_model import UserModel
+                UserModel.update_status(int(user_id), True)
+                return
+        except Exception:
+            # Token is likely expired or invalid
+            pass
+
+        # 2. If we reach here, we don't have a valid access token. Try to refresh.
         refresh_token = request.cookies.get('refresh_token_cookie')
 
-        if not access_token:
-            # No access token, request will be rejected by @jwt_required
-            return
-
-        # Try to decode the access token
-        try:
-            decoded = decode_token(access_token)
-            # Token is valid, store user info in context
-            user_id = decoded.get('sub')
-            if user_id:
-                g.current_user = {
-                    'id': int(user_id),
-                    'username': decoded.get('username'),
-                    'email': decoded.get('email')
-                }
-        except Exception as token_error:
-            # Access token is expired or invalid
-            error_description = str(token_error)
-            
-            # Check if token is expired
-            if 'expired' in error_description.lower():
-                if refresh_token:
-                    try:
-                        # Try to refresh the token
-                        decoded_refresh = decode_token(refresh_token)
-                        user_id = decoded_refresh.get('sub')
+        if refresh_token:
+            try:
+                # Decode refresh token to get user identity
+                decoded_refresh = decode_token(refresh_token)
+                user_id = decoded_refresh.get('sub')
+                
+                if user_id:
+                    from app.services.auth_service import AuthService
+                    user = AuthService.get_user_by_identity(user_id)
+                    
+                    if user:
+                        # Create new access token
+                        new_access_token = AuthService.issue_access_token(user)
                         
-                        if user_id:
-                            # Import here to avoid circular imports
-                            from app.services.auth_service import AuthService
-                            
-                            user = AuthService.get_user_by_identity(user_id)
-                            if user:
-                                # Create new access token
-                                new_access_token = AuthService.issue_access_token(user)
-                                
-                                # Store the new token in Flask's g for later use
-                                g.new_access_token = new_access_token
-                                
-                                # Store user info in context
-                                g.current_user = {
-                                    'id': int(user_id),
-                                    'username': user.get('username'),
-                                    'email': user.get('email')
-                                }
-                                
-                                # Update the request cookies with new token
-                                # This won't work here, we need to do it in after_request
-                                g.refresh_access_token = True
-                    except Exception as refresh_error:
-                        logger.debug(f"Token refresh failed: {refresh_error}")
-                        # Refresh token also expired or invalid
-                        pass
-
+                        # Store for after_request to set the cookie
+                        g.new_access_token = new_access_token
+                        g.refresh_access_token = True
+                        
+                        # 3. CRITICAL: Inject the new token into the request environment
+                        # so that subsequent @jwt_required decorators see it.
+                        request.environ['HTTP_AUTHORIZATION'] = f'Bearer {new_access_token}'
+                        
+                        # 4. Re-verify the request with the new token
+                        verify_jwt_in_request()
+                        
+                        logger.debug(f"Automatically refreshed token for user {user_id}")
+            except Exception as refresh_error:
+                logger.debug(f"Auto-refresh failed: {refresh_error}")
     except Exception as e:
         logger.debug(f"Token validation error: {e}")
 

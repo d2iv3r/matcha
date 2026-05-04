@@ -68,3 +68,10 @@ SET first_name = COALESCE(%s, first_name),
 WHERE id = %s
 RETURNING id, username, first_name, last_name, email, is_active, is_profile_complete
 """
+
+UPDATE_USER_STATUS = """
+UPDATE users
+SET is_online = %s,
+    last_connection = %s
+WHERE id = %s;
+"""

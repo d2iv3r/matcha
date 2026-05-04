@@ -79,6 +79,12 @@ def register_event_handlers(socketio_instance) -> None:
         except Exception as exc:
             logger.error("[Realtime] Error joining conversation rooms for user %s: %s", user_id, exc)
 
+        from app.models.user_model import UserModel
+        try:
+            UserModel.update_status(int(user_id), True)
+        except Exception as exc:
+            logger.error("[Realtime] Error updating online status for user %s: %s", user_id, exc)
+
         logger.info("[Realtime] Connected sid=%s user_id=%s room=user_%s", request.sid, user_id, user_id)
 
     @socketio_instance.on("send_message")
@@ -117,7 +123,12 @@ def register_event_handlers(socketio_instance) -> None:
         user_id = session.get("user_id")
         if user_id is not None:
             leave_room(f"user_{user_id}")
-            # Automatically leaves all rooms on disconnect, but we can be explicit if needed
+            from app.models.user_model import UserModel
+            try:
+                UserModel.update_status(int(user_id), False)
+            except Exception as exc:
+                logger.error("[Realtime] Error updating offline status for user %s: %s", user_id, exc)
+            
         logger.info("[Realtime] Disconnected sid=%s user_id=%s", request.sid, user_id)
         session.pop("user_id", None)
         session.pop("jwt_claims", None)

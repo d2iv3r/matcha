@@ -8,7 +8,7 @@ RETURNING user_id, gender, age, date_of_birth, city, country, ip_address, latitu
 """
 
 GET_MY_PROFILE_BY_USER_ID = """
-SELECT u.username, u.first_name, u.last_name, u.email,
+SELECT u.username, u.first_name, u.last_name, u.email, u.is_online, u.last_connection,
 	p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country, p.ip_address, p.latitude, p.longitude, p.bio, p.interests, p.avatar, p.pictures, p.rating
 FROM users u
 JOIN profiles p ON p.user_id = u.id
@@ -17,7 +17,7 @@ LIMIT 1
 """
 
 GET_PROFILE_BY_USERNAME = """
-SELECT u.first_name, u.last_name, u.username,
+SELECT u.first_name, u.last_name, u.username, u.is_online, u.last_connection,
 	p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country, p.bio, p.interests, p.avatar, p.pictures, p.rating
 FROM users u
 JOIN profiles p ON p.user_id = u.id
@@ -30,6 +30,8 @@ SELECT
     u.username,
     u.first_name,
     u.last_name,
+    u.is_online,
+    u.last_connection,
     p.user_id,
     p.gender,
     p.age,
