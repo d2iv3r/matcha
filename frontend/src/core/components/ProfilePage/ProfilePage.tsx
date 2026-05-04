@@ -5,6 +5,7 @@ import { useProfile } from "@/core/contexts/ProfileContext";
 import MatchOverlay from "@/core/constants/MatchOverlay";
 import MyProfileView from "./MyProfileView";
 import OtherProfileView from "./OtherProfileView";
+import { ApiProfile } from "@/core/types/profiles";
 
 export default function ProfilePage() {
     const { profile_username } = useParams();
@@ -14,15 +15,15 @@ export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<"gallery" | "viewers" | "liked">(
         "gallery",
     );
-    const [profileData, setProfileData] = useState<any>(null);
-    const [viewers, setViewers] = useState<any[]>([]);
-    const [likers, setLikers] = useState<any[]>([]);
+    const [profileData, setProfileData] = useState<ApiProfile | null>(null);
+    const [viewers, setViewers] = useState<ApiProfile[]>([]);
+    const [likers, setLikers] = useState<ApiProfile[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [isMatch, setIsMatch] = useState(false);
     const [matchModal, setMatchModal] = useState<{
         isOpen: boolean;
-        user: any | null;
+        user: ApiProfile | null;
     }>({
         isOpen: false,
         user: null,
@@ -117,7 +118,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="w-full h-full flex flex-col p-4 overflow-hidden">
+        <div className="w-full h-full flex flex-col p-4 overflow-y-auto scrollbar-hide">
             {!isOwner && profileData ? (
                 <OtherProfileView
                     profileData={profileData}
@@ -125,7 +126,7 @@ export default function ProfilePage() {
                     setIsLiked={setIsLiked}
                     isMatch={isMatch}
                     setIsMatch={setIsMatch}
-                    onMatch={(u: any) =>
+                    onMatch={(u: ApiProfile) =>
                         setMatchModal({ isOpen: true, user: u })
                     }
                 />
@@ -138,7 +139,7 @@ export default function ProfilePage() {
                     setViewers={setViewers}
                     likers={likers}
                     setLikers={setLikers}
-                    onMatch={(u: any) =>
+                    onMatch={(u: ApiProfile) =>
                         setMatchModal({ isOpen: true, user: u })
                     }
                 />

@@ -21,7 +21,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useProfile } from "@/core/contexts/ProfileContext";
 import { useNotifications } from "@/core/contexts/NotificationContext";
 import { useChat } from "@/core/contexts/ChatContext";
-import rating from "@/core/constants/Rating";
+import rating from "@/core/types/Rating";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -94,9 +94,10 @@ export default function Navbar() {
 
     return (
         <div
-            className={`relative bg-transparent md:bg-[#E9E8FF] md:shadow-xl shadow-black/20 transition-all duration-300 
-            flex flex-row items-center justify-between w-full rounded-2xl md:rounded-3xl md:p-4
-            md:flex-col md:max-h-[900px] md:py-5 md:px-4 md:justify-between z-40
+            className={`fixed md:relative top-0 left-0 w-full md:top-auto md:left-auto 
+             md:bg-[#E9E8FF] md:shadow-xl transition-all duration-300 
+            flex flex-row items-center justify-between rounded-b-3xl md:rounded-3xl p-4
+            md:flex-col md:max-h-[900px] md:py-5 md:px-4 md:justify-between z-50
             ${
                 isMinimized
                     ? "md:w-[90px] md:gap-6 md:rounded-2xl"
@@ -162,7 +163,7 @@ export default function Navbar() {
 
             {/* Mobile Dropdown Overlay */}
             {isMobileMenuOpen && (
-                <div className="md:hidden absolute top-full left-0 right-0 mt-3 bg-white rounded-3xl shadow-2xl p-4 flex flex-col gap-2 z-50 animate-in fade-in slide-in-from-top-4 border-2 border-[#E9E8FF]">
+                <div className="md:hidden absolute top-full left-0 right-0 mt-3 mx-4 bg-white rounded-3xl shadow-2xl p-4 flex flex-col gap-2 z-50 animate-in fade-in slide-in-from-top-4 border-2 border-[#E9E8FF]">
                     <div className="flex items-center gap-3 mb-4 p-2 border-b pb-4">
                         {isLoading ? (
                             <div className="w-[50px] h-[50px] rounded-full bg-gray-200 animate-pulse" />

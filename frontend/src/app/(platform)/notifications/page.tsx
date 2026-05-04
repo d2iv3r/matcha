@@ -158,149 +158,162 @@ export default function NotificationsPage() {
                     )}
                 </div>
             </div>
-            <div className="w-full h-fit min-h-fit md:min-h-[calc(100vh-12rem)] gap-5 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl p-6 overflow-y-auto scrollbar-hide">
-                {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
-                        <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-4xl">🔔</span>
-                        </div>
-                        <p className="text-sm font-medium text-gray-500">
-                            No notifications yet
-                        </p>
-                    </div>
-                ) : (
-                    Object.entries(
-                        notifications.reduce(
-                            (groups, notif) => {
-                                const date = new Date(notif.created_at);
-                                let label = "";
-                                if (isToday(date)) label = "Today";
-                                else if (isYesterday(date)) label = "Yesterday";
-                                else label = format(date, "MMMM d, yyyy");
-
-                                if (!groups[label]) groups[label] = [];
-                                groups[label].push(notif);
-                                return groups;
-                            },
-                            {} as Record<string, typeof notifications>,
-                        ),
-                    ).map(([label, groupItems]) => (
-                        <div key={label} className="w-full flex flex-col gap-5">
-                            <div className="flex items-center gap-3 w-full opacity-60">
-                                <span className="text-[10px] font-bold text-[#AEB0FF] uppercase tracking-widest whitespace-nowrap">
-                                    {label}
-                                </span>
-                                <hr className="w-full h-px text-[#AEB0FF]" />
+            <div className="w-full h-fit min-h-fit md:min-h-[calc(100vh-12rem)] gap-5 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl">
+                <div className="w-full h-fit min-h-fit md:min-h-[calc(100vh-12rem)] gap-5 flex flex-col items-center bg-[#F5F3FF] rounded-4xl p-6 overflow-y-auto scrollbar-hide">
+                    {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
+                            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
+                                <span className="text-4xl">🔔</span>
                             </div>
+                            <p className="text-sm font-medium text-gray-500">
+                                No notifications yet
+                            </p>
+                        </div>
+                    ) : (
+                        Object.entries(
+                            notifications.reduce(
+                                (groups, notif) => {
+                                    const date = new Date(notif.created_at);
+                                    let label = "";
+                                    if (isToday(date)) label = "Today";
+                                    else if (isYesterday(date))
+                                        label = "Yesterday";
+                                    else label = format(date, "MMMM d, yyyy");
 
-                            {groupItems.map((notif) => {
-                                const config = getNotificationConfig(
-                                    notif.type,
-                                );
-                                const actor = notif.data;
-                                const avatarUrl = formatUrl(
-                                    (actor as any)?.avatar ||
-                                        (actor as any)?.sender_avatar ||
-                                        null,
-                                );
+                                    if (!groups[label]) groups[label] = [];
+                                    groups[label].push(notif);
+                                    return groups;
+                                },
+                                {} as Record<string, typeof notifications>,
+                            ),
+                        ).map(([label, groupItems]) => (
+                            <div
+                                key={label}
+                                className="w-full flex flex-col gap-5"
+                            >
+                                <div className="flex items-center gap-3 w-full opacity-60">
+                                    <span className="text-[10px] font-bold text-[#AEB0FF] uppercase tracking-widest whitespace-nowrap">
+                                        {label}
+                                    </span>
+                                    <hr className="w-full h-px text-[#AEB0FF]" />
+                                </div>
 
-                                let time = "00:00";
-                                try {
-                                    if (notif.created_at) {
-                                        time = format(
-                                            new Date(notif.created_at),
-                                            "hh:mm a",
-                                        );
-                                    }
-                                } catch (e) {}
+                                {groupItems.map((notif) => {
+                                    const config = getNotificationConfig(
+                                        notif.type,
+                                    );
+                                    const actor = notif.data;
+                                    const avatarUrl = formatUrl(
+                                        (actor as any)?.avatar ||
+                                            (actor as any)?.sender_avatar ||
+                                            null,
+                                    );
 
-                                return (
-                                    <div
-                                        key={notif.id}
-                                        className={`flex items-start justify-between gap-4 w-full min-h-[100px] transition-all relative ${notif.is_read ? "opacity-60" : ""}`}
-                                    >
-                                        <div className="w-[100px] h-[100px] rounded-3xl border-3 shadow-md shadow-gray-500/30 border-[#F5F3FF] overflow-hidden shrink-0">
-                                            <Image
-                                                src={avatarUrl || girl}
-                                                alt={actor?.username || "user"}
-                                                width={100}
-                                                height={100}
-                                                className="w-full h-full object-cover"
-                                                unoptimized
-                                            />
-                                        </div>
-                                        <div className="w-full h-full flex flex-1 flex-col justify-center gap-1">
-                                            <div className="flex flex-row justify-between items-center w-full">
-                                                <p className="text-sm font-extrabold">
-                                                    {config.title}
-                                                </p>
-                                                <p className="text-[#AEB0FF] text-[10px] font-bold">
-                                                    {time}
-                                                </p>
+                                    let time = "00:00";
+                                    try {
+                                        if (notif.created_at) {
+                                            time = format(
+                                                new Date(notif.created_at),
+                                                "hh:mm a",
+                                            );
+                                        }
+                                    } catch (e) {}
+
+                                    return (
+                                        <div
+                                            key={notif.id}
+                                            className={`flex items-start justify-between gap-4 w-full min-h-[100px] transition-all relative ${notif.is_read ? "opacity-60" : ""}`}
+                                        >
+                                            <div className="w-[100px] h-[100px] rounded-3xl border-3 shadow-md shadow-gray-500/30 border-[#F5F3FF] overflow-hidden shrink-0">
+                                                <Image
+                                                    src={avatarUrl || girl}
+                                                    alt={
+                                                        actor?.username ||
+                                                        "user"
+                                                    }
+                                                    width={100}
+                                                    height={100}
+                                                    className="w-full h-full object-cover"
+                                                    unoptimized
+                                                />
                                             </div>
-                                            <h3 className="text-[#131313] text-sm">
-                                                {notif.message ||
-                                                    config.description}
-                                            </h3>
-                                            <div className="flex flex-row items-center gap-3 mt-1">
-                                                <button
-                                                    onClick={() =>
-                                                        handleAction(
-                                                            notif.id,
-                                                            config.primaryActionUrl(
-                                                                (actor as any)
-                                                                    ?.username ||
+                                            <div className="w-full h-full flex flex-1 flex-col justify-center gap-1">
+                                                <div className="flex  flex-row justify-between md:items-center w-full">
+                                                    <p className="text-xs md:text-sm font-extrabold">
+                                                        {config.title}
+                                                    </p>
+                                                    <p className="text-[#AEB0FF] text-[10px] font-meduim text-nowrap">
+                                                        {time}
+                                                    </p>
+                                                </div>
+                                                <h3 className="text-[#131313] text-xs md:text-sm">
+                                                    {notif.message ||
+                                                        config.description}
+                                                </h3>
+                                                <div className="flex flex-row items-center gap-3 mt-1">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                notif.id,
+                                                                config.primaryActionUrl(
                                                                     (
                                                                         actor as any
                                                                     )
-                                                                        ?.sender_username ||
-                                                                    "",
-                                                            ),
-                                                        )
-                                                    }
-                                                    className="bg-[#6367FF] text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-[#5255e6] transition-colors"
-                                                >
-                                                    {config.primaryAction}
-                                                </button>
-                                                {config.secondaryAction && (
-                                                    <button
-                                                        onClick={() =>
-                                                            handleSecondaryAction(
-                                                                actor,
-                                                                config.secondaryAction!,
+                                                                        ?.username ||
+                                                                        (
+                                                                            actor as any
+                                                                        )
+                                                                            ?.sender_username ||
+                                                                        "",
+                                                                ),
                                                             )
                                                         }
-                                                        className="text-[#6367FF] text-[10px] font-bold px-4 py-1.5 rounded-full border border-[#6367FF] hover:bg-[#d3d4fb] transition-all"
+                                                        className="bg-[#6367FF] text-white text-[10px] font-semibold px-3 md:px-4 py-1.5 rounded-full hover:bg-[#5255e6] transition-colors"
                                                     >
-                                                        {config.secondaryAction}
+                                                        {config.primaryAction}
                                                     </button>
-                                                )}
+                                                    {config.secondaryAction && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleSecondaryAction(
+                                                                    actor,
+                                                                    config.secondaryAction!,
+                                                                )
+                                                            }
+                                                            className="text-[#6367FF] text-[10px] font-semibold px-3 md:px-4 py-1.5 rounded-full border border-[#6367FF] hover:bg-[#d3d4fb] transition-all"
+                                                        >
+                                                            {
+                                                                config.secondaryAction
+                                                            }
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
+                        ))
+                    )}
+                    {notifications.length > 0 && hasMore && (
+                        <div className="w-full flex justify-center py-4">
+                            <button
+                                onClick={fetchMore}
+                                disabled={isLoading}
+                                className="text-xs font-bold text-[#6367FF] hover:bg-[#6367FF]/5 px-6 py-2 rounded-xl transition-all border border-[#6367FF]/20 flex items-center gap-2"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <div className="w-3 h-3 border-2 border-[#6367FF] border-t-transparent rounded-full animate-spin"></div>
+                                        Loading...
+                                    </>
+                                ) : (
+                                    "Load More Activity"
+                                )}
+                            </button>
                         </div>
-                    ))
-                )}
-                {notifications.length > 0 && hasMore && (
-                    <div className="w-full flex justify-center py-4">
-                        <button
-                            onClick={fetchMore}
-                            disabled={isLoading}
-                            className="text-xs font-bold text-[#6367FF] hover:bg-[#6367FF]/5 px-6 py-2 rounded-xl transition-all border border-[#6367FF]/20 flex items-center gap-2"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <div className="w-3 h-3 border-2 border-[#6367FF] border-t-transparent rounded-full animate-spin"></div>
-                                    Loading...
-                                </>
-                            ) : (
-                                "Load More Activity"
-                            )}
-                        </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
             {matchModal.isOpen && (
                 <MatchOverlay

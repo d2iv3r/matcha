@@ -15,7 +15,7 @@ import {
 import Image from "next/image";
 import girl from "@/public/girl1.png";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { format } from "date-fns";
 import { useProfile } from "@/core/contexts/ProfileContext";
@@ -53,6 +53,7 @@ export default function ChatPage() {
     const { profile: myProfileData } = useProfile();
     const { fetchUnreadCount: refreshGlobalUnread } = useChat();
     const myId = myProfileData?.profile?.user_id;
+    const router = useRouter();
 
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [matches, setMatches] = useState<any[]>([]);
@@ -224,12 +225,31 @@ export default function ChatPage() {
                 Number(conv.user1_id) === Number(myId)
                     ? conv.user2_id
                     : conv.user1_id;
+            const otherUsername =
+                Number(conv.user1_id) === Number(myId)
+                    ? conv.user2_username
+                    : conv.user1_username;
+
             setActiveRecipientId(otherId);
             fetchMessages(conv.id);
             markAsRead(conv.id);
             setMobileView("chat");
+
+            // Fetch block status using the accounts/profile endpoint
+            fetch(`${API_BASE_URL}/accounts/profile/${otherUsername}`, {
+                credentials: "include",
+            })
+                .then((res) => res.json())
+                .then((result) => {
+                    if (result.success) {
+                        setBlock(result.data.is_blocked || false);
+                    }
+                })
+                .catch((err) =>
+                    console.error("Failed to fetch block status:", err),
+                );
         },
-        [fetchMessages, markAsRead, myId],
+        [fetchMessages, markAsRead, myId, API_BASE_URL],
     );
 
     useEffect(() => {
@@ -285,7 +305,46 @@ export default function ChatPage() {
         selectedConversation,
     ]);
 
+    const handleViewProfile = () => {
+        const otherUsername = selectedConversation
+            ? Number(selectedConversation.user1_id) === Number(myId)
+                ? selectedConversation.user2_username
+                : selectedConversation.user1_username
+            : "";
+        if (otherUsername) {
+            router.push(`/profile/${otherUsername}`);
+        }
+    };
+
+    const handleBlockUnblock = async () => {
+        const otherUsername = selectedConversation
+            ? Number(selectedConversation.user1_id) === Number(myId)
+                ? selectedConversation.user2_username
+                : selectedConversation.user1_username
+            : "";
+        if (!otherUsername) return;
+
+        const endpoint = block ? "unblock" : "block";
+        try {
+            const res = await fetch(
+                `${API_BASE_URL}/profile/${otherUsername}/${endpoint}`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                },
+            );
+            if (res.ok) {
+                setBlock(!block);
+                setShowMenu(false);
+            }
+        } catch (err) {
+            console.error(`Failed to ${endpoint} user:`, err);
+        }
+    };
+
     const handleSendMessage = async () => {
+        if (block) return;
+
         // Fallback: If activeRecipientId is missing, calculate it from the conversation
         let receiver_id = activeRecipientId;
         if (!receiver_id && selectedConversation && myId) {
@@ -627,13 +686,16 @@ export default function ChatPage() {
                                     </button>
                                     {showMenu && (
                                         <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-xl overflow-hidden z-20 flex flex-col w-44 border border-gray-100">
-                                            <button className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 text-xs font-medium">
+                                            <button
+                                                onClick={handleViewProfile}
+                                                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 text-xs font-medium cursor-pointer"
+                                            >
                                                 <Eye size={14} />
                                                 <span>View Profile</span>
                                             </button>
                                             <button
-                                                onClick={() => setBlock(!block)}
-                                                className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 border-t border-gray-50 text-xs font-medium"
+                                                onClick={handleBlockUnblock}
+                                                className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 border-t border-gray-50 text-xs font-medium cursor-pointer"
                                             >
                                                 <Shield size={14} />
                                                 <span>
@@ -647,10 +709,9 @@ export default function ChatPage() {
                                                     setShowMenu(false);
                                                     setShowReportModal(true);
                                                 }}
-                                                className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 border-t border-gray-50 text-xs font-medium"
+                                                className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-gray-50 transition-colors text-xs font-medium w-full text-left cursor-pointer border-t border-gray-50"
                                             >
-                                                <Flag size={14} />
-                                                <span>Report User</span>
+                                                <Flag size={16} /> <span>Report</span>
                                             </button>
                                         </div>
                                     )}
@@ -728,66 +789,83 @@ export default function ChatPage() {
 
                             {/* Input */}
                             <div className="p-5">
-                                <div className="flex gap-3 items-center max-w-5xl mx-auto">
-                                    <div className="flex-1 flex items-center gap-3 bg-[#EAE8FC] px-3 py-2 rounded-2xl">
-                                        <div
-                                            className="relative"
-                                            ref={emojiRef}
-                                        >
-                                            <button
-                                                onClick={() =>
-                                                    setShowEmojis(!showEmojis)
-                                                }
-                                                className="p-1 text-gray-500 hover:text-[#6367FF] transition-colors"
-                                            >
-                                                <Smile size={24} />
-                                            </button>
-                                            {showEmojis && (
-                                                <div className="absolute bottom-full left-0 mb-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 grid grid-cols-6 gap-2 w-max z-50">
-                                                    {EMOJIS.map((emoji) => (
-                                                        <button
-                                                            key={emoji}
-                                                            onClick={() => {
-                                                                setMessageInput(
-                                                                    (prev) =>
-                                                                        prev +
-                                                                        emoji,
-                                                                );
-                                                                setShowEmojis(
-                                                                    false,
-                                                                );
-                                                            }}
-                                                            className="text-lg hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
-                                                        >
-                                                            {emoji}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <input
-                                            ref={inputRef}
-                                            type="text"
-                                            placeholder="Send message ..."
-                                            value={messageInput}
-                                            onChange={(e) =>
-                                                setMessageInput(e.target.value)
-                                            }
-                                            onKeyDown={(e) =>
-                                                e.key === "Enter" &&
-                                                handleSendMessage()
-                                            }
-                                            className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-500"
-                                        />
+                                {block ? (
+                                    <div className="flex items-center justify-center bg-red-50 border border-red-100 rounded-2xl p-4 gap-3 animate-in fade-in zoom-in-95">
+                                        <ShieldBan className="text-red-500 w-5 h-5" />
+                                        <p className="text-xs font-semibold text-red-600">
+                                            You cannot send messages because you have
+                                            blocked this user.
+                                        </p>
                                     </div>
-                                    <button
-                                        onClick={handleSendMessage}
-                                        disabled={!messageInput.trim()}
-                                        className="bg-linear-to-r from-blue-900 to-indigo-500 w-12 h-12 rounded-2xl text-white flex items-center justify-center cursor-pointer shrink-0"
-                                    >
-                                        <Send size={22} className="ml-0.5" />
-                                    </button>
-                                </div>
+                                ) : (
+                                    <div className="flex gap-3 items-center max-w-5xl mx-auto">
+                                        <div className="flex-1 flex items-center gap-3 bg-[#EAE8FC] px-3 py-2 rounded-2xl">
+                                            <div
+                                                className="relative"
+                                                ref={emojiRef}
+                                            >
+                                                <button
+                                                    onClick={() =>
+                                                        setShowEmojis(
+                                                            !showEmojis,
+                                                        )
+                                                    }
+                                                    className="p-1 text-gray-500 hover:text-[#6367FF] transition-colors"
+                                                >
+                                                    <Smile size={24} />
+                                                </button>
+                                                {showEmojis && (
+                                                    <div className="absolute bottom-full left-0 mb-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 grid grid-cols-6 gap-2 w-max z-50">
+                                                        {EMOJIS.map((emoji) => (
+                                                            <button
+                                                                key={emoji}
+                                                                onClick={() => {
+                                                                    setMessageInput(
+                                                                        (prev) =>
+                                                                            prev +
+                                                                            emoji,
+                                                                    );
+                                                                    setShowEmojis(
+                                                                        false,
+                                                                    );
+                                                                }}
+                                                                className="text-lg hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
+                                                            >
+                                                                {emoji}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <input
+                                                ref={inputRef}
+                                                type="text"
+                                                placeholder="Send message ..."
+                                                value={messageInput}
+                                                onChange={(e) =>
+                                                    setMessageInput(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                onKeyDown={(e) =>
+                                                    e.key === "Enter" &&
+                                                    handleSendMessage()
+                                                }
+                                                className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-500"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleSendMessage}
+                                            disabled={!messageInput.trim()}
+                                            className="bg-linear-to-r from-blue-900 to-indigo-500 w-12 h-12 rounded-2xl text-white flex items-center justify-center cursor-pointer shrink-0"
+                                        >
+                                            <Send
+                                                size={22}
+                                                className="ml-0.5"
+                                            />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </>
                     ) : (
@@ -813,56 +891,65 @@ export default function ChatPage() {
 
             {/* Report Modal */}
             {showReportModal && (
-                <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white w-[500px] max-w-[90vw] rounded-[32px] p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+                <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/40 ">
+                    <div className="bg-[#EAE8FC] w-[600px] max-w-[90vw] rounded-[32px] p-6 shadow-2xl relative">
                         <button
                             onClick={() => setShowReportModal(false)}
-                            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-1 transition-colors"
+                            className="absolute top-6 right-6 text-black hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
                         >
-                            <X size={20} />
+                            <X size={24} strokeWidth={2.5} />
                         </button>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">
-                            Report User
+                        <h2 className="text-base font-bold text-gray-900 mb-6">
+                            Report {selectedConversation?.user1_id === myId
+                                ? selectedConversation?.user2_username
+                                : selectedConversation?.user1_username}
                         </h2>
-                        <p className="text-gray-500 mb-6 text-sm">
-                            Why are you reporting this user? We take all reports
-                            seriously.
+                        <p className="text-gray-700 mb-8 text-md">
+                            Why did you report this user ?
                         </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8 mb-12 pl-1">
                             {[
                                 "Harassment",
                                 "Threats",
-                                "Catfishing",
-                                "Spam",
                                 "Inappropriate Content",
+                                "Catfishing",
                                 "Violation of Terms",
+                                "Unwanted Advances",
+                                "Offensive Language",
+                                "Unsolicited Explicit Content",
+                                "Disrespectful Behavior",
+                                "Privacy Concerns",
                             ].map((reason) => (
                                 <label
                                     key={reason}
-                                    className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-3 cursor-pointer group"
                                 >
                                     <input
                                         type="checkbox"
                                         checked={reportReasons.includes(reason)}
                                         onChange={() => toggleReason(reason)}
-                                        className="w-4 h-4 rounded text-[#6367FF] border-gray-300 focus:ring-[#6367FF] accent-[#6367FF]"
+                                        className="w-3 h-3 rounded text-[#6367FF] border-[#6367FF] focus:ring-[#6367FF] accent-[#6367FF] cursor-pointer"
                                     />
-                                    <span className="text-sm text-gray-700">
+                                    <span className="text-gray-900 tracking-tight text-xs group-hover:text-black transition-colors">
                                         {reason}
                                     </span>
                                 </label>
                             ))}
                         </div>
-                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <div className="flex justify-end gap-3 mt-auto">
                             <button
                                 onClick={() => setShowReportModal(false)}
-                                className="px-6 py-2.5 text-sm bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                                className="px-6 py-2 text-xs bg-[#DFDBFE] text-[#555DFF] font-semibold tracking-wide rounded-lg hover:bg-[#D5CEFF] transition-colors cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={() => setShowReportModal(false)}
-                                className="px-6 py-2.5 text-sm bg-[#FF4D4D] text-white font-semibold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-100"
+                                onClick={() => {
+                                    // Placeholder for actual report logic
+                                    console.log("Reporting user with reasons:", reportReasons);
+                                    setShowReportModal(false);
+                                }}
+                                className="px-6 py-2 text-xs bg-[#424AB5] text-white font-semibold tracking-wide rounded-lg hover:bg-[#343999] transition-colors cursor-pointer"
                             >
                                 Send Report
                             </button>

@@ -8,9 +8,10 @@ export interface ApiProfile {
     distance_km?: number | null;
     rating: string;
     avatar?: string | null;
-    is_match: boolean;
-    is_liked: boolean;
+    is_match?: boolean;
+    is_liked?: boolean;
     user_id: number;
     interests?: string[];
     bio?: string;
+    pictures?: string[];
 }
