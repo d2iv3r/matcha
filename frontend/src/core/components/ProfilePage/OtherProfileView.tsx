@@ -15,7 +15,8 @@ import {
     GalleryVertical,
 } from "lucide-react";
 import { INTERESTS } from "@/core/constants/interests";
-import rating from "@/core/constants/Rating";
+import rating from "@/core/types/Rating";
+import { ApiProfile } from "@/core/types/profiles";
 
 export default function OtherProfileView({
     profileData,
@@ -24,7 +25,14 @@ export default function OtherProfileView({
     isMatch,
     setIsMatch,
     onMatch,
-}: any) {
+}: {
+    profileData: ApiProfile;
+    isLiked: boolean;
+    setIsLiked: (v: boolean) => void;
+    isMatch: boolean;
+    setIsMatch: (v: boolean) => void;
+    onMatch: (u: ApiProfile) => void;
+}) {
     const [block, setBlock] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
@@ -87,7 +95,7 @@ export default function OtherProfileView({
         );
     };
 
-    const formatAvatar = (url: string | null) => {
+    const formatAvatar = (url: string | null | undefined) => {
         if (!url) return "";
         if (url.startsWith("http")) return url;
 
@@ -118,9 +126,9 @@ export default function OtherProfileView({
     };
 
     return (
-        <div className="w-full h-full flex flex-col p-4">
-            <div className="w-full h-full flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl">
-                <div className="relative flex w-full h-fit flex-col lg:flex-row items-center lg:items-stretch gap-5 shrink-0 p-4 px-5">
+        <div className="w-full h-fit md:h-full flex flex-col p-4">
+            <div className="w-full h-full flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl ">
+                <div className="relative flex w-full h-fit flex-col lg:flex-row items-center lg:items-stretch gap-5 shrink-0 p-4 px-5 ">
                     <div className="relative w-[180px] h-[180px] md:h-[220px] shrink-0">
                         <Image
                             src={formatAvatar(profileData.avatar)}
@@ -281,7 +289,7 @@ export default function OtherProfileView({
                                     : []),
                             ]
                                 .filter(Boolean)
-                                .map((item: string, index: number) => (
+                                .map((item, index: number) => (
                                     <Image
                                         key={index}
                                         src={formatAvatar(item)}
@@ -302,6 +310,7 @@ export default function OtherProfileView({
                     </div>
                 </div>
             </div>
+            {/* <div className="py-6">e</div> */}
 
             {showReportModal && (
                 <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/40 ">

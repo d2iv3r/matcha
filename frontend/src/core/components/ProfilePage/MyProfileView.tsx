@@ -11,7 +11,7 @@ import {
     X,
 } from "lucide-react";
 import { INTERESTS } from "@/core/constants/interests";
-import rating from "@/core/constants/Rating";
+import rating from "@/core/types/Rating";
 
 import girl from "@/public/girl1.png";
 
@@ -149,7 +149,7 @@ export default function MyProfileView({
     ];
 
     return (
-        <div className="w-full h-full gap-4 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl p-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="w-full h-fit md:h-full gap-4 flex flex-col items-center bg-[#F5F3FF] rounded-4xl shadow-xl p-4 md:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="flex w-full flex-col md:flex-row items-center md:items-stretch gap-2 md:gap-5 h-fit">
                 <div className="relative w-[180px] h-[180px] md:h-[220px] shrink-0">
                     <Image

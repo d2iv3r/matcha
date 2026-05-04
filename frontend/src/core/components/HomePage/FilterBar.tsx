@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { ChevronDown, Search } from "lucide-react";
-import ratingData from "@/core/constants/Rating";
+import ratingData from "@/core/types/Rating";
 import { INTERESTS } from "@/core/constants/interests";
 
 interface FilterBarProps {

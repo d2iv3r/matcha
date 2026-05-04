@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import girl from "@/public/girl1.png";
-import { ApiProfile } from "./types";
+import { ApiProfile } from "../../types/profiles";
 
 export default function UserCard({
     user,

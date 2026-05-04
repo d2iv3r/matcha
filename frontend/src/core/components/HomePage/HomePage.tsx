@@ -2,9 +2,9 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useProfile } from "@/core/contexts/ProfileContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import rating from "@/core/constants/Rating";
+import rating from "@/core/types/Rating";
 import MatchOverlay from "@/core/constants/MatchOverlay";
-import { ApiProfile } from "./types";
+import { ApiProfile } from "../../types/profiles";
 import UserCard from "./UserCard";
 import FilterBar from "./FilterBar";
 import { INTERESTS } from "@/core/constants/interests";
@@ -167,9 +167,12 @@ function HomePageContent() {
 
                 if (data && data.profiles) {
                     setRawProfiles((prev) => {
-                        return append
-                            ? [...prev, ...data.profiles]
-                            : data.profiles;
+                        if (!append) return data.profiles;
+                        const existingIds = new Set(prev.map((p) => p.user_id));
+                        const uniqueNew = data.profiles.filter(
+                            (p: ApiProfile) => !existingIds.has(p.user_id),
+                        );
+                        return [...prev, ...uniqueNew];
                     });
                     setHasMore(data.profiles.length === limit);
                 }
@@ -244,7 +247,6 @@ function HomePageContent() {
     const toggleDropdown = (name: string) => {
         setActiveDropdown((prev) => (prev === name ? null : name));
     };
-    // console.log("===================>ids of profiles:", rawProfiles.map((p: ApiProfile) => p.user_id));
 
     return (
         <div className="w-full h-full flex flex-col p-4 md:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] gap-6">
@@ -280,7 +282,7 @@ function HomePageContent() {
                         : u.rating;
                     return (
                         <UserCard
-                            key={i}
+                            key={u.user_id}
                             user={u}
                             statusColor={color}
                             displayRating={displayRating}
