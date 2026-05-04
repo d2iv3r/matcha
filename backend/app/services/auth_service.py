@@ -1,9 +1,13 @@
 """Authentication business logic."""
 
 from datetime import datetime, timedelta, timezone
-from venv import logger
+import logging
+from typing import Any, Dict, Optional
 
+from flask_jwt_extended import create_access_token, create_refresh_token
 from app.models.email_verification_token_model import EmailVerificationTokenModel
+
+logger = logging.getLogger(__name__)
 from app.models.password_reset_token_model import PasswordResetTokenModel
 from app.models.user_model import UserModel
 
@@ -227,37 +231,44 @@ class AuthService:
 
 
 
-    # @staticmethod
-    # def get_user_by_identity(identity: str | int) -> UserSchema | None:
-    #     try:
-    #         return UserService.get_user_by_id(int(identity))
-    #     except (TypeError, ValueError):
-    #         return None
+    @staticmethod
+    def get_user_by_identity(identity: str | int) -> Dict[str, Any] | None:
+        try:
+            user = UserModel.get_user_by_id(int(identity))
+            if not user:
+                return None
+            return {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }
+        except (TypeError, ValueError):
+            return None
 
-    # @staticmethod
-    # def issue_access_token(user: UserSchema | UserModel | Dict[str, Any]) -> str:
-    #     if isinstance(user, (UserSchema, UserModel)):
-    #         return create_access_token(
-    #             identity=str(user.id),
-    #             additional_claims={
-    #                 'username': user.username,
-    #                 'email': user.email
-    #             }
-    #         )
+    @staticmethod
+    def issue_access_token(user: UserModel | Dict[str, Any]) -> str:
+        if isinstance(user, UserModel):
+            return create_access_token(
+                identity=str(user.id),
+                additional_claims={
+                    'username': user.username,
+                    'email': user.email
+                }
+            )
 
-    #     return create_access_token(
-    #         identity=str(user.get('id')),
-    #         additional_claims={
-    #             'username': user.get('username'),
-    #             'email': user.get('email')
-    #         }
-    #     )
+        return create_access_token(
+            identity=str(user.get('id')),
+            additional_claims={
+                'username': user.get('username'),
+                'email': user.get('email')
+            }
+        )
 
-    # @staticmethod
-    # def issue_refresh_token(user: UserSchema | UserModel | Dict[str, Any]) -> str:
-    #     if isinstance(user, (UserSchema, UserModel)):
-    #         return create_refresh_token(identity=str(user.id))
-    #     return create_refresh_token(identity=str(user.get('id')))
+    @staticmethod
+    def issue_refresh_token(user: UserModel | Dict[str, Any]) -> str:
+        if isinstance(user, UserModel):
+            return create_refresh_token(identity=str(user.id))
+        return create_refresh_token(identity=str(user.get('id')))
 
     # @staticmethod
     # def _email_verification_token_hash(token: str) -> str:

@@ -25,6 +25,8 @@ class ProfileModel(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     email: str | None = None
+    is_online: bool = False
+    last_connection: Any | None = None
     gender: str | None = None
     age: int | None = None
     date_of_birth: Any | None = None
@@ -76,6 +78,8 @@ class ProfileModel(BaseModel):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
+            "is_online": self.is_online,
+            "last_connection": self.last_connection,
             "gender": self.gender,
             "age": self.age,
             "date_of_birth": self.date_of_birth,
@@ -150,7 +154,7 @@ class ProfileModel(BaseModel):
     ) -> list["ProfileModel"]:
         query = """
             SELECT
-                u.username, u.first_name, u.last_name,
+                u.username, u.first_name, u.last_name, u.is_online, u.last_connection,
                 p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country,
                 p.bio, p.interests, p.avatar, p.pictures, p.rating, p.latitude, p.longitude,
                 (6371 * acos(

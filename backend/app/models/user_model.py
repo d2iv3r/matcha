@@ -15,6 +15,7 @@ from app.db.queries import (
     MARK_PROFILE_COMPLETE,
     UPDATE_USER_PASSWORD_BY_ID,
     UPDATE_USER_BY_ID,
+    UPDATE_USER_STATUS,
     GET_USER_BY_OAUTH,
     LINK_OAUTH_ACCOUNT,
 )
@@ -32,6 +33,8 @@ class UserModel(BaseModel):
     password_hash: str | None = None
     is_active: bool = False
     is_profile_complete: bool = False
+    is_online: bool = False
+    last_connection: Any | None = None
 
     def __init__(
         self,
@@ -136,3 +139,12 @@ class UserModel(BaseModel):
                 (first_name, last_name, email, user_id),
             )
         )
+
+    @classmethod
+    def update_status(cls, user_id: int, is_online: bool) -> bool:
+        from datetime import datetime, timezone
+        affected_rows = cls.db_manager().execute(
+            UPDATE_USER_STATUS,
+            (is_online, datetime.now(timezone.utc), user_id)
+        )
+        return affected_rows > 0
