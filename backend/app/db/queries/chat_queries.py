@@ -27,7 +27,20 @@ JOIN users u1 ON c.user1_id = u1.id
 JOIN users u2 ON c.user2_id = u2.id
 LEFT JOIN profiles p1 ON c.user1_id = p1.user_id
 LEFT JOIN profiles p2 ON c.user2_id = p2.user_id
-WHERE c.user1_id = %s OR c.user2_id = %s
+WHERE (c.user1_id = %s OR c.user2_id = %s)
+  -- Ensure mutual like exists
+  AND EXISTS (
+      SELECT 1 FROM profile_likes WHERE profile_user_id = c.user1_id AND liker_user_id = c.user2_id
+  )
+  AND EXISTS (
+      SELECT 1 FROM profile_likes WHERE profile_user_id = c.user2_id AND liker_user_id = c.user1_id
+  )
+  -- Ensure no block exists between the two users
+  AND NOT EXISTS (
+      SELECT 1 FROM blocks 
+      WHERE (blocker_id = c.user1_id AND blocked_id = c.user2_id)
+         OR (blocker_id = c.user2_id AND blocked_id = c.user1_id)
+  )
 ORDER BY last_message_at DESC NULLS LAST;
 """
 
@@ -65,5 +78,17 @@ FROM messages m
 JOIN conversations c ON m.conversation_id = c.id
 WHERE (c.user1_id = %s OR c.user2_id = %s)
   AND m.sender_id != %s
-  AND m.is_read = FALSE;
+  AND m.is_read = FALSE
+  -- Filter for mutual matches and blocks
+  AND EXISTS (
+      SELECT 1 FROM profile_likes WHERE profile_user_id = c.user1_id AND liker_user_id = c.user2_id
+  )
+  AND EXISTS (
+      SELECT 1 FROM profile_likes WHERE profile_user_id = c.user2_id AND liker_user_id = c.user1_id
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM blocks 
+      WHERE (blocker_id = c.user1_id AND blocked_id = c.user2_id)
+         OR (blocker_id = c.user2_id AND blocked_id = c.user1_id)
+  );
 """

@@ -12,6 +12,12 @@ WHERE profile_user_id = %s
     AND liker_user_id = %s;
 """
 
+REMOVE_MUTUAL_LIKES = """
+DELETE FROM profile_likes
+WHERE (profile_user_id = %s AND liker_user_id = %s)
+   OR (profile_user_id = %s AND liker_user_id = %s);
+"""
+
 GET_PROFILE_LIKES_COUNT = """
 SELECT COUNT(*) as count
 FROM profile_likes
