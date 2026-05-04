@@ -60,7 +60,9 @@ SELECT
     p.age as liker_age,
     p.city as liker_city,
     p.country as liker_country,
-    p.avatar as liker_avatar
+    p.avatar as liker_avatar,
+    u.is_online as is_online,
+    u.last_connection as last_connection
 FROM profile_likes pl1
 JOIN profile_likes pl2 ON pl1.profile_user_id = pl2.liker_user_id 
     AND pl1.liker_user_id = pl2.profile_user_id

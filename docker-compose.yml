@@ -15,7 +15,7 @@ services:
     app:
         build:
             context: ./backend
-            dockerfile: docker/Dockerfile.dev
+            dockerfile: docker/Dockerfile
         container_name: flask_app_dev
         restart: unless-stopped
         env_file:
@@ -34,9 +34,9 @@ services:
             - app-network
         command: >
             sh -c "
-              flask init-db &&
-              flask seed-db &&
-                            python -m app.wsgi
+                flask init-db &&
+                flask seed-db &&
+                python -m app.wsgi
             "
     frontend:
         image: node:20-alpine
@@ -48,6 +48,8 @@ services:
         volumes:
             - ./frontend:/app
             - /app/node_modules
+        depends_on:
+            - app
         networks:
             - app-network
         command: sh -c "npm install && npm run dev"
