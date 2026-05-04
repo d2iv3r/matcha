@@ -63,11 +63,11 @@ class UpdateAccountProfileSchema(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    first_name: Optional[str] = Field(None, max_length=150)
-    last_name: Optional[str] = Field(None, max_length=150)
+    first_name: Optional[str] = Field(None, min_length=3, max_length=150)
+    last_name: Optional[str] = Field(None, min_length=3, max_length=150)
     email: Optional[str] = Field(None, pattern=EMAIL_PATTERN)
     gender: Optional[str] = Field(None, pattern=r"^(male|female)$")
-    bio: Optional[str] = Field(None, max_length=500)
+    bio: Optional[str] = Field(None, min_length=10, max_length=500)
     interests: Optional[List[str]] = None
 
     @model_validator(mode="before")
@@ -83,17 +83,22 @@ class UpdateAccountProfileSchema(BaseModel):
     @classmethod
     def normalize_interests(cls, value):
         if value is None:
-            return value
+            raise ValueError("interests is required")
         if isinstance(value, list):
-            return [str(item).strip() for item in value if str(item).strip()]
+            result = [str(item).strip() for item in value if str(item).strip()]
+            if len(result) == 0:
+                raise ValueError("At least one interest must be provided for update")
+            return result
         if isinstance(value, str):
             text = value.strip()
             if text.startswith("{") and text.endswith("}"):
                 text = text[1:-1]
             if not text:
-                return []
-            return [item.strip().strip('"').strip("'") for item in text.split(",") if item.strip()]
-        return [str(value).strip()]
+                raise ValueError("interests cannot be empty")
+            result = [item.strip().strip('"').strip("'") for item in text.split(",") if item.strip()]
+            if len(result) == 0:
+                raise ValueError("At least one interest must be provided for update")
+            return result
 
 
 class UpdateProfileMediaSchema(BaseModel):
