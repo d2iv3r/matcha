@@ -7,6 +7,7 @@ from typing import Any, Dict
 from app.db.queries.profile_likes_queries import (
     RECORD_PROFILE_LIKE,
     REMOVE_PROFILE_LIKE,
+    REMOVE_MUTUAL_LIKES,
     GET_PROFILE_LIKES_COUNT,
     GET_PROFILE_RECENT_LIKES,
     HAS_PROFILE_LIKE,
@@ -54,6 +55,14 @@ class ProfileLikesModel(BaseModel):
             return True
         except Exception:
             return False
+
+    @classmethod
+    def remove_mutual_likes(cls, user1_id: int, user2_id: int) -> None:
+        """Remove likes in both directions between two users."""
+        cls.db_manager().execute(
+            REMOVE_MUTUAL_LIKES,
+            (user1_id, user2_id, user2_id, user1_id),
+        )
 
     @classmethod
     def get_likes_count(cls, profile_user_id: int) -> int:

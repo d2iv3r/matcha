@@ -30,6 +30,11 @@ class BlockService:
 
         # Perform block
         result = current_app.db_manager.execute_returning(BLOCK_USER, (blocker_id, blocked_id))
+        
+        # Automatically unmatch (remove likes in both directions)
+        from app.services.profile_likes_service import ProfileLikesService
+        ProfileLikesService.remove_mutual_likes(blocker_id, blocked_id)
+        
         return result
 
     @staticmethod

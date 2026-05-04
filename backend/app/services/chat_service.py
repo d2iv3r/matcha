@@ -10,21 +10,7 @@ class ChatService:
 
     @staticmethod
     def get_user_conversations(user_id: int) -> list[ConversationModel]:
-        conversations = ConversationModel.get_user_conversations(user_id)
-        
-        for conv in conversations:
-            print(f"+++++++=== ==> {conv.to_dict()}")
-
-        from app.services.block_service import BlockService
-        blocked_ids = BlockService.get_blocked_users_ids(user_id)
-        
-        if not blocked_ids:
-            return conversations
-            
-        return [
-            conv for conv in conversations 
-            if conv.user1_id not in blocked_ids and conv.user2_id not in blocked_ids
-        ]
+        return ConversationModel.get_user_conversations(user_id)
 
     @staticmethod
     def get_conversation_messages(user_id: int, conversation_id: int, limit: int = 20, offset: int = 0) -> list[MessageModel]:

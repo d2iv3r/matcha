@@ -94,6 +94,16 @@ class ProfileLikesService:
         )
 
     @staticmethod
+    def remove_mutual_likes(user1_id: int, user2_id: int) -> None:
+        """Remove likes in both directions between two users.
+        
+        Args:
+            user1_id: ID of the first user
+            user2_id: ID of the second user
+        """
+        ProfileLikesModel.remove_mutual_likes(user1_id, user2_id)
+
+    @staticmethod
     def get_profile_like_count(user_id: int) -> int:
         """Get the total number of times a user's profile has been liked.
         
