@@ -10,6 +10,8 @@ from app.config import DevConfig, BaseConfig
 from app.middlewares.middleware import register_middleware
 from app.extensions import register_extensions, socketio
 from app.utils.app_error import register_error_handlers
+from app.realtime import register_realtime
+from app.db.database import init_db
 
 from app.routes import (
     api_bp, auth_bp, docs_bp, profile_bp, accounts_bp,
@@ -41,12 +43,10 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         register_extensions(app)
         logger.info("[APP] Extensions registered successfully.")
 
-        from app.realtime import register_realtime
         register_realtime(socketio)
         logger.info("[APP] Realtime module registered successfully.")
 
-        # Initialize database connection pool (without running migrations)
-        from app.db.database import init_db
+        # Initialize database connection pool
         init_db(app)
 
         register_middleware(app)

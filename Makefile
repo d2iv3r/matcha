@@ -1,4 +1,4 @@
-DOCKER_COMPOSE_NAME=docker-compose.dev.yml
+DOCKER_COMPOSE_NAME=docker-compose.yml
 
 all: up
 

@@ -27,6 +27,8 @@ class ProfileLikesModel(BaseModel):
     liker_city: str | None = None
     liker_country: str | None = None
     liker_avatar: str | None = None
+    is_online: bool | None = None
+    last_connection: str | None = None
 
     def __init__(self, **kwargs):
         for field_name in self.__class__.__annotations__:
@@ -97,4 +99,6 @@ class ProfileLikesModel(BaseModel):
             "liker_city": self.liker_city,
             "liker_country": self.liker_country,
             "liker_avatar": self.liker_avatar,
+            "is_online": self.is_online,
+            "last_connection": self.last_connection,
         }
