@@ -17,7 +17,12 @@ const SOCKET_URL = "http://localhost:5001";
 
 export const ChatPage = () => {
     const { profile: myProfileData } = useProfile();
-    const { fetchUnreadCount: refreshGlobalUnread } = useChat();
+    const {
+        fetchUnreadCount: refreshGlobalUnread,
+        socket: globalSocket,
+        onlineUsers,
+        setTotalUnread,
+    } = useChat();
     const myId = myProfileData?.profile?.user_id;
     const router = useRouter();
 
@@ -26,7 +31,8 @@ export const ChatPage = () => {
     const [selectedConversation, setSelectedConversation] =
         useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const [messagesOffset, setMessagesOffset] = useState(0);
     const [loadingData, setLoadingData] = useState(false);
 
     const [showMenu, setShowMenu] = useState(false);
@@ -50,7 +56,9 @@ export const ChatPage = () => {
         if (!url) return null;
         if (url.startsWith("http")) return url;
         const cleanPath = url.startsWith("/") ? url : `/${url}`;
-        const finalPath = cleanPath.startsWith("/static") ? cleanPath : `/static${cleanPath}`;
+        const finalPath = cleanPath.startsWith("/static")
+            ? cleanPath
+            : `/static${cleanPath}`;
         return `${SOCKET_URL}${finalPath}`;
     }, []);
 
@@ -71,7 +79,16 @@ export const ChatPage = () => {
             });
             if (res.ok) {
                 const json = await res.json();
-                setConversations(json.data || []);
+                console.log("Conversations data:", json.data);
+                const convs = json.data || [];
+                setConversations(convs);
+                // Update navbar unread badge immediately from conversation data
+                const total = convs.reduce(
+                    (sum: number, c: Conversation) =>
+                        sum + (c.unread_count ?? 0),
+                    0,
+                );
+                setTotalUnread(total);
             }
         } catch (err) {
             console.error("Failed to fetch conversations:", err);
@@ -100,39 +117,73 @@ export const ChatPage = () => {
         }
     }, []);
 
-    const fetchMessages = useCallback(async (conversationId: number) => {
-        try {
-            const res = await fetch(
-                `${API_BASE_URL}/chat/conversations/${conversationId}/messages`,
-                { credentials: "include" },
-            );
-            if (res.ok) {
-                const json = await res.json();
-                setMessages((json.data || []).reverse());
+    const fetchMessages = useCallback(
+        async (conversationId: number, offset = 0) => {
+            if (conversationId < 0) {
+                setMessages([]);
+                setHasMoreMessages(false);
+                setMessagesOffset(0);
+                return;
             }
-        } catch (err) {
-            console.error("Failed to fetch messages:", err);
-        }
-    }, []);
+            try {
+                const limit = 100;
+                const res = await fetch(
+                    `${API_BASE_URL}/chat/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`,
+                    { credentials: "include" },
+                );
+                if (res.ok) {
+                    const json = await res.json();
+                    const fetchedMessages = json.data || [];
 
-    const markAsRead = useCallback(async (conversationId: number) => {
-        try {
-            await fetch(`${API_BASE_URL}/chat/messages/read`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ conversation_id: conversationId }),
-                credentials: "include",
-            });
-            setConversations((prev) =>
-                prev.map((c) =>
-                    c.id === conversationId ? { ...c, unread_count: 0 } : c,
-                ),
-            );
-            refreshGlobalUnread();
-        } catch (err) {
-            console.error("Failed to mark messages as read:", err);
-        }
-    }, [refreshGlobalUnread]);
+                    if (offset === 0) {
+                        setMessages(fetchedMessages.reverse());
+                    } else {
+                        // Prepend older messages, deduplicating by ID
+                        setMessages((prev) => {
+                            const existingIds = new Set(prev.map((m) => m.id));
+                            const newMsgs = fetchedMessages
+                                .reverse()
+                                .filter((m: any) => !existingIds.has(m.id));
+                            return [...newMsgs, ...prev];
+                        });
+                    }
+
+                    setHasMoreMessages(fetchedMessages.length === limit);
+                    setMessagesOffset(offset + fetchedMessages.length);
+                }
+            } catch (err) {
+                console.error("Failed to fetch messages:", err);
+            }
+        },
+        [],
+    );
+
+    const handleLoadMoreMessages = useCallback(() => {
+        if (!selectedConversation || !hasMoreMessages) return;
+        fetchMessages(selectedConversation.id, messagesOffset);
+    }, [selectedConversation, hasMoreMessages, messagesOffset, fetchMessages]);
+
+    const markAsRead = useCallback(
+        async (conversationId: number) => {
+            try {
+                await fetch(`${API_BASE_URL}/chat/messages/read`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ conversation_id: conversationId }),
+                    credentials: "include",
+                });
+                setConversations((prev) =>
+                    prev.map((c) =>
+                        c.id === conversationId ? { ...c, unread_count: 0 } : c,
+                    ),
+                );
+                refreshGlobalUnread();
+            } catch (err) {
+                console.error("Failed to mark messages as read:", err);
+            }
+        },
+        [refreshGlobalUnread],
+    );
 
     const searchParams = useSearchParams();
     const targetUsername = searchParams.get("user");
@@ -143,15 +194,12 @@ export const ChatPage = () => {
         Promise.all([fetchConversations(), fetchMatches()]).finally(() =>
             setLoadingData(false),
         );
+    }, [myId, fetchConversations, fetchMatches]);
 
-        const token = localStorage.getItem("access_token");
-        const newSocket = io(SOCKET_URL, {
-            withCredentials: true,
-            transports: ["polling", "websocket"],
-            auth: { token },
-        });
+    useEffect(() => {
+        if (!globalSocket) return;
 
-        newSocket.on("new_message", (payload: Message) => {
+        const onNewMessage = (payload: Message) => {
             setMessages((prev) => {
                 if (payload.conversation_id === selectedConversation?.id) {
                     if (prev.find((m) => m.id === payload.id)) return prev;
@@ -161,13 +209,33 @@ export const ChatPage = () => {
                 return prev;
             });
             fetchConversations();
-        });
-
-        setSocket(newSocket);
-        return () => {
-            newSocket.close();
         };
-    }, [myId, selectedConversation?.id, fetchConversations, fetchMatches, markAsRead]);
+
+        const onMessagesRead = (data: { conversation_id: number; reader_id: number }) => {
+            if (data.conversation_id === selectedConversation?.id) {
+                setMessages((prev) =>
+                    prev.map((m) =>
+                        m.sender_id === myId ? { ...m, is_read: true } : m,
+                    ),
+                );
+            }
+            fetchConversations();
+        };
+
+        globalSocket.on("new_message", onNewMessage);
+        globalSocket.on("messages_read", onMessagesRead);
+
+        return () => {
+            globalSocket.off("new_message", onNewMessage);
+            globalSocket.off("messages_read", onMessagesRead);
+        };
+    }, [
+        globalSocket,
+        selectedConversation?.id,
+        fetchConversations,
+        markAsRead,
+        myId,
+    ]);
 
     const handleSelectConversation = useCallback(
         (conv: Conversation) => {
@@ -182,7 +250,9 @@ export const ChatPage = () => {
                     : conv.user1_username;
 
             setActiveRecipientId(otherId);
-            fetchMessages(conv.id);
+            setMessagesOffset(0);
+            setHasMoreMessages(true);
+            fetchMessages(conv.id, 0);
             markAsRead(conv.id);
             setMobileView("chat");
 
@@ -193,6 +263,23 @@ export const ChatPage = () => {
                 .then((result) => {
                     if (result.success) {
                         setBlock(result.data.is_blocked || false);
+                        // Update online status in the selected conversation
+                        setSelectedConversation((prev) => {
+                            if (!prev) return null;
+                            const isUser1 =
+                                Number(prev.user1_id) === Number(myId);
+                            return {
+                                ...prev,
+                                [isUser1
+                                    ? "user2_is_online"
+                                    : "user1_is_online"]:
+                                    result.data.profile.is_online,
+                                [isUser1
+                                    ? "user2_last_connection"
+                                    : "user1_last_connection"]:
+                                    result.data.profile.last_connection,
+                            };
+                        });
                     }
                 })
                 .catch((err) =>
@@ -244,7 +331,15 @@ export const ChatPage = () => {
                 setTimeout(() => inputRef.current?.focus(), 100);
             }
         }
-    }, [conversations, matches, targetUsername, handleSelectConversation, myId, myProfileData, selectedConversation]);
+    }, [
+        conversations,
+        matches,
+        targetUsername,
+        handleSelectConversation,
+        myId,
+        myProfileData,
+        selectedConversation,
+    ]);
 
     const handleViewProfile = useCallback(() => {
         const otherUsername = selectedConversation
@@ -341,22 +436,30 @@ export const ChatPage = () => {
                         prev ? { ...prev, id: realMsg.conversation_id } : null,
                     );
                 }
-            } else if (socket) {
-                socket.emit("send_message", {
+            } else if (globalSocket) {
+                globalSocket.emit("send_message", {
                     receiver_id,
                     content: currentInput,
                 });
             }
             fetchConversations();
         } catch (err) {
-            if (socket)
-                socket.emit("send_message", {
+            if (globalSocket)
+                globalSocket.emit("send_message", {
                     receiver_id,
                     content: currentInput,
                 });
             fetchConversations();
         }
-    }, [block, activeRecipientId, selectedConversation, myId, messageInput, socket, fetchConversations]);
+    }, [
+        block,
+        activeRecipientId,
+        selectedConversation,
+        myId,
+        messageInput,
+        globalSocket,
+        fetchConversations,
+    ]);
 
     const formatMessageTime = useCallback((dateStr: string) => {
         try {
@@ -408,11 +511,27 @@ export const ChatPage = () => {
                     formatMessageTime={formatMessageTime}
                     mobileView={mobileView}
                 />
-                
+
                 <div className="basis-px h-full w-px bg-gray-200 shrink-0 hidden lg:block" />
 
                 <ChatWindow
-                    selectedConversation={selectedConversation}
+                    selectedConversation={
+                        selectedConversation
+                            ? {
+                                  ...selectedConversation,
+                                  user1_is_online:
+                                      onlineUsers[
+                                          Number(selectedConversation.user1_id)
+                                      ]?.is_online ??
+                                      selectedConversation.user1_is_online,
+                                  user2_is_online:
+                                      onlineUsers[
+                                          Number(selectedConversation.user2_id)
+                                      ]?.is_online ??
+                                      selectedConversation.user2_is_online,
+                              }
+                            : null
+                    }
                     messages={messages}
                     myId={myId}
                     messageInput={messageInput}
@@ -437,6 +556,8 @@ export const ChatPage = () => {
                     formatMessageTime={formatMessageTime}
                     onBackToList={() => setMobileView("list")}
                     mobileView={mobileView}
+                    hasMoreMessages={hasMoreMessages}
+                    onLoadMore={handleLoadMoreMessages}
                 />
             </div>
 

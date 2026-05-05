@@ -13,7 +13,9 @@ import {
     MessageCircleMore,
     GalleryHorizontalEnd,
     GalleryVertical,
+    Clock,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { INTERESTS } from "@/core/constants/interests";
 import rating from "@/core/types/Rating";
 import { ApiProfile } from "@/core/types/profiles";
@@ -137,6 +139,9 @@ export default function OtherProfileView({
                             unoptimized
                             className="rounded-[24px] object-cover shadow-lg"
                         />
+                        {profileData.is_online && (
+                            <div className="absolute top-3 left-3 bg-[#45ff00] w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 animate-pulse"></div>
+                        )}
                         <div className="absolute bottom-0 w-full h-1/2 bg-linear-to-t from-[#555DFF] to-transparent rounded-b-2xl"></div>
                         <div className="absolute flex flex-col gap-2 bottom-3 left-3">
                             {isMatch && (
@@ -181,9 +186,34 @@ export default function OtherProfileView({
                     </div>
                     <div className="flex flex-col w-full h-full flex-1 min-w-0 md:justify-between items-center lg:items-start py-1 gap-3">
                         <div className="flex flex-col gap-1 items-center md:items-start">
-                            <h4 className="text-xs text-gray-900">
-                                @{profileData.username}
-                            </h4>
+                            <div className="flex gap-1 items-center">
+                                <h4 className="text-xs text-gray-900">
+                                    @{profileData.username},
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                    {profileData.is_online ? (
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 bg-[#38d200] rounded-full"></div>
+                                            <span className="text-[10px] font-bold text-[#38d200] tracking-wider">
+                                                Online
+                                            </span>
+                                        </div>
+                                    ) : profileData.last_connection ? (
+                                        <div className="flex items-center gap-1.5 text-gray-400">
+                                            <Clock size={12} />
+                                            <span className="text-[10px] font-medium">
+                                                Last seen{" "}
+                                                {formatDistanceToNow(
+                                                    new Date(
+                                                        profileData.last_connection,
+                                                    ),
+                                                    { addSuffix: true },
+                                                )}
+                                            </span>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            </div>
                             <h2 className="font-bold text-gray-900">
                                 {profileData.first_name}{" "}
                                 {profileData.last_name || ""}

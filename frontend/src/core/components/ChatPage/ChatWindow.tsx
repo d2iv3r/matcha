@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
     MoreVertical,
     Shield,
@@ -15,11 +16,34 @@ import {
 import Image from "next/image";
 import { RefObject } from "react";
 import girl from "@/public/girl1.png";
+import { formatDistanceToNow } from "date-fns";
 import { Conversation, Message } from "@/core/types/chat";
 
 const EMOJIS = [
-    "😀", "😂", "🥰", "😎", "🥺", "😭", "😤", "😡", "👍", "🙏", "🔥", "✨",
-    "❤️", "💯", "🎉", "👀", "🤔", "🙄", "🤫", "😘", "😜", "🤭", "🤤", "🥱",
+    "😀",
+    "😂",
+    "🥰",
+    "😎",
+    "🥺",
+    "😭",
+    "😤",
+    "😡",
+    "👍",
+    "🙏",
+    "🔥",
+    "✨",
+    "❤️",
+    "💯",
+    "🎉",
+    "👀",
+    "🤔",
+    "🙄",
+    "🤫",
+    "😘",
+    "😜",
+    "🤭",
+    "🤤",
+    "🥱",
     "😉",
 ];
 
@@ -46,6 +70,8 @@ interface ChatWindowProps {
     formatMessageTime: (dateStr: string) => string;
     onBackToList: () => void;
     mobileView: "list" | "chat";
+    hasMoreMessages: boolean;
+    onLoadMore: () => void;
 }
 
 export const ChatWindow = ({
@@ -71,7 +97,41 @@ export const ChatWindow = ({
     formatMessageTime,
     onBackToList,
     mobileView,
+    hasMoreMessages,
+    onLoadMore,
 }: ChatWindowProps) => {
+    // ALL hooks must be declared before any early returns (Rules of Hooks)
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const isLoadingMoreRef = useRef(false); // ref for immediate lock (avoids stale closure)
+    const prevScrollHeight = useRef<number>(0);
+
+    // Preserve scroll position when older messages are prepended
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container || prevScrollHeight.current === 0) return;
+        const newScrollHeight = container.scrollHeight;
+        const scrollDiff = newScrollHeight - prevScrollHeight.current;
+        if (scrollDiff > 0) {
+            container.scrollTop += scrollDiff;
+        }
+        prevScrollHeight.current = 0;
+    }, [messages.length]);
+
+    const handleScroll = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (!container || !hasMoreMessages || isLoadingMoreRef.current) return;
+        if (container.scrollTop <= 50) {
+            isLoadingMoreRef.current = true;
+            prevScrollHeight.current = container.scrollHeight;
+            setIsLoadingMore(true);
+            Promise.resolve(onLoadMore()).finally(() => {
+                isLoadingMoreRef.current = false;
+                setIsLoadingMore(false);
+            });
+        }
+    }, [hasMoreMessages, onLoadMore]);
+
     if (!selectedConversation) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[#F9F8FF]">
@@ -99,6 +159,16 @@ export const ChatWindow = ({
             ? selectedConversation.user2_avatar
             : selectedConversation.user1_avatar;
 
+    const isOtherOnline =
+        selectedConversation.user1_id === myId
+            ? selectedConversation.user2_is_online
+            : selectedConversation.user1_is_online;
+
+    const otherLastConnection =
+        selectedConversation.user1_id === myId
+            ? selectedConversation.user2_last_connection
+            : selectedConversation.user1_last_connection;
+
     return (
         <div
             className={`flex-1 flex flex-col min-h-0 bg-[#F9F8FF] ${
@@ -123,8 +193,36 @@ export const ChatWindow = ({
                             className="aspect-square rounded-full object-cover"
                             unoptimized
                         />
+                        {isOtherOnline && (
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#45ff00] border-2 border-white rounded-full"></div>
+                        )}
                     </div>
-                    <h2 className="font-bold text-gray-900">{otherUsername}</h2>
+                    <div className="flex flex-col">
+                        <h2 className="font-bold text-gray-900 leading-none">
+                            {otherUsername}
+                        </h2>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            {isOtherOnline ? (
+                                <>
+                                    <span className="text-[10px] font-bold text-[#45ff00] tracking-wider">
+                                        Online
+                                    </span>
+                                </>
+                            ) : otherLastConnection ? (
+                                <span className="text-[10px] text-gray-400 font-medium">
+                                    Last seen{" "}
+                                    {formatDistanceToNow(
+                                        new Date(otherLastConnection),
+                                        { addSuffix: true },
+                                    )}
+                                </span>
+                            ) : (
+                                <span className="text-[10px] text-gray-400 font-medium">
+                                    Offline
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="relative" ref={menuRef}>
@@ -162,17 +260,27 @@ export const ChatWindow = ({
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4 min-h-0 scrollbar-hide">
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4 min-h-0 scrollbar-hide"
+            >
                 {messages.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center opacity-20">
                         <p className="text-xs font-medium">No messages yet</p>
                     </div>
                 ) : (
-                    messages.map((msg, idx) => {
+                    <>
+                        {isLoadingMore && (
+                            <div className="flex justify-center py-2">
+                                <div className="w-4 h-4 border-2 border-[#6367FF] border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        )}
+                        {messages.map((msg, idx) => {
                         const isMine = msg.sender_id === myId;
                         return (
                             <div
-                                key={msg.id || idx}
+                                key={`msg-${msg.id}-${idx}`}
                                 className={`flex ${
                                     isMine ? "justify-end" : "justify-start"
                                 } animate-in fade-in slide-in-from-bottom-2 duration-300`}
@@ -216,7 +324,8 @@ export const ChatWindow = ({
                                 </div>
                             </div>
                         );
-                    })
+                    })}
+                </>
                 )}
                 <div ref={messagesEndRef} />
             </div>

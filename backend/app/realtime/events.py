@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
+from datetime import datetime, timezone
 
 from flask import current_app, request, session
 from flask_jwt_extended import decode_token
@@ -85,6 +86,21 @@ def register_event_handlers(socketio_instance) -> None:
         except Exception as exc:
             logger.error("[Realtime] Error updating online status for user %s: %s", user_id, exc)
 
+        # Broadcast status to matches
+        from app.services.profile_likes_service import ProfileLikesService
+        try:
+            matches = ProfileLikesService.get_matches(int(user_id), limit=100)
+            for m in matches:
+                other_id = m.get("liker_id")
+                if other_id:
+                    socketio_instance.emit("user_status", {
+                        "user_id": int(user_id),
+                        "is_online": True,
+                        "last_connection": datetime.now(timezone.utc).isoformat()
+                    }, room=f"user_{other_id}")
+        except Exception as exc:
+            logger.error("[Realtime] Error broadcasting online status for user %s: %s", user_id, exc)
+
         logger.info("[Realtime] Connected sid=%s user_id=%s room=user_%s", request.sid, user_id, user_id)
 
     @socketio_instance.on("send_message")
@@ -118,6 +134,44 @@ def register_event_handlers(socketio_instance) -> None:
             logger.error("[Realtime] Error sending message: %s", exc)
             return {"error": str(exc)}
 
+    @socketio_instance.on("mark_read")
+    def _handle_mark_read(data: Dict[str, Any]):
+        if not data:
+            return {"error": "Missing data"}
+        user_id = session.get("user_id")
+        if not user_id:
+            return {"error": "Unauthorized"}
+        
+        conversation_id = data.get("conversation_id")
+        if not conversation_id:
+            return {"error": "Missing conversation_id"}
+            
+        from app.services.chat_service import ChatService
+        try:
+            ChatService.mark_as_read(int(user_id), int(conversation_id))
+            
+            # Emit messages_read event to both reader and sender
+            # Reader (current user) to sync other tabs
+            socketio_instance.emit("messages_read", {
+                "conversation_id": conversation_id,
+                "reader_id": user_id
+            }, room=f"user_{user_id}")
+            
+            # We also need to notify the OTHER user in the conversation
+            from app.models.chat_model import ConversationModel
+            conv = ConversationModel.get_by_id(conversation_id)
+            if conv:
+                other_id = conv.user2_id if conv.user1_id == int(user_id) else conv.user1_id
+                socketio_instance.emit("messages_read", {
+                    "conversation_id": conversation_id,
+                    "reader_id": user_id
+                }, room=f"user_{other_id}")
+            
+            return {"status": "ok"}
+        except Exception as exc:
+            logger.error("[Realtime] Error marking as read: %s", exc)
+            return {"error": str(exc)}
+
     @socketio_instance.on("disconnect")
     def _disconnect():
         user_id = session.get("user_id")
@@ -128,6 +182,21 @@ def register_event_handlers(socketio_instance) -> None:
                 UserModel.update_status(int(user_id), False)
             except Exception as exc:
                 logger.error("[Realtime] Error updating offline status for user %s: %s", user_id, exc)
+            
+            # Broadcast status to matches
+            from app.services.profile_likes_service import ProfileLikesService
+            try:
+                matches = ProfileLikesService.get_matches(int(user_id), limit=100)
+                for m in matches:
+                    other_id = m.get("liker_id")
+                    if other_id:
+                        socketio_instance.emit("user_status", {
+                            "user_id": int(user_id),
+                            "is_online": False,
+                            "last_connection": datetime.now(timezone.utc).isoformat()
+                        }, room=f"user_{other_id}")
+            except Exception as exc:
+                logger.error("[Realtime] Error broadcasting offline status for user %s: %s", user_id, exc)
             
         logger.info("[Realtime] Disconnected sid=%s user_id=%s", request.sid, user_id)
         session.pop("user_id", None)
