@@ -90,6 +90,12 @@ WHERE user_id = %s
 RETURNING user_id, gender, age, date_of_birth, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, rating
 """
 
+UPDATE_PROFILE_RATING = """
+UPDATE profiles
+SET rating = %s
+WHERE user_id = %s
+"""
+
 
 # UPSERT_PROFILE = """
 # INSERT INTO profiles (user_id, gender, age, date_of_birth, location, bio, interests, avatar, pictures)

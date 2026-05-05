@@ -12,6 +12,7 @@ from app.db.queries import (
     GET_PROFILE_BY_USERNAME,
     GET_PROFILES_LIST,
     UPDATE_PROFILE_BY_USER_ID,
+    UPDATE_PROFILE_RATING,
     # GET_PROFILES_WITH_USERS,
 )
 from app.models.base_model import BaseModel
@@ -134,6 +135,11 @@ class ProfileModel(BaseModel):
             (gender, bio, interests, avatar, pictures, user_id),
         )
         return cls.from_row(row)
+
+    @classmethod
+    def update_rating(cls, user_id: int, rating: str) -> None:
+        """Update a profile's rating."""
+        cls.db_manager().execute(UPDATE_PROFILE_RATING, (rating, user_id))
 
     @classmethod
     def search_profiles(

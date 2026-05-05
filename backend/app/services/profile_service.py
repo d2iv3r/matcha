@@ -29,17 +29,11 @@ class ProfileService:
         if not user:
             raise NotFoundError("User", profile_data.get("user_id"))
 
-        print(f"Completing profile for user_id: {profile_data.get('user_id')}, username: {user.username}")
         if user.is_active is False:
             raise ForbiddenError("Only verified users can update profile")
 
-        print(f"Resolved avatar URL: {profile_data.get('avatar')}")
-        print(f"Resolved pictures URLs: {profile_data.get('pictures')}")
-        print("creating profile ------------:")
         profile = ProfileModel(**profile_data).create()
-        print(f"Profile created successfully for user_id: {profile_data.get('user_id')}")
         UserModel.mark_profile_complete(profile_data.get("user_id"))
-        print(f"Profile marked as complete for user_id: {profile_data.get('user_id')}")
         return profile
     
     @staticmethod
@@ -185,31 +179,35 @@ class ProfileService:
 
 
 
-    # @staticmethod
-    # def _normalize_rating(value: Any) -> str:
-    #     if isinstance(value, str) and value in ProfileService.RATING_LEVELS:
-    #         return value
+    @staticmethod
+    def _normalize_rating(score: int) -> str:
+        """Convert a numerical score (likes + views) to a rating level."""
+        if score <= 19:
+            return "Ghost"
+        if score <= 39:
+            return "Rising"
+        if score <= 59:
+            return "Popular"
+        if score <= 79:
+            return "Elite"
+        return "Iconic"
 
-    #     if isinstance(value, (int, float)):
-    #         score = int(value)
-    #         if score <= 19:
-    #             return "Ghost"
-    #         if score <= 39:
-    #             return "Rising"
-    #         if score <= 59:
-    #             return "Popular"
-    #         if score <= 79:
-    #             return "Elite"
-    #         return "Iconic"
+    @staticmethod
+    def update_profile_rating(user_id: int) -> str:
+        """Calculate and update the profile rating for a user."""
+        from app.services.profile_likes_service import ProfileLikesService
+        from app.services.profile_views_service import ProfileViewsService
 
-    #     return "Ghost"
+        likes_count = ProfileLikesService.get_profile_like_count(user_id)
+        views_count = ProfileViewsService.get_profile_view_count(user_id)
+        # Weight likes more than views? The user didn't specify, 
+        # but usually likes are more significant. 
+        # For now, let's keep it simple as sum.
+        score = likes_count + views_count
 
-    # @staticmethod
-    # def get_rating_for_user(user_id: int) -> str:
-    #     likes_count = ProfileLikesService.get_profile_like_count(user_id)
-    #     views_count = ProfileViewsService.get_profile_view_count(user_id)
-    #     score = likes_count + views_count
-    #     return ProfileService._normalize_rating(score)
+        new_rating = ProfileService._normalize_rating(score)
+        ProfileModel.update_rating(user_id, new_rating)
+        return new_rating
 
     # @staticmethod
     # def _resolve_avatar_url(user_id: int, avatar, resolved_pictures: list[str]) -> str:

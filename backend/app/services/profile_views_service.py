@@ -37,6 +37,9 @@ class ProfileViewsService:
             entity_id=viewer_user_id
         )
 
+        from app.services.profile_service import ProfileService
+        ProfileService.update_profile_rating(profile_user_id)
+
     @staticmethod
     def get_profile_view_count(user_id: int) -> int:
         """Get the total number of times a user's profile has been viewed.
@@ -65,6 +68,5 @@ class ProfileViewsService:
             return []
         data = []
         for viewer in viewers:
-            print("Viewer model instance:", viewer)  # Debug log
             data.append(viewer.to_dict())
         return data

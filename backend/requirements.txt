@@ -19,3 +19,4 @@ mypy==1.5.1
 ipython==8.14.0
 watchdog==3.0.0
 faker==19.6.1
+zxcvbn==4.4.28

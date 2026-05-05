@@ -64,6 +64,9 @@ class ProfileLikesService:
                 entity_id=liker_user_id
             )
 
+        from app.services.profile_service import ProfileService
+        ProfileService.update_profile_rating(profile_user_id)
+
     @staticmethod
     def remove_profile_like(profile_user_id: int, liker_user_id: int) -> None:
         """Remove a like for a user's profile.
@@ -92,6 +95,9 @@ class ProfileLikesService:
             data=actor_data,
             entity_id=liker_user_id
         )
+
+        from app.services.profile_service import ProfileService
+        ProfileService.update_profile_rating(profile_user_id)
 
     @staticmethod
     def remove_mutual_likes(user1_id: int, user2_id: int) -> None:
