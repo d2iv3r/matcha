@@ -3,6 +3,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any, List, Optional
 
+import os
+import requests
 from flask import current_app, has_app_context
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -72,9 +74,9 @@ class CreateProfileSchema(BaseModel):
     gender_preference: str = Field(default="all", pattern=r"^(male|female|all)$")
     city: str = Field(..., min_length=1, max_length=255)
     country: str = Field(..., min_length=1, max_length=255)
-    ip_address: str = Field(..., min_length=1, max_length=45)
-    latitude: float
-    longitude: float
+    ip_address: Optional[str] = Field(None, max_length=45)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     bio: str = Field(..., max_length=500)
     interests: List[str]
     avatar: Any
@@ -120,6 +122,38 @@ class CreateProfileSchema(BaseModel):
             raise ValueError("You must be at least 18 years old to use Matcha")
 
         self.age = age
+        return self
+
+    @model_validator(mode="after")
+    def validate_location(self) -> "CreateProfileSchema":
+        """Ensure location data is present or fetch it using Nominatim (OpenStreetMap) API."""
+        # If latitude and longitude are already provided, we are good
+        if self.latitude is not None and self.longitude is not None:
+            return self
+
+        # Otherwise, city and country must be present
+        if not self.city or not self.country:
+            raise ValueError("City and country are required if latitude/longitude are not provided")
+
+        # Fetch from Nominatim (OpenStreetMap) - Free and no API key required
+        address = f"{self.city}, {self.country}"
+        try:
+            # Nominatim requires a descriptive User-Agent
+            headers = {"User-Agent": "MatchaApp/1.0 (contact@matcha.com)"}
+            url = f"https://nominatim.openstreetmap.org/search?q={address}&format=json&limit=1"
+            response = requests.get(url, headers=headers, timeout=5)
+            data = response.json()
+
+            if data and len(data) > 0:
+                self.latitude = float(data[0]["lat"])
+                self.longitude = float(data[0]["lon"])
+            else:
+                raise ValueError(f"Could not find coordinates for: {address}")
+        except Exception as e:
+            if isinstance(e, ValueError):
+                raise e
+            raise ValueError(f"Geocoding service error: {str(e)}")
+
         return self
 
     @field_validator("interests", mode="before")
