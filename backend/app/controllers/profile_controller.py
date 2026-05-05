@@ -6,7 +6,7 @@ from flask import request, g
 from flask_jwt_extended import get_jwt_identity
 
 from app.schemas.profile_schemas import CreateProfileSchema
-from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema, UpdateProfileMediaSchema, UpdateSecuritySettingsSchema
+from app.schemas.accounts_requests_schemas import UpdateAccountProfileSchema, UpdateProfileMediaSchema, UpdateSecuritySettingsSchema, UpdateLocationSchema
 from app.services.profile_service import ProfileService
 from app.services.user_service import UserService
 from app.services.profile_views_service import ProfileViewsService
@@ -212,6 +212,21 @@ class ProfileController:
             new_password=payload.new_password
         )
         return success(message="Password updated successfully", data={})
+
+    @staticmethod
+    def update_location():
+        user_id = int(get_jwt_identity())
+        raw_payload = request.get_json(silent=True)
+        if raw_payload is None:
+            raw_payload = request.form.to_dict(flat=True)
+        if not raw_payload:
+            raw_payload = {}
+
+        payload = UpdateLocationSchema.model_validate(raw_payload)
+        data = payload.model_dump()
+        
+        ProfileService.update_profile_fields(user_id, data)
+        return success(message="Location updated successfully", data={})
 
     @staticmethod
     def search_profiles():

@@ -3,6 +3,7 @@
 from datetime import date
 from typing import Any, List, Optional
 
+import requests
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.schemas.profile_schemas import _validate_image_file
@@ -184,4 +185,41 @@ class UpdateSecuritySettingsSchema(BaseModel):
             raise ValueError("new_password and password_confirm must match")
         if self.current_password == self.new_password:
             raise ValueError("new_password must be different from current_password")
+        return self
+
+
+class UpdateLocationSchema(BaseModel):
+    """Schema for updating user location."""
+
+    city: str = Field(..., min_length=1, max_length=255)
+    country: str = Field(..., min_length=1, max_length=255)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    @model_validator(mode="after")
+    def validate_location(self) -> "UpdateLocationSchema":
+        """Ensure location data is present or fetch it using Nominatim (OpenStreetMap) API."""
+        # If latitude and longitude are already provided, we are good
+        if self.latitude is not None and self.longitude is not None:
+            return self
+
+        # Fetch from Nominatim (OpenStreetMap)
+        address = f"{self.city}, {self.country}"
+        try:
+            # Nominatim requires a descriptive User-Agent
+            headers = {"User-Agent": "MatchaApp/1.0 (contact@matcha.com)"}
+            url = f"https://nominatim.openstreetmap.org/search?q={address}&format=json&limit=1"
+            response = requests.get(url, headers=headers, timeout=5)
+            data = response.json()
+
+            if data and len(data) > 0:
+                self.latitude = float(data[0]["lat"])
+                self.longitude = float(data[0]["lon"])
+            else:
+                raise ValueError(f"Could not find coordinates for: {address}")
+        except Exception as e:
+            if isinstance(e, ValueError):
+                raise e
+            raise ValueError(f"Geocoding service error: {str(e)}")
+
         return self

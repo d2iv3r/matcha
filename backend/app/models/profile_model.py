@@ -130,10 +130,26 @@ class ProfileModel(BaseModel):
         interests: Any | None = None,
         avatar: str | None = None,
         pictures: Any | None = None,
+        city: str | None = None,
+        country: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> Optional["ProfileModel"]:
         row = cls.db_manager().execute_returning(
             UPDATE_PROFILE_BY_USER_ID,
-            (gender, gender_preference, bio, interests, avatar, pictures, user_id),
+            (
+                gender,
+                gender_preference,
+                bio,
+                interests,
+                avatar,
+                pictures,
+                city,
+                country,
+                latitude,
+                longitude,
+                user_id,
+            ),
         )
         return cls.from_row(row)
 
