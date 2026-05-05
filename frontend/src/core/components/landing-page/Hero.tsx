@@ -20,7 +20,7 @@ export default function Hero({ children }: HeroProps) {
     return (
         <section
             id="hero"
-            className="w-full min-h-screen flex flex-col items-center px-6 relative"
+            className="w-full flex flex-col items-center px-6 relative"
         >
             <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
                 <Image

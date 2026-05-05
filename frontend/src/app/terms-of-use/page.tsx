@@ -9,14 +9,9 @@ export default function TermsOfUse() {
     return (
         <div className="min-h-screen relative overflow-hidden bg-gray-50 text-gray-800 font-sans selection:bg-[#6367FF] selection:text-white">
             
-            {/* Background Decorative Shapes */}
-            {/* Pill shape */}
             <div className="absolute top-[-5%] left-[-5%] w-[400px] h-[200px] bg-linear-to-tr from-[#6367FF]/20 to-[#AEB0FF]/20 rounded-full rotate-45 pointer-events-none shadow-sm"></div>
-            {/* Hollow circle */}
             <div className="absolute top-[15%] right-[-5%] w-[300px] h-[300px] border-30 border-[#6367FF]/10 rounded-full pointer-events-none"></div>
-            {/* Large offset circle */}
             <div className="absolute bottom-[-10%] left-[10%] w-[500px] h-[500px] bg-[#E9E8FF] rounded-full opacity-60 pointer-events-none"></div>
-            {/* Small floating square */}
             <div className="absolute bottom-[20%] right-[10%] w-[150px] h-[150px] bg-linear-to-br from-[#6367FF]/10 to-transparent rounded-3xl -rotate-12 pointer-events-none"></div>
 
             <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">

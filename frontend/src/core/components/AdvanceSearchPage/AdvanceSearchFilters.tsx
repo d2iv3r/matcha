@@ -172,11 +172,11 @@ export const AdvanceSearchFilters = ({
                             </div>
                             {showFameDropdown && (
                                 <div className="absolute top-full left-0 mt-3 p-2 bg-white w-48 max-h-60 overflow-y-auto rounded-xl shadow-xl z-50 border border-gray-100 flex flex-col gap-1">
-                                    {rating.map((ratingObj) => {
+                                    {rating.map((ratingObj, index: number) => {
                                         const isSelected = fameRatings.includes(ratingObj.name);
                                         return (
                                             <button
-                                                key={ratingObj.name}
+                                                key={`${ratingObj.name}-${index}`}
                                                 onClick={() => {
                                                     setFameRatings((prev) =>
                                                         prev.includes(ratingObj.name)
@@ -225,11 +225,11 @@ export const AdvanceSearchFilters = ({
                             </div>
                             {showSortingDropdown && (
                                 <div className="absolute top-full left-0 mt-3 p-2 bg-white w-48 max-h-60 overflow-y-auto rounded-xl shadow-xl z-50 border border-gray-100 flex flex-col gap-1">
-                                    {["Ascending", "Descending"].map((sortOption) => {
+                                    {["Ascending", "Descending"].map((sortOption, index: number) => {
                                         const isSelected = sorting === sortOption;
                                         return (
                                             <button
-                                                key={sortOption}
+                                                key={`${sortOption}-${index}`}
                                                 onClick={() => {
                                                     setSorting(sortOption);
                                                     setShowSortingDropdown(false);
@@ -254,11 +254,11 @@ export const AdvanceSearchFilters = ({
                                     className="bg-[#E9E8FF] w-full p-2 px-3 rounded-xl flex items-center flex-wrap gap-2 text-gray-800 relative"
                                     ref={dropdownRef}
                                 >
-                                    {tags.map((tag) => {
+                                    {tags.map((tag, index: number) => {
                                         const interest = INTERESTS.find((i) => i.label === tag);
                                         return (
                                             <span
-                                                key={tag}
+                                                key={`${tag}-${index}`}
                                                 className="bg-[#DFDBFE] text-[#6367FF] text-sm font-semibold px-3 py-1 rounded-lg flex items-center gap-1.5"
                                             >
                                                 {interest?.icon}
@@ -282,9 +282,9 @@ export const AdvanceSearchFilters = ({
                                         />
                                         {showTagDropdown && availableTags.length > 0 && (
                                             <div className="absolute top-full left-0 mt-3 bg-white w-64 max-h-60 overflow-y-auto rounded-xl shadow-xl border border-gray-100 z-50 flex flex-col p-2">
-                                                {availableTags.map((t) => (
+                                                {availableTags.map((t, index: number) => (
                                                     <button
-                                                        key={t.id}
+                                                        key={`${t.id}-${index}`}
                                                         onClick={() => addTag(t.label)}
                                                         className="flex items-center gap-3 px-3 py-2 hover:bg-[#F5F3FF] text-[#4B4B4B] hover:text-[#6367FF] rounded-lg transition-colors text-left"
                                                     >

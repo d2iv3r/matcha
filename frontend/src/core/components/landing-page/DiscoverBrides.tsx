@@ -16,14 +16,18 @@ export default function DiscoverBrides() {
                 alt="Shape"
                 width={175}
                 height={867}
-                className="absolute top-30 left-0 -z-10 hidden md:block"
+                fetchPriority="high"
+                priority
+                className="absolute top-30 left-0 -z-10 hidden md:block w-auto h-auto"
             />
             <Image
                 src={shape3}
                 alt="Shape"
                 width={175}
                 height={867}
-                className="absolute -top-30 right-0 -z-10 hidden md:block"
+                fetchPriority="high"
+                priority
+                className="absolute -top-30 right-0 -z-10 hidden md:block w-auto h-auto"
             />
             {/* Desktop: text + cards in 5-col 2-row grid */}
             <div
@@ -35,12 +39,13 @@ export default function DiscoverBrides() {
                         Do not stay alone...
                     </p>
                     <p className="text-xs lg:text-sm text-[#727272] w-[85%]">
-                        Maybe one of these profiles is your future bride. Just be more persistent
+                        Maybe one of these profiles is your future bride. Just
+                        be more persistent
                     </p>
                 </div>
-                {DISCOVER_PROFILES.map((item, index) => (
+                {DISCOVER_PROFILES.map((item, index: number) => (
                     <div
-                        key={index}
+                        key={`${item.name}-${index}`}
                         className={`col-span-1 row-span-1 aspect-3.5/4.5 relative rounded-xl flex flex-col justify-end px-3 py-2 shadow-lg overflow-hidden group cursor-pointer ${index >= 6 ? "hidden xl:flex" : index >= 4 ? "hidden lg:flex" : ""}`}
                     >
                         <div
@@ -69,7 +74,8 @@ export default function DiscoverBrides() {
                         Do not stay alone...
                     </p>
                     <p className="text-xs sm:text-sm text-[#727272] mt-2">
-                        Maybe one of these profiles is your future bride. Just be more persistent
+                        Maybe one of these profiles is your future bride. Just
+                        be more persistent
                     </p>
                 </div>
                 <div className="w-full overflow-hidden marquee-wrapper">
@@ -78,9 +84,9 @@ export default function DiscoverBrides() {
                         {[
                             ...DISCOVER_PROFILES.slice(0, 6),
                             ...DISCOVER_PROFILES.slice(0, 6),
-                        ].map((item, index) => (
+                        ].map((item, index: number) => (
                             <div
-                                key={index}
+                                key={`${item.name}-mobile-${index}`}
                                 className="shrink-0 w-[150px] aspect-3/4 relative rounded-xl flex flex-col justify-end px-2 py-2 shadow-lg overflow-hidden group cursor-pointer mx-2"
                             >
                                 <div

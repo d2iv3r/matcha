@@ -13,7 +13,7 @@ interface NavbarProps {
 export default function Navbar({ isMenuOpen, setIsMenuOpen, handleScroll }: NavbarProps) {
     return (
         <nav className="relative w-full flex flex-row gap-4 items-center justify-between mt-5 z-50">
-            <Image src={logo} alt="Logo" width={140} height={140} />
+            <Image src={logo} alt="Logo" width={80} height={80} className="w-auto h-5" />
 
             {/* Desktop Links */}
             <div className="hidden lg:flex flex-1 flex-row gap-6 items-center justify-center text-white font-bold">

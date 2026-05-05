@@ -30,12 +30,12 @@ export default function FaqAccordion() {
 
     return (
         <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-[800px]">
-            {faqData.map((faq, index) => {
+            {faqData.map((faq, index: number) => {
                 const isOpen = openIndex === index;
 
                 return (
                     <div
-                        key={index}
+                        key={`${faq.question}-${index}`}
                         onClick={() => toggleFaq(index)}
                         className="w-full flex flex-col gap-3 sm:gap-4 items-start bg-[#E2DCFF] rounded-2xl sm:rounded-3xl p-4 sm:p-5 cursor-pointer transition-all duration-300"
                     >

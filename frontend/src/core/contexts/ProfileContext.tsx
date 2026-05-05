@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
     profile: {
@@ -19,15 +20,8 @@ interface ProfileData {
         rating: string;
         user_id: number;
         username: string;
+        gender_preference: string;
     };
-    // profile_likes: {
-    //     recent_likers: string[];
-    //     total_likes: number;
-    // }
-    // profile_views: {
-    //     recent_viewers: string[];
-    //     total_views: number;
-    // }
 }
 
 interface ProfileContextType {
@@ -40,6 +34,7 @@ interface ProfileContextType {
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -59,12 +54,18 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
                 },
             );
 
+            if (res.status === 403) {
+                router.push("/step1");
+                return;
+            }
+
             if (!res.ok) {
                 throw new Error("Failed to fetch profile");
             }
 
             const jsonResponse = await res.json();
             const data = jsonResponse.data;
+            console.log("data: ", data);
 
             // Helpers
             const formatUrl = (url: string | null) => {
@@ -86,7 +87,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
                 const content = str.slice(1, -1);
                 if (!content) return [];
 
-                return content.split(",").map((item) => {
+                return content.split(",").map((item, idx) => {
                     item = item.trim();
                     if (item.startsWith('"') && item.endsWith('"')) {
                         return item.slice(1, -1).replace(/\\"/g, '"');
@@ -115,11 +116,14 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false);
         }
     };
-    // console.log("---- profile is ===> :", profile);
 
     useEffect(() => {
         fetchProfile();
     }, []);
+
+    if (isLoading) {
+        return null; // Prevent content flash before profile check/redirect
+    }
 
     return (
         <ProfileContext.Provider

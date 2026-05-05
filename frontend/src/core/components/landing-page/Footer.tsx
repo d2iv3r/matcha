@@ -12,7 +12,7 @@ interface FooterProps {
 
 export default function Footer({ handleScroll }: FooterProps) {
     return (
-        <section className=" px-6 relative w-full flex flex-col gap-8 items-center mt-45">
+        <section className=" px-6 relative w-full flex gap-8 justify-center items-center mt-45">
             <div className="relative w-full max-w-[1320px] flex flex-col gap-15 justify-center items-center">
                 <Image
                     src={men}
@@ -26,7 +26,7 @@ export default function Footer({ handleScroll }: FooterProps) {
                     alt="women"
                     width={170}
                     height={170}
-                    className="absolute bottom-0 -right-10 md:w-[300px] md:h-[300px] lg:w-[350px] lg:h-[350px]"
+                    className="absolute bottom-0 -right-5 md:w-[300px] md:h-[300px] lg:w-[350px] lg:h-[350px]"
                 />
                 <Image
                     src={shape4}
@@ -63,9 +63,7 @@ export default function Footer({ handleScroll }: FooterProps) {
                         </a>
                         <a
                             href="#discover-brides"
-                            onClick={(e) =>
-                                handleScroll(e, "discover-brides")
-                            }
+                            onClick={(e) => handleScroll(e, "discover-brides")}
                         >
                             Discover Brides
                         </a>

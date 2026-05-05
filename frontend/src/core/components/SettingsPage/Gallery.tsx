@@ -418,9 +418,9 @@ export default function Gallery({ profileData, onUpdate }: GalleryProps) {
                                         "grayscale",
                                         "sepia",
                                         "invert",
-                                    ].map((f) => (
+                                    ].map((f,index) => (
                                         <button
-                                            key={f}
+                                            key={`${f}-${index}`}
                                             onClick={() => setFilter(f)}
                                             className={`py-1.5 px-3 text-[10px] rounded-lg border font-medium transition-all ${filter === f ? "bg-[#6367FF] border-[#6367FF] text-white shadow-md shadow-[#6367FF]/20" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}
                                         >

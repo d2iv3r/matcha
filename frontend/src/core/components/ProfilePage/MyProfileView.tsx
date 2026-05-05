@@ -59,7 +59,7 @@ export default function MyProfileView({
                 const isMatch = json.data?.is_match || false;
 
                 const updateList = (list: any[]) =>
-                    list.map((item) => {
+                    list.map((item,index) => {
                         const itemUsername =
                             listType === "viewers"
                                 ? item.viewer_username
@@ -238,9 +238,9 @@ export default function MyProfileView({
                         className="absolute bg-[#DFD9FF] rounded-xl transition-all duration-300 ease-linear"
                         style={{ ...indicatorStyle }}
                     />
-                    {["gallery", "viewers", "liked"].map((tab) => (
+                    {["gallery", "viewers", "liked"].map((tab,index) => (
                         <div
-                            key={tab}
+                            key={`${tab}-${index}`}
                             ref={(el) => {
                                 tabsRef.current[tab] = el;
                             }}

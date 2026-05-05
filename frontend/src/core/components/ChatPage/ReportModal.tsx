@@ -50,9 +50,9 @@ export const ReportModal = ({
                     Why did you report this user?
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8 mb-12 pl-1">
-                    {reasons.map((reason) => (
+                    {reasons.map((reason,index) => (
                         <label
-                            key={reason}
+                            key={`${reason}-${index}`}
                             className="flex items-center gap-3 cursor-pointer group"
                         >
                             <input

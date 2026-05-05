@@ -85,13 +85,13 @@ export default function FilterBar({
                                 i.label
                                     .toLowerCase()
                                     .includes(tagSearch.toLowerCase()),
-                            ).map((interest) => {
+                            ).map((interest, index: number) => {
                                 const isSelected = selectedTags.includes(
                                     interest.label,
                                 );
                                 return (
                                     <button
-                                        key={interest.id}
+                                        key={`${interest.id}-${index}`}
                                         onClick={() =>
                                             toggleSelection(
                                                 interest.label,
@@ -148,14 +148,14 @@ export default function FilterBar({
                 {activeDropdown === "rating" && (
                     <div className="absolute top-full right-0 mt-3 p-3 bg-white rounded-3xl shadow-xl shadow-black/10 z-20 border border-gray-100 w-35">
                         <div className="flex flex-col gap-2">
-                            {ratingData.map((statusObj) => {
+                            {ratingData.map((statusObj, index: number) => {
                                 const rating = statusObj.name;
                                 const isSelected =
                                     selectedRatings.includes(rating);
                                 const color = statusObj.color;
                                 return (
                                     <button
-                                        key={rating}
+                                        key={`${rating}-${index}`}
                                         onClick={() =>
                                             toggleSelection(
                                                 rating,
@@ -207,11 +207,11 @@ export default function FilterBar({
                 {activeDropdown === "age" && (
                     <div className="absolute top-full right-0 mt-3 p-3 bg-white rounded-3xl shadow-xl shadow-black/10 z-20 border border-gray-100 w-25">
                         <div className="flex flex-col gap-2">
-                            {["18-25", "26-35", "36-45", "46+"].map((age) => {
+                            {["18-25", "26-35", "36-45", "46+"].map((age, index: number) => {
                                 const isSelected = selectedAges.includes(age);
                                 return (
                                     <button
-                                        key={age}
+                                        key={`${age}-${index}`}
                                         onClick={() =>
                                             toggleSelection(
                                                 age,
@@ -247,7 +247,7 @@ export default function FilterBar({
                 </button>
                 <button
                     onClick={handleSearch}
-                    className="bg-linear-to-r from-[#6367FF] to-[#1f27c2] active:scale-95 transition-transform text-white px-8 py-2 rounded-xl shadow-[0_4px_12px_rgba(99,103,255,0.4)] cursor-pointer font-semibold shadow-md"
+                    className="bg-linear-to-r from-[#6367FF] to-[#1f27c2] active:scale-95 transition-transform text-white px-8 py-2 rounded-xl shadow-[0_4px_12px_rgba(99,103,255,0.4)] cursor-pointer font-semibold"
                 >
                     Show
                 </button>

@@ -52,10 +52,10 @@ export default function ForgetPassword() {
                         <Image
                             src={logo}
                             alt="Logo"
-                            priority={true}
                             width={140}
-                            height={140}
-                            className="w-35 h-10"
+                            height={90}
+                            priority
+                            className="w-auto h-5 object-contain"
                         />
                     </div>
                     <form onSubmit={handleReset} className="flex w-full max-w-[450px] flex-col gap-5 self-center text-sm">

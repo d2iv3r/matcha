@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import quots from "@/public/quots.svg";
-import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import TestimonialsCarousel from "@/core/components/landing-page/TestimonialsCarousel";
 
 export default function About() {
     return (
@@ -11,7 +11,7 @@ export default function About() {
             className="w-full max-w-[1320px] flex flex-col gap-4 items-center px-6 scroll-mt-10"
         >
             <div className="flex flex-col gap-3 items-center justify-center">
-                <Image src={quots} alt="Logo" width={80} height={80} />
+                <Image src={quots} alt="Logo" width={50} height={50} className="w-auto h-18" />
                 <p className="text-lg font-bold">
                     WHAT CLIENTS SAY ABOUT US
                 </p>

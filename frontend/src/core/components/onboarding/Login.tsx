@@ -51,7 +51,6 @@ export default function Login() {
             setLoading(false);
         }
     };
-    // https://api.intra.42.fr/oauth/authorize?response_type=code&client_id=None&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fapi%2Fauth%2Foauth2%2F42%2Fcallback&scope=public&state=eimM00cTLfmbIiRTLwFXZt133bOu2v
     const handleIntraLogin = () => {
         window.location.href = "http://localhost:5001/api/auth/oauth2/42/login";
     };
@@ -61,14 +60,16 @@ export default function Login() {
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
                     <div className="flex justify-center lg:justify-start">
-                        <Image
-                            src={logo}
-                            alt="Logo"
-                            priority={true}
-                            width={140}
-                            height={140}
-                            className="w-35 h-10"
-                        />
+                        <a href="/marketing">
+                            <Image
+                                src={logo}
+                                alt="Logo"
+                                width={140}
+                                height={90}
+                                priority
+                                className="w-auto h-5 object-contain"
+                            />
+                        </a>
                     </div>
                     <form
                         onSubmit={(e) => {

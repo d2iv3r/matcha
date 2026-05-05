@@ -190,13 +190,13 @@ export default function Navbar() {
                             </p>
                         </div>
                     </div>
-                    {NAV_ITEMS.map((item) => {
+                    {NAV_ITEMS.map((item, index: number) => {
                         const isActive =
                             pathname === item.href ||
                             pathname?.startsWith(item.href + "/");
                         return (
                             <Link
-                                key={item.name}
+                                key={`${item.name}-${index}`}
                                 href={item.href}
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className={`flex flex-row items-center rounded-xl p-3 transition-colors duration-200 cursor-pointer gap-4 ${
@@ -279,13 +279,13 @@ export default function Navbar() {
             <div
                 className={`hidden md:flex w-full flex-1 flex-col gap-4 ${isMinimized ? "items-center" : ""}`}
             >
-                {NAV_ITEMS.map((item) => {
+                {NAV_ITEMS.map((item, index: number) => {
                     const isActive =
                         pathname === item.href ||
                         pathname?.startsWith(item.href + "/");
                     return (
                         <Link
-                            key={item.name}
+                            key={`${item.name}-${index}`}
                             href={item.href}
                             title={isMinimized ? item.name : undefined}
                             className={`flex flex-row items-center rounded-xl p-2 transition-colors duration-200 cursor-pointer ${
