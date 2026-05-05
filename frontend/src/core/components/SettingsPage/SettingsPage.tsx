@@ -123,21 +123,65 @@ export const SettingsPage = () => {
     }
 
     return (
-        <div className="w-full h-full flex flex-col p-4">
+        <div className="w-full h-full flex flex-col p-4 relative">
+            {/* High-Visibility floating Toast */}
+            {saveMessage.text && (
+                <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[9999] animate-in slide-in-from-top-4 duration-300">
+                    <div
+                        className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-2 ${
+                            saveMessage.type === "success"
+                                ? "bg-[#10B981] border-[#34D399] text-white"
+                                : "bg-[#EF4444] border-[#F87171] text-white"
+                        }`}
+                    >
+                        <div className="bg-white/20 p-1.5 rounded-full ring-2 ring-white/30">
+                            {saveMessage.type === "success" ? (
+                                <svg
+                                    className="w-6 h-6"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="3"
+                                        d="M5 13l4 4L19 7"
+                                    />
+                                </svg>
+                            ) : (
+                                <svg
+                                    className="w-6 h-6"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="3"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            )}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-base leading-tight">
+                                {saveMessage.type === "success"
+                                    ? "Success!"
+                                    : "Error"}
+                            </span>
+                            <span className="text-xs font-medium opacity-90">
+                                {saveMessage.text}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="relative w-full h-full flex flex-col gap-3 bg-[#F5F3FF] rounded-4xl shadow-xl p-4 min-h-0">
                 <div className="flex justify-between items-center px-4 py-2">
                     <h1 className="font-semibold text-xl">Settings</h1>
-                    {saveMessage.text && (
-                        <div
-                            className={`text-xs px-4 py-2 rounded-xl animate-in fade-in slide-in-from-top-2 ${
-                                saveMessage.type === "success"
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                            }`}
-                        >
-                            {saveMessage.text}
-                        </div>
-                    )}
                 </div>
 
                 <div className="w-full flex-1 min-h-0 flex flex-col -space-y-0.5">
@@ -181,7 +225,12 @@ export const SettingsPage = () => {
                                     onUpdate={handleUpdate}
                                 />
                             )}
-                            {activeTab === "security" && <Security />}
+                            {activeTab === "security" && (
+                                <Security
+                                    profileData={profileData}
+                                    onUpdate={handleUpdate}
+                                />
+                            )}
                             {activeTab === "blocked" && <Blocked />}
                         </div>
                         <div className="flex justify-end p-4 gap-5 text-xs">

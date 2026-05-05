@@ -13,7 +13,10 @@ interface SearchProfileCardProps {
     onMatch: (u: ApiProfile) => void;
 }
 
-export const SearchProfileCard = ({ user, onMatch }: SearchProfileCardProps) => {
+export const SearchProfileCard = ({
+    user,
+    onMatch,
+}: SearchProfileCardProps) => {
     const [isLiked, setIsLiked] = useState(user.is_liked || user.is_match);
     const [isMatch, setIsMatch] = useState(user.is_match);
     const router = useRouter();
@@ -91,6 +94,7 @@ export const SearchProfileCard = ({ user, onMatch }: SearchProfileCardProps) => 
                             {user.city || "Unknown"}
                             {user.country ? `, ${user.country}` : ""}
                         </span>
+                        <span className="text-[10px] text-[#6367FF] truncate font-medium">{user.distance_km || "Unknown"} km away</span>
                         <span
                             className="text-[10px] font-bold truncate mt-1"
                             style={{ color: ratingColor }}

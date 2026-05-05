@@ -222,7 +222,7 @@ class ProfileModel(BaseModel):
         # Handle Sorting
         sort_field = "distance_km"
         if sort_by == "age":
-            sort_field = "p.age"
+            sort_field = "age"
         elif sort_by == "rating":
             sort_field = """
                 CASE rating

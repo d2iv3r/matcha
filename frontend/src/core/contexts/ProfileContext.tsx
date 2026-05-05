@@ -65,7 +65,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
             const jsonResponse = await res.json();
             const data = jsonResponse.data;
-            console.log("data: ", data);
+            // console.log("data: ", data);
 
             // Helpers
             const formatUrl = (url: string | null) => {

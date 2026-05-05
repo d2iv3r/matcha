@@ -1,9 +1,36 @@
 "use client";
-import { useState } from "react";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, Eye, EyeOff, Globe, MapPin } from "lucide-react";
 
-export default function Security() {
-    const [locationAccess, setLocationAccess] = useState<boolean | null>(true);
+interface SecurityProps {
+    profileData: any;
+    onUpdate: (data: any) => void;
+}
+
+export default function Security({ profileData, onUpdate }: SecurityProps) {
+    const profile = profileData?.profile || {};
+    
+    const [locationAccess, setLocationAccess] = useState<boolean | null>(
+        profile.latitude && profile.longitude ? true : null
+    );
+    const [coordinates, setCoordinates] = useState<{
+        lat: number;
+        lng: number;
+        city: string;
+        country: string;
+        ip: string;
+    } | null>({
+        lat: profile.latitude || 0,
+        lng: profile.longitude || 0,
+        city: profile.city || "",
+        country: profile.country || "",
+        ip: profile.ip_address || "",
+    });
+    
+    const [manualCity, setManualCity] = useState(profile.city || "");
+    const [manualCountry, setManualCountry] = useState(profile.country || "");
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+    
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
     const [showConfirmPassword, setShowConfirmPassword] =
@@ -127,16 +154,10 @@ export default function Security() {
                             className="text-xs bg-transparent outline-none w-full placeholder-black/40"
                         />
                         <button
-                            onClick={() => {
-                                setShowPassword(!showPassword);
-                            }}
+                            onClick={() => setShowPassword(!showPassword)}
                             className="text-gray-400 hover:text-[#6367FF] transition-colors"
                         >
-                            {showPassword ? (
-                                <EyeOff className="w-5 h-5" />
-                            ) : (
-                                <Eye className="w-5 h-5" />
-                            )}
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                     </div>
                 </div>
@@ -153,42 +174,22 @@ export default function Security() {
                                 className="text-xs bg-transparent outline-none w-full placeholder-black/40"
                             />
                             <button
-                                onClick={() => {
-                                    setShowNewPassword(!showNewPassword);
-                                }}
+                                onClick={() => setShowNewPassword(!showNewPassword)}
                                 className="text-gray-400 hover:text-[#6367FF] transition-colors"
                             >
-                                {showNewPassword ? (
-                                    <EyeOff className="w-5 h-5" />
-                                ) : (
-                                    <Eye className="w-5 h-5" />
-                                )}
+                                {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
                         <div className="flex flex-col gap-1 px-1">
                             {newPassword && (
-                                <p
-                                    className={`text-xs font-medium h-4 transition-colors duration-300 ${
-                                        score <= 2
-                                            ? "text-red-500"
-                                            : score <= 4
-                                              ? "text-orange-500"
-                                              : "text-green-500"
-                                    }`}
-                                >
+                                <p className={`text-xs font-medium h-4 transition-colors duration-300 ${score <= 2 ? "text-red-500" : score <= 4 ? "text-orange-500" : "text-green-500"}`}>
                                     {getStrengthText()}
                                 </p>
                             )}
                             <div className="flex gap-2 w-full h-1 mt-1">
-                                <div
-                                    className={`flex-1 rounded-full transition-all duration-300 ${newPassword ? strengthColor : "bg-[#E2DCFF]"}`}
-                                ></div>
-                                <div
-                                    className={`flex-1 rounded-full transition-all duration-300 ${score > 2 ? strengthColor : "bg-[#E2DCFF]"}`}
-                                ></div>
-                                <div
-                                    className={`flex-1 rounded-full transition-all duration-300 ${score > 4 ? strengthColor : "bg-[#E2DCFF]"}`}
-                                ></div>
+                                <div className={`flex-1 rounded-full transition-all duration-300 ${newPassword ? strengthColor : "bg-[#E2DCFF]"}`}></div>
+                                <div className={`flex-1 rounded-full transition-all duration-300 ${score > 2 ? strengthColor : "bg-[#E2DCFF]"}`}></div>
+                                <div className={`flex-1 rounded-full transition-all duration-300 ${score > 4 ? strengthColor : "bg-[#E2DCFF]"}`}></div>
                             </div>
                             <p className="text-[10px] font-medium text-black/30 mt-1">
                                 8+ characters including a special character.
@@ -197,110 +198,163 @@ export default function Security() {
                     </div>
                     <div className="flex flex-col gap-2 w-full lg:w-1/2">
                         <h3 className="pl-4 text-sm">Re-write new password</h3>
-                        <div
-                            className={`flex flex-row items-center gap-2 px-3 py-[7px] bg-white border rounded-xl shadow-sm transition-all ${confirmPassword && newPassword !== confirmPassword ? "border-red-500" : confirmPassword && newPassword === confirmPassword ? "border-green-500 shadow-[#22c55e]/10" : "border-[#6367FF]"}`}
-                        >
+                        <div className={`flex flex-row items-center gap-2 px-3 py-[7px] bg-white border rounded-xl shadow-sm transition-all ${confirmPassword && newPassword !== confirmPassword ? "border-red-500" : confirmPassword && newPassword === confirmPassword ? "border-green-500 shadow-[#22c55e]/10" : "border-[#6367FF]"}`}>
                             <Lock className="w-5 h-5 text-[#6367FF]" />
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="Confirm new password"
                                 value={confirmPassword}
-                                onChange={(e) =>
-                                    setConfirmPassword(e.target.value)
-                                }
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="text-xs bg-transparent outline-none w-full placeholder-black/40"
                             />
                             <button
-                                onClick={() => {
-                                    setShowConfirmPassword(
-                                        !showConfirmPassword,
-                                    );
-                                }}
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="text-gray-400 hover:text-[#6367FF] transition-colors"
                             >
-                                {showConfirmPassword ? (
-                                    <EyeOff className="w-5 h-5" />
-                                ) : (
-                                    <Eye className="w-5 h-5" />
-                                )}
+                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
                         <div className="flex flex-col gap-1 px-1 h-4">
-                            {confirmPassword &&
-                                newPassword !== confirmPassword && (
-                                    <p className="text-[10px] font-medium text-red-500 animate-in fade-in">
-                                        Passwords do not match
-                                    </p>
-                                )}
-                            {confirmPassword &&
-                                newPassword === confirmPassword && (
-                                    <p className="text-[10px] font-medium text-green-500 animate-in fade-in">
-                                        Passwords match
-                                    </p>
-                                )}
+                            {confirmPassword && newPassword !== confirmPassword && <p className="text-[10px] font-medium text-red-500 animate-in fade-in">Passwords do not match</p>}
+                            {confirmPassword && newPassword === confirmPassword && <p className="text-[10px] font-medium text-green-500 animate-in fade-in">Passwords match</p>}
                         </div>
                     </div>
                 </div>
                 <div className="w-full flex justify-end mt-2">
                     <button
                         onClick={handlePasswordUpdate}
-                        disabled={
-                            isUpdating ||
-                            !currentPassword ||
-                            !newPassword ||
-                            !confirmPassword ||
-                            newPassword !== confirmPassword ||
-                            score < 3
-                        }
+                        disabled={isUpdating || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || score < 3}
                         className={`bg-[#6367FF] text-white px-8 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#6367FF]/20 transition-all ${isUpdating || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || score < 3 ? "opacity-50 cursor-not-allowed" : "hover:bg-[#555DFF] active:scale-95 cursor-pointer"}`}
                     >
-                        {isUpdating ? (
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 border-2 border-white/30 border-b-white rounded-full animate-spin" />
-                                Updating...
-                            </div>
-                        ) : (
-                            "Update Password"
-                        )}
+                        {isUpdating ? "Updating..." : "Update Password"}
                     </button>
                 </div>
-                <hr className="w-[98%] mx-auto border-[#AEB0FF] mt-2" />
-                <div className="flex flex-col items-start gap-4 w-full lg:w-1/2 mb-4">
-                    <h2 className="text-md font-semibold">Localisation :</h2>
-                    <div className="w-full flex gap-2 flex-col">
-                        <p className="pl-3 text-sm">Location access :</p>
-                        <div className="w-full flex flex-col gap-4">
-                            <div className="w-full h-[150px] bg-[url('/map-image.png')] rounded-2xl bg-cover bg-center border border-[#6367FF]" />
-                            <div className="w-full flex flex-row gap-5">
+                
+                <hr className="w-[98%] mx-auto border-[#AEB0FF] mt-4" />
+                
+                <div className="flex flex-col items-start gap-4 w-full mb-10">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-md font-semibold">Localisation :</h2>
+                        <p className="text-[10px] text-gray-500">Update your current location for better matches</p>
+                    </div>
+                    
+                    <div className="w-full flex flex-col lg:flex-row gap-6">
+                        <div className="w-full lg:w-1/2 flex flex-col gap-4">
+                            <div className="w-full h-[150px] bg-[url('/map-image.png')] rounded-2xl bg-cover bg-center border border-[#6367FF] relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
+                                {(coordinates || locationAccess === true) && (
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-xl animate-bounce">
+                                        <MapPin className="w-5 h-5 text-[#6367FF]" />
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="flex flex-row gap-4">
                                 <button
-                                    onClick={() => setLocationAccess(true)}
-                                    className={`flex-1 rounded-xl flex items-center justify-center p-2 border border-[#6367FF] transition-colors duration-300 ${
-                                        locationAccess === true
-                                            ? "bg-[#6367FF] text-white cursor-pointer"
-                                            : "bg-[#E2DCFF] cursor-pointer text-black"
-                                    }`}
+                                    onClick={async () => {
+                                        setIsLoadingLocation(true);
+                                        if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition(
+                                                (pos) => {
+                                                    const newCoords = {
+                                                        lat: pos.coords.latitude,
+                                                        lng: pos.coords.longitude,
+                                                        city: profile.city || "",
+                                                        country: profile.country || "",
+                                                        ip: profile.ip_address || ""
+                                                    };
+                                                    setCoordinates(newCoords);
+                                                    setLocationAccess(true);
+                                                    onUpdate({
+                                                        latitude: newCoords.lat,
+                                                        longitude: newCoords.lng,
+                                                        city: newCoords.city,
+                                                        country: newCoords.country
+                                                    });
+                                                    setIsLoadingLocation(false);
+                                                },
+                                                () => {
+                                                    setLocationAccess(true);
+                                                    setIsLoadingLocation(false);
+                                                }
+                                            );
+                                        } else {
+                                            setIsLoadingLocation(false);
+                                        }
+                                    }}
+                                    className={`flex-1 rounded-xl flex items-center justify-center gap-2 p-2.5 border-2 transition-all duration-300 ${locationAccess === true ? "bg-[#6367FF] border-[#6367FF] text-white" : "bg-white border-[#E2DCFF] text-gray-600 hover:border-[#6367FF]"}`}
                                 >
-                                    <p className="font-semibold text-sm">
-                                        Approve
-                                    </p>
+                                    <Navigation size={16} />
+                                    <span className="font-bold text-xs">{isLoadingLocation && locationAccess !== false ? "Locating..." : "Auto Precise"}</span>
                                 </button>
                                 <button
-                                    onClick={() => setLocationAccess(false)}
-                                    className={`flex-1 rounded-xl flex items-center justify-center p-2 border border-[#6367FF] transition-colors duration-300 ${
-                                        locationAccess === false
-                                            ? "bg-[#6367FF] text-white cursor-pointer"
-                                            : "bg-[#E2DCFF] cursor-pointer text-black"
-                                    }`}
+                                    onClick={() => {
+                                        setLocationAccess(false);
+                                        setCoordinates(null);
+                                        onUpdate({
+                                            latitude: null,
+                                            longitude: null,
+                                            city: manualCity,
+                                            country: manualCountry
+                                        });
+                                    }}
+                                    className={`flex-1 rounded-xl flex items-center justify-center gap-2 p-2.5 border-2 transition-all duration-300 ${locationAccess === false ? "bg-[#6367FF] border-[#6367FF] text-white" : "bg-white border-[#E2DCFF] text-gray-600 hover:border-[#6367FF]"}`}
                                 >
-                                    <p className="font-semibold text-sm">
-                                        Decline
-                                    </p>
+                                    <Globe size={16} />
+                                    <span className="font-bold text-xs">Manual Entry</span>
                                 </button>
                             </div>
                         </div>
+
+                        {(locationAccess === false || (locationAccess === true && coordinates)) && (
+                            <div className="w-full lg:w-1/2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-[#E2DCFF] rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500 h-fit">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1">City</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={locationAccess === false ? manualCity : (coordinates?.city || "")}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setManualCity(val);
+                                                onUpdate({ city: val });
+                                            }}
+                                            readOnly={locationAccess === true}
+                                            className={`w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs transition-all ${locationAccess === true ? "opacity-70 cursor-not-allowed" : "focus:bg-white focus:border-[#6367FF]"}`}
+                                            placeholder="Enter city..."
+                                        />
+                                        {locationAccess === true && <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />}
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1">Country</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={locationAccess === false ? manualCountry : (coordinates?.country || "")}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setManualCountry(val);
+                                                onUpdate({ country: val });
+                                            }}
+                                            readOnly={locationAccess === true}
+                                            className={`w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs transition-all ${locationAccess === true ? "opacity-70 cursor-not-allowed" : "focus:bg-white focus:border-[#6367FF]"}`}
+                                            placeholder="Enter country..."
+                                        />
+                                        {locationAccess === true && <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+const Navigation = ({ size, className }: { size?: number; className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+    </svg>
+);

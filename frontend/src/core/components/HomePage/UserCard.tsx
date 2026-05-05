@@ -109,7 +109,7 @@ export default function UserCard({
             <div className="w-full flex flex-row justify-between items-center gap-2 px-1 py-1 mt-auto">
                 <div className="flex flex-col min-w-0 flex-1">
                     <p className="font-bold text-xs md:text-sm text-gray-900 truncate">
-                        {user.username},{" "}
+                        {user.first_name} {user.last_name}, {" "}
                         <span className="">{user.age || "N/A"}</span>
                     </p>
                     <p className="text-gray-500 text-[10px] md:text-xs truncate">
