@@ -76,29 +76,26 @@ class ProfileModel(BaseModel):
 
     def to_dict(self) -> dict:
         return {
-            "user_id": self.user_id,
-            "username": self.username,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "email": self.email,
-            "is_online": self.is_online,
-            "last_connection": self.last_connection,
-            "gender": self.gender,
-            "gender_preference": self.gender_preference,
-            "age": self.age,
-            "date_of_birth": self.date_of_birth,
-            "city": self.city,
-            "country": self.country,
-            # "ip_address": self.ip_address,
-            # "latitude": self.latitude,
-            # "longitude": self.longitude,
+            "user_id": getattr(self, "user_id", None),
+            "username": getattr(self, "username", None),
+            "first_name": getattr(self, "first_name", None),
+            "last_name": getattr(self, "last_name", None),
+            "email": getattr(self, "email", None),
+            "is_online": getattr(self, "is_online", None),
+            "last_connection": getattr(self, "last_connection", None).isoformat() if getattr(self, "last_connection", None) else None,
+            "gender": getattr(self, "gender", None),
+            "gender_preference": getattr(self, "gender_preference", None),
+            "age": getattr(self, "age", None),
+            "date_of_birth": getattr(self, "date_of_birth", None).isoformat() if getattr(self, "date_of_birth", None) else None,
+            "city": getattr(self, "city", None),
+            "country": getattr(self, "country", None),
             "distance_km": getattr(self, "distance_km", None),
             "shared_tags_count": getattr(self, "shared_tags_count", 0),
-            "bio": self.bio,
-            "interests": self.interests,
-            "avatar": self.avatar,
-            "pictures": self.pictures,
-            "rating": self.rating,
+            "bio": getattr(self, "bio", None),
+            "interests": getattr(self, "interests", []),
+            "avatar": getattr(self, "avatar", None),
+            "pictures": getattr(self, "pictures", []),
+            "rating": getattr(self, "rating", None),
         }
 
     @classmethod
@@ -119,7 +116,7 @@ class ProfileModel(BaseModel):
         """Return profiles of `gender` ordered by distance, tags, rating."""
         rows = cls.db_manager().fetch_all(
             GET_PROFILES_LIST,
-            (latitude, longitude, latitude, interests, user_id, gender, user_id, user_id, limit, offset),
+            (latitude, longitude, latitude, interests, user_id, gender, gender, user_id, user_id, limit, offset),
         )
         return cls.from_rows(rows)
 
