@@ -19,6 +19,8 @@ GET_USER_CONVERSATIONS = """
 SELECT c.id, c.user1_id, c.user2_id, c.created_at,
        u1.username as user1_username, u2.username as user2_username,
        p1.avatar as user1_avatar, p2.avatar as user2_avatar,
+       u1.is_online as user1_is_online, u2.is_online as user2_is_online,
+       u1.last_connection as user1_last_connection, u2.last_connection as user2_last_connection,
        (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
        (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_at,
        (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != %s AND is_read = FALSE) as unread_count

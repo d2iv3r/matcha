@@ -10,6 +10,8 @@ export interface ApiProfile {
     avatar?: string | null;
     is_match?: boolean;
     is_liked?: boolean;
+    is_online?: boolean;
+    last_connection?: string;
     user_id: number;
     interests?: string[];
     bio?: string;

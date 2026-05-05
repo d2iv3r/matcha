@@ -27,6 +27,10 @@ class ConversationModel(BaseModel):
     user2_username: str | None = None
     user1_avatar: str | None = None
     user2_avatar: str | None = None
+    user1_is_online: bool | None = None
+    user2_is_online: bool | None = None
+    user1_last_connection: Any | None = None
+    user2_last_connection: Any | None = None
     last_message: str | None = None
     last_message_at: Any | None = None
     unread_count: int = 0
@@ -64,6 +68,10 @@ class ConversationModel(BaseModel):
             "user2_username": self.user2_username,
             "user1_avatar": self.user1_avatar,
             "user2_avatar": self.user2_avatar,
+            "user1_is_online": self.user1_is_online,
+            "user2_is_online": self.user2_is_online,
+            "user1_last_connection": self.user1_last_connection.isoformat() if hasattr(self.user1_last_connection, 'isoformat') else self.user1_last_connection,
+            "user2_last_connection": self.user2_last_connection.isoformat() if hasattr(self.user2_last_connection, 'isoformat') else self.user2_last_connection,
             "last_message": self.last_message,
             "last_message_at": self.last_message_at.isoformat() if hasattr(self.last_message_at, 'isoformat') else self.last_message_at,
             "unread_count": self.unread_count,

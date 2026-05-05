@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import girl from "@/public/girl1.png";
+import { formatDistanceToNow } from "date-fns";
 import { ApiProfile } from "../../types/profiles";
 
 export default function UserCard({
@@ -19,6 +20,7 @@ export default function UserCard({
 }) {
     const [isLiked, setIsLiked] = useState(user.is_liked || user.is_match);
     const [isMatch, setIsMatch] = useState(user.is_match);
+    const [isOnline, setIsOnline] = useState(user.is_online);
     const router = useRouter();
 
     const imageUrl = user.avatar
@@ -85,6 +87,9 @@ export default function UserCard({
                         </p>
                     </div>
                 )}
+                {isOnline && (
+                    <div className="absolute top-2.5 left-2 bg-[#45ff00] w-2 h-2 rounded-full border border-white"></div>
+                )}
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
                     <p className="text-white text-[10px] line-clamp-2 italic mb-1">
                         "{user.bio}"
@@ -124,6 +129,19 @@ export default function UserCard({
                     >
                         {displayRating}
                     </p>
+                    {!isOnline && user.last_connection ? (
+                        <p className="text-gray-400 text-[9px] mt-0.5 truncate">
+                            Last seen{" "}
+                            {formatDistanceToNow(
+                                new Date(user.last_connection),
+                                { addSuffix: true },
+                            )}
+                        </p>
+                    ) : (
+                        <p className="text-gray-400 text-[9px] mt-0.5 truncate">
+                            Currently online
+                        </p>
+                    )}
                 </div>
                 <div className="relative flex justify-center items-center group/heart">
                     <Heart
