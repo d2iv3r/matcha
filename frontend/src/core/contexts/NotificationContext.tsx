@@ -100,10 +100,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const markAsRead = async (id: number) => {
-        // const token = localStorage.getItem("access_token");
-        // if (!token) return;
 
-        // Optimistic update
         setNotifications((prev) =>
             prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
         );

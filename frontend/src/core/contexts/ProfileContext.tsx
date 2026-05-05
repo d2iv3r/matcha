@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
     profile: {
@@ -20,14 +21,6 @@ interface ProfileData {
         user_id: number;
         username: string;
     };
-    // profile_likes: {
-    //     recent_likers: string[];
-    //     total_likes: number;
-    // }
-    // profile_views: {
-    //     recent_viewers: string[];
-    //     total_views: number;
-    // }
 }
 
 interface ProfileContextType {
@@ -40,6 +33,7 @@ interface ProfileContextType {
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -58,6 +52,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
                     },
                 },
             );
+
+            if (res.status === 403) {
+                router.push("/step1");
+                return;
+            }
 
             if (!res.ok) {
                 throw new Error("Failed to fetch profile");
@@ -115,11 +114,14 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false);
         }
     };
-    // console.log("---- profile is ===> :", profile);
 
     useEffect(() => {
         fetchProfile();
     }, []);
+
+    if (isLoading) {
+        return null; // Prevent content flash before profile check/redirect
+    }
 
     return (
         <ProfileContext.Provider

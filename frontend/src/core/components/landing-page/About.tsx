@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import quots from "@/public/quots.svg";
-import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import TestimonialsCarousel from "@/core/components/landing-page/TestimonialsCarousel";
 
 export default function About() {
     return (

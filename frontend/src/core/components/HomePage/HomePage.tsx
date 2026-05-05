@@ -163,7 +163,7 @@ function HomePageContent() {
                 );
                 const json = await res.json();
                 const data = json.data;
-                console.log("====================>data", data.profiles);
+                // console.log("====================>data", data.profiles);
 
                 if (data && data.profiles) {
                     setRawProfiles((prev) => {
