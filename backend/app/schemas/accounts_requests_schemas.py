@@ -67,6 +67,7 @@ class UpdateAccountProfileSchema(BaseModel):
     last_name: Optional[str] = Field(None, min_length=3, max_length=150)
     email: Optional[str] = Field(None, pattern=EMAIL_PATTERN)
     gender: Optional[str] = Field(None, pattern=r"^(male|female)$")
+    gender_preference: Optional[str] = Field(None, pattern=r"^(male|female|other|all)$")
     bio: Optional[str] = Field(None, min_length=10, max_length=500)
     interests: Optional[List[str]] = None
 

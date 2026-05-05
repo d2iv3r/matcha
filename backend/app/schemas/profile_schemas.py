@@ -70,7 +70,7 @@ class CreateProfileSchema(BaseModel):
     gender: str = Field(..., pattern=r"^(male|female)$")
     date_of_birth: date
     age: Optional[int] = None
-    gender_preference: str = Field(..., pattern=r"^(male|female|other|all)$")
+    gender_preference: str = Field(default="all", pattern=r"^(male|female|other|all)$")
     city: str = Field(..., min_length=1, max_length=255)
     country: str = Field(..., min_length=1, max_length=255)
     ip_address: str = Field(..., min_length=1, max_length=45)

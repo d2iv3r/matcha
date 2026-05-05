@@ -10,7 +10,7 @@ SEED_MOCK_USERS_AND_PROFILES = """
     WITH input_data (
         username, first_name, last_name, email,
         password_hash, is_active, is_profile_complete,
-        gender, age, date_of_birth,
+        gender, age, date_of_birth, gender_preference,
         city, country, ip_address,
         latitude, longitude, bio,
         interests, avatar, pictures, rating
@@ -31,7 +31,7 @@ SEED_MOCK_USERS_AND_PROFILES = """
         RETURNING id, username
     )
     INSERT INTO profiles (
-        user_id, gender, age, date_of_birth,
+        user_id, gender, age, date_of_birth, gender_preference,
         city, country, ip_address,
         latitude, longitude, bio,
         interests, avatar, pictures, rating
@@ -41,6 +41,7 @@ SEED_MOCK_USERS_AND_PROFILES = """
         i.gender,
         i.age,
         i.date_of_birth::date,
+        i.gender_preference,
         i.city,
         i.country,
         NULLIF(i.ip_address, '')::inet,

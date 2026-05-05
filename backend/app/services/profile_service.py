@@ -118,16 +118,14 @@ class ProfileService:
         if not caller_profile:
             raise NotFoundError("Profile", user_id)
 
-        gender_map = {"male": "female", "female": "male"}
-        opposite_gender = gender_map.get((caller_profile.gender or "").lower(), "female")
-
+        gender_preference = caller_profile.gender_preference or "all"
         latitude = caller_profile.latitude or 0.0
         longitude = caller_profile.longitude or 0.0
         interests = caller_profile.interests or []
 
         return ProfileModel.get_profiles_list(
             user_id=user_id,
-            gender=opposite_gender,
+            gender=gender_preference,
             latitude=latitude,
             longitude=longitude,
             interests=interests,
@@ -140,6 +138,7 @@ class ProfileService:
         profile = ProfileModel.update_profile_by_user_id(
             user_id=user_id,
             gender=profile_data.get("gender"),
+            gender_preference=profile_data.get("gender_preference"),
             bio=profile_data.get("bio"),
             interests=profile_data.get("interests"),
             avatar=profile_data.get("avatar"),
@@ -155,15 +154,13 @@ class ProfileService:
         if not caller_profile:
             raise NotFoundError("Profile", user_id)
 
-        gender_map = {"male": "female", "female": "male"}
-        opposite_gender = gender_map.get((caller_profile.gender or "").lower(), "female")
-
+        gender_preference = caller_profile.gender_preference or "all"
         latitude = caller_profile.latitude or 0.0
         longitude = caller_profile.longitude or 0.0
 
         return ProfileModel.search_profiles(
             user_id=user_id,
-            gender=opposite_gender,
+            gender=gender_preference,
             latitude=latitude,
             longitude=longitude,
             first_name=filters.get("first_name"),

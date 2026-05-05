@@ -291,6 +291,7 @@ class DataSeeder:
             gender  = u["gender"]
             bracket = _bracket_for_age(age)
             avatar  = self._pick_avatar(gender, bracket)
+            gender_preference = "female" if gender == "male" else "male"    
 
             rows.append((
                 u["login"]["username"],
@@ -303,6 +304,7 @@ class DataSeeder:
                 gender,
                 age,
                 u["dob"]["date"],
+                gender_preference,
                 u["location"]["city"],
                 u["location"]["country"],
                 None,   # ip_address (unknown at seed time)

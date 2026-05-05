@@ -29,6 +29,7 @@ class ProfileModel(BaseModel):
     is_online: bool = False
     last_connection: Any | None = None
     gender: str | None = None
+    gender_preference: str | None = "all"
     age: int | None = None
     date_of_birth: Any | None = None
     city: str | None = None
@@ -53,6 +54,7 @@ class ProfileModel(BaseModel):
                     self.gender,
                     self.age,
                     self.date_of_birth,
+                    self.gender_preference,
                     self.city,
                     self.country,
                     self.ip_address,
@@ -82,6 +84,7 @@ class ProfileModel(BaseModel):
             "is_online": self.is_online,
             "last_connection": self.last_connection,
             "gender": self.gender,
+            "gender_preference": self.gender_preference,
             "age": self.age,
             "date_of_birth": self.date_of_birth,
             "city": self.city,
@@ -125,6 +128,7 @@ class ProfileModel(BaseModel):
         cls,
         user_id: int,
         gender: str | None = None,
+        gender_preference: str | None = None,
         bio: str | None = None,
         interests: Any | None = None,
         avatar: str | None = None,
@@ -132,7 +136,7 @@ class ProfileModel(BaseModel):
     ) -> Optional["ProfileModel"]:
         row = cls.db_manager().execute_returning(
             UPDATE_PROFILE_BY_USER_ID,
-            (gender, bio, interests, avatar, pictures, user_id),
+            (gender, gender_preference, bio, interests, avatar, pictures, user_id),
         )
         return cls.from_row(row)
 
@@ -173,13 +177,15 @@ class ProfileModel(BaseModel):
             FROM users u
             JOIN profiles p ON p.user_id = u.id
             WHERE u.id != %s
-                AND p.gender = %s
+                AND (
+                    (%s = 'all') OR (p.gender = %s)
+                )
                 AND p.latitude IS NOT NULL
                 AND p.longitude IS NOT NULL
                 AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)
                 AND u.id NOT IN (SELECT blocker_id FROM blocks WHERE blocked_id = %s)
         """
-        params = [latitude, longitude, latitude, user_id, gender, user_id, user_id]
+        params = [latitude, longitude, latitude, user_id, gender, gender, user_id, user_id]
 
         if first_name:
             query += " AND u.first_name ILIKE %s"
