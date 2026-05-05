@@ -88,7 +88,11 @@ SET gender = COALESCE(%s, gender),
     bio = COALESCE(%s, bio),
     interests = COALESCE(%s::TEXT[], interests),
     avatar = COALESCE(%s, avatar),
-    pictures = COALESCE(%s::TEXT[], pictures)
+    pictures = COALESCE(%s::TEXT[], pictures),
+    city = COALESCE(%s, city),
+    country = COALESCE(%s, country),
+    latitude = COALESCE(%s, latitude),
+    longitude = COALESCE(%s, longitude)
 WHERE user_id = %s
 RETURNING user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, rating
 """

@@ -13,6 +13,7 @@ accounts_bp.add_url_rule("/profile", view_func=jwt_required()(profile_completion
 accounts_bp.add_url_rule("/profile", view_func=jwt_required()(profile_completion_required(ProfileController.update_my_profile)), methods=["PATCH"])
 accounts_bp.add_url_rule("/security", view_func=jwt_required()(profile_completion_required(ProfileController.update_security_settings)), methods=["PATCH"])
 accounts_bp.add_url_rule("/profile/media", view_func=jwt_required()(profile_completion_required(ProfileController.update_profile_media)), methods=["PATCH"])
+accounts_bp.add_url_rule("/profile/location", view_func=jwt_required()(profile_completion_required(ProfileController.update_location)), methods=["PATCH"])
 accounts_bp.add_url_rule("/profile/<string:username>", view_func=jwt_required()(profile_completion_required(ProfileController.get_profile_by_username)), methods=["GET"])
 
 accounts_bp.add_url_rule("/profiles/search", view_func=jwt_required()(profile_completion_required(ProfileController.search_profiles)), methods=["GET"])

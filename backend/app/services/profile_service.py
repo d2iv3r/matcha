@@ -143,6 +143,10 @@ class ProfileService:
             interests=profile_data.get("interests"),
             avatar=profile_data.get("avatar"),
             pictures=profile_data.get("pictures"),
+            city=profile_data.get("city"),
+            country=profile_data.get("country"),
+            latitude=profile_data.get("latitude"),
+            longitude=profile_data.get("longitude"),
         )
         if not profile:
             raise NotFoundError("Profile", user_id)
