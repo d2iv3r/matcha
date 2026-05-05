@@ -10,7 +10,10 @@ export default function VerifyRequest() {
     const searchParams = useSearchParams();
     const email = searchParams.get("email") || "this email";
     const [isResending, setIsResending] = useState(false);
-    const [resendStatus, setResendStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const [resendStatus, setResendStatus] = useState<{
+        type: "success" | "error";
+        message: string;
+    } | null>(null);
 
     // Mask the email like ab***@gmail.com if it's a valid email, else just use the string
     const getMaskedEmail = (e: string) => {
@@ -32,22 +35,34 @@ export default function VerifyRequest() {
         setResendStatus(null);
 
         try {
-            const res = await fetch("http://localhost:5001/api/auth/reset-password/request", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const res = await fetch(
+                "http://localhost:5001/api/auth/reset-password/request",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ email }),
                 },
-                body: JSON.stringify({ email }),
-            });
+            );
 
             if (res.ok) {
-                setResendStatus({ type: "success", message: "Email resent successfully!" });
+                setResendStatus({
+                    type: "success",
+                    message: "Email resent successfully!",
+                });
             } else {
                 const data = await res.json();
-                setResendStatus({ type: "error", message: data.message || "Failed to resend email." });
+                setResendStatus({
+                    type: "error",
+                    message: data.message || "Failed to resend email.",
+                });
             }
         } catch (err) {
-            setResendStatus({ type: "error", message: "An error occurred. Please try again." });
+            setResendStatus({
+                type: "error",
+                message: "An error occurred. Please try again.",
+            });
         } finally {
             setIsResending(false);
         }
@@ -59,14 +74,14 @@ export default function VerifyRequest() {
         <div className="w-full h-screen flex items-center justify-center p-3 bg-white">
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
-                    <a href="/">
+                    <a href="/marketing">
                         <Image
                             src={logo}
                             alt="Logo"
-                            priority={true}
                             width={140}
-                            height={140}
-                            className="w-35 h-10"
+                            height={90}
+                            priority
+                            className="w-auto h-5 object-contain"
                         />
                     </a>
                     <div className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm">
@@ -81,7 +96,7 @@ export default function VerifyRequest() {
                                 If you didn't receive an email, resend it again.
                             </div>
                         </h4>
-                        
+
                         {resendStatus && (
                             <div
                                 className={`px-4 py-3 rounded-xl text-xs font-semibold ${
@@ -99,7 +114,9 @@ export default function VerifyRequest() {
                                 onClick={handleResend}
                                 disabled={isResending}
                                 className={`w-full flex items-center justify-center text-white py-3 rounded-xl font-bold transition-colors ${
-                                    isResending ? "bg-[#6367FF]/60 cursor-not-allowed" : "bg-[#6367FF] hover:bg-[#6367FF]/90 cursor-pointer"
+                                    isResending
+                                        ? "bg-[#6367FF]/60 cursor-not-allowed"
+                                        : "bg-[#6367FF] hover:bg-[#6367FF]/90 cursor-pointer"
                                 }`}
                             >
                                 {isResending ? "Sending..." : "Resend Email"}
@@ -108,7 +125,7 @@ export default function VerifyRequest() {
                                 href="/login"
                                 className="w-full flex flex-row items-center justify-center gap-3 border border-gray-200 py-2 rounded-xl font-bold hover:bg-gray-50 transition-colors"
                             >
-                                <MoveLeft size={18}/>
+                                <MoveLeft size={18} />
                                 Back to Login
                             </a>
                         </div>
@@ -122,7 +139,10 @@ export default function VerifyRequest() {
                         >
                             LOGIN
                         </a>
-                        <a href="/sign-up" className="font-medium hover:underline hover:underline-offset-4 transition-all">
+                        <a
+                            href="/sign-up"
+                            className="font-medium hover:underline hover:underline-offset-4 transition-all"
+                        >
                             SIGN UP
                         </a>
                     </div>

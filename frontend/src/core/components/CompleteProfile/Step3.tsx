@@ -61,13 +61,13 @@ export default function Step3() {
                     people who share your world.
                 </p>
                 <div className="w-full flex flex-wrap gap-2">
-                    {INTERESTS.map((interest) => {
+                    {INTERESTS.map((interest,index) => {
                         const isSelected = selectedInterests.includes(
                             interest.id,
                         );
                         return (
                             <button
-                                key={interest.id}
+                                key={`${interest.id}-${index}`}
                                 onClick={() => toggleInterest(interest.id)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-2xl border-2 transition-colors duration-300 ${
                                     isSelected

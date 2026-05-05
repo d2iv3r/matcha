@@ -89,14 +89,16 @@ export default function SignUp() {
             <div className="w-full h-full max-w-[13f20px] flex flex-row">
                 <div className="w-full h-full flex flex-col gap-10 p-6 flex-1">
                     <div className="flex justify-center lg:justify-start">
-                        <Image
-                            src={logo}
-                            alt="Logo"
-                            priority={true}
-                            width={140}
-                            height={140}
-                            className="w-35 h-10"
-                        />
+                        <a href="/marketing">
+                            <Image
+                                src={logo}
+                                alt="Logo"
+                                width={140}
+                                height={90}
+                                priority
+                                className="w-auto h-5 object-contain"
+                            />
+                        </a>
                     </div>
                     <div className="flex w-full max-w-[450px] flex-col gap-4 self-center text-sm">
                         <h1 className="pl-3 text-3xl font-bold text-center lg:text-left ">

@@ -173,7 +173,7 @@ export const ChatPage = () => {
                     credentials: "include",
                 });
                 setConversations((prev) =>
-                    prev.map((c) =>
+                    prev.map((c,index) =>
                         c.id === conversationId ? { ...c, unread_count: 0 } : c,
                     ),
                 );
@@ -214,7 +214,7 @@ export const ChatPage = () => {
         const onMessagesRead = (data: { conversation_id: number; reader_id: number }) => {
             if (data.conversation_id === selectedConversation?.id) {
                 setMessages((prev) =>
-                    prev.map((m) =>
+                    prev.map((m,index) =>
                         m.sender_id === myId ? { ...m, is_read: true } : m,
                     ),
                 );
@@ -426,7 +426,7 @@ export const ChatPage = () => {
                     if (prev.some((m) => m.id === realMsg.id)) {
                         return prev.filter((m) => m.id !== tempMessage.id);
                     }
-                    return prev.map((m) =>
+                    return prev.map((m,index) =>
                         m.id === tempMessage.id ? realMsg : m,
                     );
                 });

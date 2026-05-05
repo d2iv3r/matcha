@@ -17,6 +17,7 @@ export default function BasicInfo({ profileData, onUpdate }: BasicInfoProps) {
         email: profile.email || "",
         bio: profile.bio || "",
         gender: profile.gender || "male",
+        gender_preference: profile.gender_preference || "all",
         interests: profile.interests || [],
     });
 
@@ -33,6 +34,7 @@ export default function BasicInfo({ profileData, onUpdate }: BasicInfoProps) {
                 email: profile.email || "",
                 bio: profile.bio || "",
                 gender: profile.gender || "male",
+                gender_preference: profile.gender_preference || "all",
                 interests: profile.interests || [],
             });
         }
@@ -174,7 +176,7 @@ export default function BasicInfo({ profileData, onUpdate }: BasicInfoProps) {
                         </div>
                     </div>
                     <div
-                        className="flex flex-col gap-2 w-full mb-[120px]"
+                        className="flex flex-col gap-2 w-full pb-4"
                         ref={dropdownRef}
                     >
                         <h3 className="pl-4 text-sm">Tags</h3>
@@ -196,9 +198,9 @@ export default function BasicInfo({ profileData, onUpdate }: BasicInfoProps) {
                                 {showTagDropdown &&
                                     availableTags.length > 0 && (
                                         <div className="absolute top-full left-0 mt-2 bg-white w-full max-h-40 overflow-y-auto rounded-xl shadow-xl border border-gray-100 z-[150] flex flex-col p-2">
-                                            {availableTags.map((t) => (
+                                            {availableTags.map((t: any, index: number) => (
                                                 <button
-                                                    key={t.id}
+                                                    key={`${t.id}-${index}`}
                                                     onClick={() =>
                                                         addTag(t.label)
                                                     }
@@ -233,6 +235,51 @@ export default function BasicInfo({ profileData, onUpdate }: BasicInfoProps) {
                                     </span>
                                 );
                             })}
+                        </div>
+                    </div>
+                    <hr className="w-[98%] mx-auto border-[#AEB0FF]" />
+
+                    <div className="flex flex-col gap-2 mb-[120px]">
+                        <h2 className="text-md font-semibold">
+                            Gender Preference :
+                        </h2>
+                        <div className="flex flex-col gap-3 pl-4">
+                            <h4 className="text-sm font-medium">Show me :</h4>
+                            <div className="flex flex-row gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input
+                                        type="radio"
+                                        name="gender_preference"
+                                        value="male"
+                                        checked={formData.gender_preference === "male"}
+                                        onChange={handleChange}
+                                        className="w-4 h-4 accent-[#6367FF]"
+                                    />
+                                    <span className="text-sm text-gray-700 group-hover:text-black transition-colors">Men</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input
+                                        type="radio"
+                                        name="gender_preference"
+                                        value="female"
+                                        checked={formData.gender_preference === "female"}
+                                        onChange={handleChange}
+                                        className="w-4 h-4 accent-[#6367FF]"
+                                    />
+                                    <span className="text-sm text-gray-700 group-hover:text-black transition-colors">Women</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input
+                                        type="radio"
+                                        name="gender_preference"
+                                        value="all"
+                                        checked={formData.gender_preference === "all"}
+                                        onChange={handleChange}
+                                        className="w-4 h-4 accent-[#6367FF]"
+                                    />
+                                    <span className="text-sm text-gray-700 group-hover:text-black transition-colors">Both</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

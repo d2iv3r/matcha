@@ -24,7 +24,7 @@ export default function Marketing() {
     };
 
     return (
-        <section className="w-full flex flex-col gap-20 items-center relative">
+        <section className="w-full flex flex-col gap-20 items-center relative overflow-hidden">
             <Hero>
                 <Navbar
                     isMenuOpen={isMenuOpen}

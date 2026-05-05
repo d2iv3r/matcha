@@ -39,12 +39,12 @@ export const ChatSidebar = ({
         0,
     );
 
-    const conversationUserIds = conversations.map((c) =>
+    const conversationUserIds = conversations.map((c, index: number) =>
         Number(Number(c.user1_id) === Number(myId) ? c.user2_id : c.user1_id),
     );
 
     const allItems = [
-        ...conversations.map((c) => ({
+        ...conversations.map((c, index: number) => ({
             id: c.id,
             userId:
                 Number(c.user1_id) === Number(myId) ? c.user2_id : c.user1_id,
@@ -78,7 +78,7 @@ export const ChatSidebar = ({
             .filter(
                 (m) => !conversationUserIds.includes(Number(m.user_id)),
             )
-            .map((m) => ({
+            .map((m, index: number) => ({
                 id: -m.user_id,
                 userId: m.user_id,
                 username: m.username,
@@ -135,9 +135,9 @@ export const ChatSidebar = ({
                                 : "No messages or matches yet"}
                         </p>
                     ) : (
-                        allItems.map((item) => (
+                        allItems.map((item, index: number) => (
                             <div
-                                key={item.id}
+                                key={`${item.id}-${index}`}
                                 className="w-full flex flex-row gap-2 items-center cursor-pointer"
                                 onClick={() => {
                                     if (item.isConv) {

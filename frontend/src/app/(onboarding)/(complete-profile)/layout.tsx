@@ -1,26 +1,20 @@
-"use client";
 
-import { ReactNode, useEffect, useState } from "react";
+
+import { ReactNode } from "react";
 import Image from "next/image";
 import logo from "@/public/logomatchvibe.svg";
-import { useRouter } from "next/navigation";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function Layout({ children }: { children: ReactNode }) {
-    const router = useRouter();
-    // const [isChecking, setIsChecking] = useState(true);
+export default async function Layout({ children }: { children: ReactNode }) {
 
-    // useEffect(() => {
-    //     const token = localStorage.getItem("access_token");
-    //     if (!token) {
-    //         router.replace("/login");
-    //     } else {
-    //         setIsChecking(false);
-    //     }
-    // }, [router]);
-
-    // if (isChecking) {
-    //     return (null); // Or you could render a small loading spinner here
-    // }
+        const cookieStore = await cookies();
+        const hasAccess = cookieStore.has("access_token_cookie");
+        const hasRefresh = cookieStore.has("refresh_token_cookie");
+    
+        if (!hasAccess && !hasRefresh) {
+            redirect("/login");
+        }
 
     return (
         <div className="w-full min-h-screen flex flex-col gap-4 items-center justify-center p-3 bg-[url('/image-pending-profile.png')] bg-cover bg-center relative">

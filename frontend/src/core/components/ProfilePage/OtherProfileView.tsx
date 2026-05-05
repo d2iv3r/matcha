@@ -238,7 +238,7 @@ export default function OtherProfileView({
                         </p>
                         <div className="flex flex-row gap-2 flex-wrap w-full md:max-w-[700px] justify-center md:justify-start items-center md:items-start">
                             {Array.isArray(profileData.interests) &&
-                                profileData.interests.map((tagId: string) => {
+                                profileData.interests.map((tagId: string,index) => {
                                     const foundInterest = INTERESTS.find(
                                         (i) =>
                                             i.id.toLowerCase() ===
@@ -248,7 +248,7 @@ export default function OtherProfileView({
                                     );
                                     return (
                                         <div
-                                            key={tagId}
+                                            key={`${tagId}-${index}`}
                                             className="flex items-center gap-2 px-3 py-2 rounded-full bg-[#E2DCFF] text-[#6367FF]"
                                         >
                                             {foundInterest?.icon || (
@@ -369,9 +369,9 @@ export default function OtherProfileView({
                                 "Unsolicited Explicit Content",
                                 "Disrespectful Behavior",
                                 "Privacy Concerns",
-                            ].map((reason) => (
+                            ].map((reason,index) => (
                                 <label
-                                    key={reason}
+                                    key={`${reason}-${index}`}
                                     className="flex items-center gap-3 cursor-pointer group"
                                 >
                                     <input

@@ -3,12 +3,14 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
-export default function Step4Page() {
+export default function Step4() {
     const router = useRouter();
     const [locationAccess, setLocationAccess] = useState<boolean | null>(null);
     const [coordinates, setCoordinates] = useState<{ lat: number; lng: number; city: string; country: string; ip: string } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showSettingsPrompt, setShowSettingsPrompt] = useState(false);
+    const [manualCity, setManualCity] = useState("");
+    const [manualCountry, setManualCountry] = useState("");
 
     const fetchIpLocation = async () => {
         const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
@@ -96,6 +98,8 @@ export default function Step4Page() {
                 country: ipData.country || "",
                 ip: ipData.ip || "",
             });
+            setManualCity(ipData.city || "");
+            setManualCountry(ipData.country || "");
             setLocationAccess(false);
         } catch (error) {
             console.error("IP Geo error on decline:", error);
@@ -111,7 +115,7 @@ export default function Step4Page() {
         try {
             const ipData = await fetchIpLocation();
             setCoordinates({
-                lat: parseFloat(ipData.latitude),
+                lat: parseFloat(ipData.latitude) ,
                 lng: parseFloat(ipData.longitude),
                 city: ipData.city || "",
                 country: ipData.country || "",
@@ -137,8 +141,8 @@ export default function Step4Page() {
                 location_access: locationAccess ? "true" : "false",
                 latitude: coordinates?.lat,
                 longitude: coordinates?.lng,
-                city: coordinates?.city,
-                country: coordinates?.country,
+                city: locationAccess === false ? manualCity : (coordinates?.city || ""),
+                country: locationAccess === false ? manualCountry : (coordinates?.country || ""),
                 ip_address: coordinates?.ip
             }),
         );
@@ -233,6 +237,34 @@ export default function Step4Page() {
                                 <p className="font-semibold">{isLoading && locationAccess === false && !showSettingsPrompt ? "Loading..." : "Decline"}</p>
                             </button>
                         </div>
+
+                        {locationAccess === false && (
+                            <div className="w-full flex flex-col gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <p className="text-xs font-semibold text-[#4B4B4B] pl-1">
+                                    Please verify your location manually:
+                                </p>
+                                <div className="flex flex-row gap-3">
+                                    <div className="flex-1 flex flex-col gap-1">
+                                        <input
+                                            type="text"
+                                            placeholder="City"
+                                            value={manualCity}
+                                            onChange={(e) => setManualCity(e.target.value)}
+                                            className="w-full p-2.5 bg-white border border-[#E2DCFF] rounded-xl text-sm focus:outline-none focus:border-[#6367FF] transition-colors text-black"
+                                        />
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Country"
+                                            value={manualCountry}
+                                            onChange={(e) => setManualCountry(e.target.value)}
+                                            className="w-full p-2.5 bg-white border border-[#E2DCFF] rounded-xl text-sm focus:outline-none focus:border-[#6367FF] transition-colors text-black"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <p className="text-center text-[10px] text-black/50">
                         You can change your location anytime in settings
@@ -249,10 +281,18 @@ export default function Step4Page() {
                     <p className="font-semibold text-black/50">Back</p>
                 </button>
                 <button
-                    disabled={locationAccess === null || isLoading || showSettingsPrompt}
+                    disabled={
+                        locationAccess === null || 
+                        isLoading || 
+                        showSettingsPrompt ||
+                        (locationAccess === false && (!manualCity.trim() || !manualCountry.trim()))
+                    }
                     onClick={handleNext}
                     className={`w-full flex-2 flex flex-col items-center justify-center p-3 rounded-2xl transition-colors duration-300 ${
-                        locationAccess !== null && !isLoading && !showSettingsPrompt
+                        locationAccess !== null && 
+                        !isLoading && 
+                        !showSettingsPrompt &&
+                        (locationAccess === true || (manualCity.trim() && manualCountry.trim()))
                             ? "bg-[#6367FF] text-white cursor-pointer"
                             : "bg-[#E2DCFF] text-black/50 cursor-not-allowed"
                     }`}

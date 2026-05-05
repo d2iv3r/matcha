@@ -33,6 +33,7 @@ export const SettingsPage = () => {
                 "email",
                 "bio",
                 "gender",
+                "gender_preference",
                 "interests",
             ];
             const hasProfileChanges = profileFields.some(

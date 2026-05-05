@@ -95,9 +95,9 @@ export default function UserCard({
                         "{user.bio}"
                     </p>
                     <div className="flex flex-wrap gap-1">
-                        {user.interests?.slice(0, 3).map((interest, idx) => (
+                        {user.interests?.slice(0, 3).map((interest, idx: number) => (
                             <span
-                                key={idx}
+                                key={`${interest}-${idx}`}
                                 className="bg-white/20 backdrop-blur-md text-white text-[8px] px-1.5 py-0.5 rounded-full border border-white/30"
                             >
                                 {interest}

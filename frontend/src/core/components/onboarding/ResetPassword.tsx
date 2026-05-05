@@ -91,10 +91,10 @@ export default function ResetPassword() {
                         <Image
                             src={logo}
                             alt="Logo"
-                            priority={true}
                             width={140}
-                            height={140}
-                            className="w-35 h-10"
+                            height={90}
+                            priority
+                            className="w-auto h-5 object-contain"
                         />
                     </a>
                     <div className="flex w-full max-w-[450px] flex-col gap-6 self-center text-sm">

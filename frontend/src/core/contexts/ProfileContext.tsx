@@ -20,6 +20,7 @@ interface ProfileData {
         rating: string;
         user_id: number;
         username: string;
+        gender_preference: string;
     };
 }
 
@@ -64,6 +65,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
             const jsonResponse = await res.json();
             const data = jsonResponse.data;
+            console.log("data: ", data);
 
             // Helpers
             const formatUrl = (url: string | null) => {
@@ -85,7 +87,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
                 const content = str.slice(1, -1);
                 if (!content) return [];
 
-                return content.split(",").map((item) => {
+                return content.split(",").map((item, idx) => {
                     item = item.trim();
                     if (item.startsWith('"') && item.endsWith('"')) {
                         return item.slice(1, -1).replace(/\\"/g, '"');

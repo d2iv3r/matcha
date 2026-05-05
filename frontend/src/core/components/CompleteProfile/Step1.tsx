@@ -16,6 +16,9 @@ export default function Step1() {
     const [openDropdown, setOpenDropdown] = useState<
         "day" | "month" | "year" | null
     >(null);
+    const [genderPreference, setGenderPreference] = useState<
+        "man" | "woman" | "both" | null
+    >(null);
     const [isOAuth, setIsOAuth] = useState(false);
 
     useEffect(() => {
@@ -27,17 +30,22 @@ export default function Step1() {
             const lastName = searchParams.get("last_name");
             const avatar = searchParams.get("avatar");
             const username = searchParams.get("username");
-            
+
             if (username) localStorage.setItem("username", username);
-            
-            const existingData = JSON.parse(localStorage.getItem("profile_data") || "{}");
-            localStorage.setItem("profile_data", JSON.stringify({
-                ...existingData,
-                oauth: "intra42",
-                first_name: firstName,
-                last_name: lastName,
-                avatar: avatar
-            }));
+
+            const existingData = JSON.parse(
+                localStorage.getItem("profile_data") || "{}",
+            );
+            localStorage.setItem(
+                "profile_data",
+                JSON.stringify({
+                    ...existingData,
+                    oauth: "intra42",
+                    first_name: firstName,
+                    last_name: lastName,
+                    avatar: avatar,
+                }),
+            );
         }
     }, []);
 
@@ -73,13 +81,9 @@ export default function Step1() {
             Number(day),
         );
         const today = new Date();
-        let computedAge =
-            today.getFullYear() - birthDateDate.getFullYear();
+        let computedAge = today.getFullYear() - birthDateDate.getFullYear();
         const m = today.getMonth() - birthDateDate.getMonth();
-        if (
-            m < 0 ||
-            (m === 0 && today.getDate() < birthDateDate.getDate())
-        ) {
+        if (m < 0 || (m === 0 && today.getDate() < birthDateDate.getDate())) {
             computedAge--;
         }
 
@@ -91,6 +95,12 @@ export default function Step1() {
             JSON.stringify({
                 ...existingData,
                 gender: mappedGender,
+                gender_preference:
+                    !genderPreference || genderPreference === "both"
+                        ? "all"
+                        : genderPreference === "man"
+                          ? "male"
+                          : "female",
                 date_of_birth: date_of_birth,
                 age: computedAge,
             }),
@@ -177,6 +187,7 @@ export default function Step1() {
                             </p>
                         </div>
                     </div>
+
                     <div className="flex flex-col gap-2">
                         <p className="text-sm">
                             Age <span className="text-red-700">*</span> :
@@ -205,9 +216,9 @@ export default function Step1() {
                                 />
                                 {openDropdown === "day" && (
                                     <div className="absolute top-[110%] left-0 w-full bg-white border border-[#6367FF] rounded-xl shadow-lg z-500 max-h-[200px] overflow-y-auto">
-                                        {days.map((d) => (
+                                        {days.map((d,index) => (
                                             <div
-                                                key={d}
+                                                key={`${d}-${index}`}
                                                 className="p-2 text-center text-sm hover:bg-[#E2DCFF]"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -243,9 +254,9 @@ export default function Step1() {
                                 />
                                 {openDropdown === "month" && (
                                     <div className="absolute top-[110%] left-0 w-full bg-white border border-[#6367FF] rounded-xl shadow-lg z-500 max-h-[200px] overflow-y-auto">
-                                        {months.map((m) => (
+                                        {months.map((m,index) => (
                                             <div
-                                                key={m}
+                                                key={`${m}-${index}`}
                                                 className="p-2 text-center text-sm hover:bg-[#E2DCFF]"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -279,9 +290,9 @@ export default function Step1() {
                                 />
                                 {openDropdown === "year" && (
                                     <div className="absolute top-[110%] left-0 w-full bg-white border border-[#6367FF] rounded-xl shadow-lg z-500 max-h-[200px] overflow-y-auto">
-                                        {years.map((y) => (
+                                        {years.map((y,index) => (
                                             <div
-                                                key={y}
+                                                key={`${y}-${index}`}
                                                 className="p-2 text-center text-sm hover:bg-[#E2DCFF]"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -300,23 +311,39 @@ export default function Step1() {
                             <p className="text-sm text-red-700">is under 18</p>
                         )}
                     </div>
+                    <div className="flex flex-col gap-2">
+                        <p className="text-sm font-medium">Show me</p>
+                        <div className="w-full flex flex-row gap-3">
+                            {["man", "woman"].map((pref,index) => (
+                                <button
+                                    key={`${pref}-${index}`}
+                                    type="button"
+                                    onClick={() =>
+                                        setGenderPreference(
+                                            pref as "man" | "woman" | "both",
+                                        )
+                                    }
+                                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+                                        genderPreference === pref
+                                            ? "bg-[#6367FF] text-white shadow-md"
+                                            : "bg-[#E2DCFF] text-black/50 hover:bg-[#D4CEFF]"
+                                    }`}
+                                >
+                                    {pref.charAt(0).toUpperCase() +
+                                        pref.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
             <button
                 disabled={
-                    !gender ||
-                    !day ||
-                    !month ||
-                    !year ||
-                    checkIsUnder18()
+                    !gender || !day || !month || !year || checkIsUnder18()
                 }
                 onClick={handleNext}
                 className={`w-full flex flex-col items-center justify-center p-3 rounded-2xl transition-colors duration-300 ${
-                    gender &&
-                    day &&
-                    month &&
-                    year &&
-                    !checkIsUnder18()
+                    gender && day && month && year && !checkIsUnder18()
                         ? "bg-[#6367FF] cursor-pointer"
                         : "bg-[#E2DCFF] cursor-not-allowed"
                 }`}

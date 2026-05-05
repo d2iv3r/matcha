@@ -21,9 +21,9 @@ export const AdvanceSearchResults = ({
     if (isSearch && !isFetching && searchResults.length > 0) {
         return (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto scrollbar-hide pb-10 px-4">
-                {searchResults.map((user, index) => (
+                {searchResults.map((user, index: number) => (
                     <SearchProfileCard
-                        key={index}
+                        key={`${user.username}-${index}`}
                         user={user}
                         onMatch={(u) => setMatchModal({ isOpen: true, user: u })}
                     />
