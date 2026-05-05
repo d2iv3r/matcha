@@ -149,13 +149,17 @@ class ProfileModel(BaseModel):
         gender: str,
         latitude: float,
         longitude: float,
+        viewer_interests: list[str],
         first_name: str | None = None,
         last_name: str | None = None,
         city: str | None = None,
         min_age: int | None = None,
         max_age: int | None = None,
-        rating: str | None = None,
+        ratings: list[str] | None = None,
+        max_distance: float | None = None,
         interests: list[str] | None = None,
+        sort_by: str | None = "distance",
+        sort_order: str | None = "asc",
         limit: int = 20,
         offset: int = 0,
     ) -> list["ProfileModel"]:
@@ -170,7 +174,12 @@ class ProfileModel(BaseModel):
                         cos(radians(p.longitude) - radians(%s)) +
                         sin(radians(%s)) * sin(radians(p.latitude))
                     ))
-                )) AS distance_km
+                )) AS distance_km,
+                (
+                    SELECT count(*)
+                    FROM unnest(p.interests) AS i
+                    JOIN unnest(%s::TEXT[]) AS j ON i = j
+                ) AS shared_tags_count
             FROM users u
             JOIN profiles p ON p.user_id = u.id
             WHERE u.id != %s
@@ -182,7 +191,7 @@ class ProfileModel(BaseModel):
                 AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)
                 AND u.id NOT IN (SELECT blocker_id FROM blocks WHERE blocked_id = %s)
         """
-        params = [latitude, longitude, latitude, user_id, gender, gender, user_id, user_id]
+        params = [latitude, longitude, latitude, viewer_interests, user_id, gender, gender, user_id, user_id]
 
         if first_name:
             query += " AND u.first_name ILIKE %s"
@@ -199,14 +208,43 @@ class ProfileModel(BaseModel):
         if max_age is not None:
             query += " AND p.age <= %s"
             params.append(max_age)
-        if rating:
-            query += " AND p.rating = %s"
-            params.append(rating)
+        if ratings:
+            query += " AND p.rating = ANY(%s)"
+            params.append(ratings)
         if interests:
             query += " AND p.interests && %s::TEXT[]"
             params.append(interests)
+        if max_distance is not None:
+            # We wrap the query in a subquery to filter by distance_km
+            query = f"SELECT * FROM ({query}) AS search_results WHERE distance_km <= %s"
+            params.append(max_distance)
 
-        query += " ORDER BY distance_km ASC LIMIT %s OFFSET %s"
+        # Handle Sorting
+        sort_field = "distance_km"
+        if sort_by == "age":
+            sort_field = "p.age"
+        elif sort_by == "rating":
+            sort_field = """
+                CASE rating
+                    WHEN 'Iconic' THEN 5
+                    WHEN 'Elite' THEN 4
+                    WHEN 'Popular' THEN 3
+                    WHEN 'Rising' THEN 2
+                    WHEN 'Ghost' THEN 1
+                    ELSE 0
+                END
+            """
+        elif sort_by == "tags":
+            sort_field = "shared_tags_count"
+
+        direction = "ASC"
+        if sort_order and sort_order.lower() == "desc":
+            direction = "DESC"
+        # If sorting by tags or rating, default to DESC unless specified
+        elif sort_by in ["tags", "rating"] and not sort_order:
+            direction = "DESC"
+
+        query += f" ORDER BY {sort_field} {direction} LIMIT %s OFFSET %s"
         params.extend([limit, offset])
 
         rows = cls.db_manager().fetch_all(query, tuple(params))

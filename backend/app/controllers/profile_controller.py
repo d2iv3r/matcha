@@ -225,8 +225,11 @@ class ProfileController:
         city = request.args.get("city")
         min_age = request.args.get("min_age", type=int)
         max_age = request.args.get("max_age", type=int)
-        rating = request.args.get("rating")
+        ratings = request.args.getlist("rating")
         interests = request.args.getlist("interests")
+        max_distance = request.args.get("max_distance", type=float)
+        sort_by = request.args.get("sort_by", "distance")
+        sort_order = request.args.get("sort_order", "asc")
 
         filters = {
             "first_name": first_name,
@@ -234,8 +237,11 @@ class ProfileController:
             "city": city,
             "min_age": min_age,
             "max_age": max_age,
-            "rating": rating,
+            "ratings": ratings if ratings else None,
             "interests": interests if interests else None,
+            "max_distance": max_distance,
+            "sort_by": sort_by,
+            "sort_order": sort_order,
             "limit": limit,
             "offset": offset,
         }
