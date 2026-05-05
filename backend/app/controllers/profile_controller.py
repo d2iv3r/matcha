@@ -37,12 +37,9 @@ class ProfileController:
         raw_payload["avatar"] = avatar
         raw_payload["pictures"] = pictures
         raw_payload["interests"] = request.form.getlist("interests")
-        print(f"-->> data before validation == {raw_payload}")
         payload = CreateProfileSchema.model_validate(raw_payload)
         data = payload.model_dump()
-        print(f"-->> data after validation == {data}")
         profile = ProfileService.complete_profile(data)
-        print('-------------')
         if not profile:
             return {"status": "error", "message": "Profile already exists or could not be created."}, 400
 

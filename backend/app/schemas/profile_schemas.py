@@ -70,6 +70,7 @@ class CreateProfileSchema(BaseModel):
     gender: str = Field(..., pattern=r"^(male|female)$")
     date_of_birth: date
     age: Optional[int] = None
+    gender_preference: str = Field(default="all", pattern=r"^(male|female|other|all)$")
     city: str = Field(..., min_length=1, max_length=255)
     country: str = Field(..., min_length=1, max_length=255)
     ip_address: str = Field(..., min_length=1, max_length=45)
@@ -113,6 +114,19 @@ class CreateProfileSchema(BaseModel):
             _validate_image_file(file_item, "picture")
         return value
 
+    @model_validator(mode="after")
+    def calculate_and_validate_age(self) -> "CreateProfileSchema":
+        """Calculate age from date_of_birth and ensure user is at least 18."""
+        today = date.today()
+        dob = self.date_of_birth
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+        if age < 18:
+            raise ValueError("You must be at least 18 years old to use Matcha")
+
+        self.age = age
+        return self
+
     @field_validator("interests", mode="before")
     @classmethod
     def normalize_interests(cls, value):
@@ -135,12 +149,6 @@ class CreateProfileSchema(BaseModel):
 
     @model_validator(mode="after")
     def resolve_media(self):
-        if self.date_of_birth:
-            today = date.today()
-            self.age = today.year - self.date_of_birth.year - (
-                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
-            )
-
         if self.avatar is None and not self.pictures:
             return self
 
