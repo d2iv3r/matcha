@@ -2,13 +2,11 @@
 This module defines CLI commands for seeding the database with mock data.
 """
 
-import logging
 import click
 from flask import current_app
 from app.utils.utils import hash_password
 from app.db.queries import SEED_MOCK_USERS_AND_PROFILES, COUNT_USERS
 
-logger = logging.getLogger(__name__)
 
 
 @click.command("seed-db")
@@ -37,7 +35,7 @@ def seed_db(count):
         seeder = DataSeeder(
             count=count,
             users_password=password_hash,
-            pexels_api_key=current_app.config["PEXELS_API_KEY"],
+            pexels_api_key=current_app.config["PEXELS_API_KEY1"],
         )
         data = seeder.get_mock_users()
         click.echo(f"  {len(data)} records assembled — inserting into DB …")
@@ -53,5 +51,4 @@ def seed_db(count):
         raise SystemExit(1)
     except Exception as e:
         click.secho(f"Seeding failed: {str(e)}", fg="red")
-        logger.exception("[CLI] Seeding error:")
         raise SystemExit(1)

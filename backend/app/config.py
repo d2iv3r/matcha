@@ -1,29 +1,33 @@
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+import secrets
 
 # Load environment variables from .env (safe for dev)
 load_dotenv()
 
 class BaseConfig:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key")
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+    FLASK_ENV = os.environ.get("FLASK_ENV", "dev")
+    SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_urlsafe(50))
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", secrets.token_urlsafe(50))
     JWT_TOKEN_LOCATION = ["cookies", "headers"]
     JWT_HEADER_NAME = "Authorization"
     JWT_HEADER_TYPE = "Bearer"
-    JWT_COOKIE_SECURE = os.environ.get("JWT_COOKIE_SECURE", "false").lower() == "true"
+    JWT_COOKIE_SECURE = os.environ.get("JWT_COOKIE_SECURE", "false")
     JWT_COOKIE_HTTPONLY = True
     JWT_COOKIE_SAMESITE = os.environ.get("JWT_COOKIE_SAMESITE", "Lax")
-    JWT_COOKIE_CSRF_PROTECT = os.environ.get("JWT_COOKIE_CSRF_PROTECT", "false").lower() == "true"
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.environ.get("JWT_ACCESS_TOKEN_MINUTES", 15)))
+    JWT_COOKIE_CSRF_PROTECT = os.environ.get("JWT_COOKIE_CSRF_PROTECT", "false")
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.environ.get("JWT_ACCESS_TOKEN_MINUTES", 120)))
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.environ.get("JWT_REFRESH_TOKEN_DAYS", 30)))
     JWT_ACCESS_COOKIE_NAME = "access_token_cookie"
     JWT_REFRESH_COOKIE_NAME = "refresh_token_cookie"
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/"
+
     SQL_MIGRATIONS_DIR = os.environ.get("SQL_MIGRATIONS_DIR", "db/migrations")
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
     BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5000")
+
     PASSWORD_RESET_TOKEN_MAX_AGE = int(os.environ.get("PASSWORD_RESET_TOKEN_MAX_AGE", 3600))
     MAIL_HOST = os.environ.get("MAIL_HOST")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
@@ -31,6 +35,7 @@ class BaseConfig:
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
+
     MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 32 * 1024 * 1024))
     MEDIA_PATH = os.environ.get("MEDIA_PATH", "static/media")
     AVATARS_UPLOAD_PATH = os.environ.get("AVATARS_UPLOAD_PATH", os.path.join(MEDIA_PATH, "avatars"))
@@ -48,7 +53,8 @@ class BaseConfig:
         os.environ.get("SOCKETIO_MAX_HTTP_BUFFER_SIZE", 1000000)
     )
     MOCK_USERS_PASS = os.environ.get("MOCK_USERS_PASS")
-    PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY1")
+    PEXELS_API_KEY1 = os.environ.get("PEXELS_API_KEY1")
+    PEXELS_API_KEY2 = os.environ.get("PEXELS_API_KEY2")
 
     # 42 Intra OAuth2
     INTRA42_CLIENT_ID = os.environ.get("INTRA42_CLIENT_ID")
@@ -69,8 +75,8 @@ class DevConfig(BaseConfig):
 
 class ProdConfig(BaseConfig):
     DEBUG = False
-    DB_POOL_MIN_CONN = 10
-    DB_POOL_MAX_CONN = 50
+    DB_POOL_MIN_CONN = os.environ.get("DB_POOL_MIN_CONN", 10)
+    DB_POOL_MAX_CONN = os.environ.get("DB_POOL_MAX_CONN", 50)
     DATABASE_URL = os.environ.get("DATABASE_URL")
 
 

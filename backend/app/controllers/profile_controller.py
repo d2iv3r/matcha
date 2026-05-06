@@ -1,7 +1,5 @@
 """Controller for profile-related operations."""
 
-import json
-
 from flask import request, g
 from flask_jwt_extended import get_jwt_identity
 

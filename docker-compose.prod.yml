@@ -1,0 +1,100 @@
+services:
+
+    # ── PostgreSQL ─────────────────────────────────────────────────────────────
+    db:
+        image: postgres:15-alpine
+        container_name: postgres_db_prod
+        restart: always
+        env_file:
+            - .env.prod
+        volumes:
+            - postgres_data_prod:/var/lib/postgresql/data
+        networks:
+            - backend-network
+        ports:
+            - "5432:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    # ── Flask / Socket.IO backend ──────────────────────────────────────────────
+    app:
+        build:
+            context: ./backend
+            dockerfile: docker/Dockerfile.prod
+        container_name: flask_app_prod
+        restart: always
+        env_file:
+            - .env.prod
+        environment:
+            - FLASK_APP=app.wsgi
+            - FLASK_ENV=prod
+            - SOCKETIO_ASYNC_MODE=eventlet
+        volumes:
+            - media_data:/app/static/media
+        depends_on:
+            db:
+                condition: service_healthy
+        networks:
+            - backend-network
+        command: |
+            sh -c "flask init-db && gunicorn --worker-class eventlet --workers 1 --bind 0.0.0.0:5001 --timeout 120 --keep-alive 5 --log-level info --access-logfile - --error-logfile - app.wsgi:app"
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 60s
+
+    # ── Next.js frontend ───────────────────────────────────────────────────────
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile.prod
+            args:
+                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+                NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL}
+        container_name: nextjs_app_prod
+        restart: always
+        env_file:
+            - .env.prod
+        environment:
+            - NODE_ENV=production
+        depends_on:
+            app:
+                condition: service_healthy
+        networks:
+            - backend-network
+            - frontend-network
+
+    # ── Nginx reverse proxy ────────────────────────────────────────────────────
+    nginx:
+        image: nginx:1.27-alpine
+        container_name: nginx_prod
+        restart: always
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+            - media_data:/app/static/media:ro
+        depends_on:
+            - app
+            - frontend
+        networks:
+            - backend-network
+            - frontend-network
+
+volumes:
+    postgres_data_prod:
+        driver: local
+    media_data:
+        driver: local
+
+networks:
+    backend-network:
+        driver: bridge
+    frontend-network:
+        driver: bridge
