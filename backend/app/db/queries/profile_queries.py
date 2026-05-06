@@ -1,15 +1,15 @@
 """Profile-related SQL query constants."""
 
 CREATE_PROFILE = """
-INSERT INTO profiles (user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::TEXT[], %s, %s::TEXT[])
+INSERT INTO profiles (user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, is_location_approved)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::TEXT[], %s, %s::TEXT[], %s)
 ON CONFLICT (user_id) DO NOTHING
-RETURNING user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures
+RETURNING user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, is_location_approved
 """
 
 GET_MY_PROFILE_BY_USER_ID = """
 SELECT u.username, u.first_name, u.last_name, u.email, u.is_online, u.last_connection,
-	p.user_id, p.gender, p.age, p.date_of_birth, p.gender_preference, p.city, p.country, p.ip_address, p.latitude, p.longitude, p.bio, p.interests, p.avatar, p.pictures, p.rating
+	p.user_id, p.gender, p.age, p.date_of_birth, p.gender_preference, p.city, p.country, p.ip_address, p.latitude, p.longitude, p.bio, p.interests, p.avatar, p.pictures, p.rating, p.is_location_approved
 FROM users u
 JOIN profiles p ON p.user_id = u.id
 WHERE u.id = %s
@@ -92,9 +92,10 @@ SET gender = COALESCE(%s, gender),
     city = COALESCE(%s, city),
     country = COALESCE(%s, country),
     latitude = COALESCE(%s, latitude),
-    longitude = COALESCE(%s, longitude)
+    longitude = COALESCE(%s, longitude),
+    is_location_approved = COALESCE(%s, is_location_approved)
 WHERE user_id = %s
-RETURNING user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, rating
+RETURNING user_id, gender, age, date_of_birth, gender_preference, city, country, ip_address, latitude, longitude, bio, interests, avatar, pictures, rating, is_location_approved
 """
 
 UPDATE_PROFILE_RATING = """

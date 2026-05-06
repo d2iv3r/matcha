@@ -21,6 +21,7 @@ interface ProfileData {
         user_id: number;
         username: string;
         gender_preference: string;
+        is_location_approved: boolean;
     };
 }
 
@@ -121,8 +122,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         fetchProfile();
     }, []);
 
-    if (isLoading) {
-        return null; // Prevent content flash before profile check/redirect
+    if (isLoading && !profile) {
+        return null; // Prevent content flash ONLY on initial load
     }
 
     return (

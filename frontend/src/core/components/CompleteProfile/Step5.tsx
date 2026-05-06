@@ -78,6 +78,8 @@ export default function Step5() {
                 formData.append("latitude", String(existingData.latitude));
             if (existingData.longitude !== undefined)
                 formData.append("longitude", String(existingData.longitude));
+            if (existingData.is_location_approved !== undefined)
+                formData.append("is_location_approved", String(existingData.is_location_approved));
 
             if (
                 existingData.interests &&

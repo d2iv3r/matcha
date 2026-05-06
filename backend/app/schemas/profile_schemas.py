@@ -81,6 +81,7 @@ class CreateProfileSchema(BaseModel):
     interests: List[str]
     avatar: Any
     pictures: List[Any]
+    is_location_approved: bool = False
 
     @field_validator("avatar")
     @classmethod

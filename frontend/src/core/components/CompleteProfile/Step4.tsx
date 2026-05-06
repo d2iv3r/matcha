@@ -139,6 +139,7 @@ export default function Step4() {
             JSON.stringify({
                 ...existingData,
                 location_access: locationAccess ? "true" : "false",
+                is_location_approved: locationAccess === true,
                 latitude: coordinates?.lat,
                 longitude: coordinates?.lng,
                 city: locationAccess === false ? manualCity : (coordinates?.city || ""),

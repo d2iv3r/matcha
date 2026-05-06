@@ -216,13 +216,13 @@ export default function BasicInfo({ profileData, onUpdate }: BasicInfoProps) {
                                     )}
                             </div>
 
-                            {formData.interests.map((tag: string) => {
+                            {formData.interests.map((tag: string, index: number) => {
                                 const interest = INTERESTS.find(
                                     (i) => i.label === tag,
                                 );
                                 return (
                                     <span
-                                        key={tag}
+                                        key={`${tag}-${index}`}
                                         className="bg-[#DFD8FF] text-[#555EFF] text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-2"
                                     >
                                         {interest?.icon}

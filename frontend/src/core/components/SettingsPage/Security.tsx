@@ -1,9 +1,37 @@
 "use client";
-import { useState } from "react";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, Eye, EyeOff, Globe, MapPin } from "lucide-react";
 
-export default function Security() {
-    const [locationAccess, setLocationAccess] = useState<boolean | null>(true);
+interface SecurityProps {
+    profileData: any;
+    onUpdate: (data: any) => void;
+}
+
+export default function Security({ profileData, onUpdate }: SecurityProps) {
+    const profile = profileData?.profile || {};
+
+    const [locationAccess, setLocationAccess] = useState<boolean | null>(
+        profile.is_location_approved ??
+            (profile.latitude && profile.longitude ? true : null),
+    );
+    const [coordinates, setCoordinates] = useState<{
+        lat: number;
+        lng: number;
+        city: string;
+        country: string;
+        ip: string;
+    } | null>({
+        lat: profile.latitude || 0,
+        lng: profile.longitude || 0,
+        city: profile.city || "",
+        country: profile.country || "",
+        ip: profile.ip_address || "",
+    });
+
+    const [manualCity, setManualCity] = useState(profile.city || "");
+    const [manualCountry, setManualCountry] = useState(profile.country || "");
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
     const [showConfirmPassword, setShowConfirmPassword] =
@@ -14,6 +42,151 @@ export default function Security() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
     const [message, setMessage] = useState({ text: "", type: "" });
+    const [showSettingsPrompt, setShowSettingsPrompt] = useState(false);
+
+    const fetchIpLocation = async () => {
+        const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+        if (!res.ok) throw new Error("Failed to fetch IP location");
+        return await res.json();
+    };
+
+    const handleApprove = async () => {
+        setIsLoadingLocation(true);
+        try {
+            const ipData = await fetchIpLocation();
+
+            if (!navigator.geolocation) {
+                const newCoords = {
+                    lat: parseFloat(ipData.latitude),
+                    lng: parseFloat(ipData.longitude),
+                    city: ipData.city || "",
+                    country: ipData.country || "",
+                    ip: ipData.ip || "",
+                };
+                setCoordinates(newCoords);
+                setLocationAccess(true);
+                onUpdate({
+                    latitude: newCoords.lat,
+                    longitude: newCoords.lng,
+                    city: newCoords.city,
+                    country: newCoords.country,
+                    is_location_approved: true,
+                });
+                setIsLoadingLocation(false);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const newCoords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        city: ipData.city || "",
+                        country: ipData.country || "",
+                        ip: ipData.ip || "",
+                    };
+                    setCoordinates(newCoords);
+                    setLocationAccess(true);
+                    onUpdate({
+                        latitude: newCoords.lat,
+                        longitude: newCoords.lng,
+                        city: newCoords.city,
+                        country: newCoords.country,
+                        is_location_approved: true,
+                    });
+                    setIsLoadingLocation(false);
+                },
+                (error) => {
+                    if (error.code === 1 || error.code === 2) {
+                        setShowSettingsPrompt(true);
+                    } else {
+                        const newCoords = {
+                            lat: parseFloat(ipData.latitude),
+                            lng: parseFloat(ipData.longitude),
+                            city: ipData.city || "",
+                            country: ipData.country || "",
+                            ip: ipData.ip || "",
+                        };
+                        setCoordinates(newCoords);
+                        setLocationAccess(true);
+                        onUpdate({
+                            latitude: newCoords.lat,
+                            longitude: newCoords.lng,
+                            city: newCoords.city,
+                            country: newCoords.country,
+                            is_location_approved: true,
+                        });
+                    }
+                    setIsLoadingLocation(false);
+                },
+            );
+        } catch (error) {
+            console.error("Location error:", error);
+            setIsLoadingLocation(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        setIsLoadingLocation(true);
+        try {
+            const ipData = await fetchIpLocation();
+            setCoordinates({
+                lat: parseFloat(ipData.latitude),
+                lng: parseFloat(ipData.longitude),
+                city: ipData.city || "",
+                country: ipData.country || "",
+                ip: ipData.ip || "",
+            });
+            setManualCity(ipData.city || "");
+            setManualCountry(ipData.country || "");
+            setLocationAccess(false);
+            onUpdate({
+                latitude: null,
+                longitude: null,
+                city: ipData.city || "",
+                country: ipData.country || "",
+                is_location_approved: false,
+            });
+        } catch (error) {
+            console.error("IP Geo error on decline:", error);
+            setLocationAccess(false);
+            onUpdate({
+                latitude: null,
+                longitude: null,
+                is_location_approved: false,
+            });
+        } finally {
+            setIsLoadingLocation(false);
+        }
+    };
+
+    const runFallbackIPLocation = async () => {
+        setShowSettingsPrompt(false);
+        setIsLoadingLocation(true);
+        try {
+            const ipData = await fetchIpLocation();
+            const newCoords = {
+                lat: parseFloat(ipData.latitude),
+                lng: parseFloat(ipData.longitude),
+                city: ipData.city || "",
+                country: ipData.country || "",
+                ip: ipData.ip || "",
+            };
+            setCoordinates(newCoords);
+            setLocationAccess(true);
+            onUpdate({
+                latitude: newCoords.lat,
+                longitude: newCoords.lng,
+                city: newCoords.city,
+                country: newCoords.country,
+                is_location_approved: true,
+            });
+        } catch (e) {
+            setLocationAccess(true);
+        } finally {
+            setIsLoadingLocation(false);
+        }
+    };
 
     const getPasswordScore = (pass: string) => {
         let score = 0;
@@ -99,7 +272,37 @@ export default function Security() {
     };
 
     return (
-        <div className="w-full h-full flex flex-col gap-4 p-4">
+        <div className="w-full h-full flex flex-col gap-4 p-4 relative">
+            {showSettingsPrompt && (
+                <div className="absolute inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 rounded-3xl">
+                    <div className="bg-white rounded-2xl p-6 flex flex-col gap-4 w-full max-w-[340px] shadow-2xl animate-in zoom-in-95 duration-300">
+                        <h3 className="text-xl font-bold text-black border-b pb-2">
+                            Location Blocked
+                        </h3>
+                        <p className="text-[13px] text-black/70 leading-relaxed font-semibold">
+                            Your browser settings are currently blocking
+                            location access. To provide precise GPS coordinates,
+                            please click the <b>Tune/Lock icon</b> next to your
+                            URL bar, switch Location to <b>Allow</b>, and
+                            refresh the page.
+                        </p>
+                        <div className="flex flex-col gap-2 mt-2">
+                            <button
+                                onClick={() => setShowSettingsPrompt(false)}
+                                className="w-full py-2.5 rounded-xl border-2 border-black text-black font-bold hover:bg-black/5 transition-colors"
+                            >
+                                Cancel and Retry
+                            </button>
+                            <button
+                                onClick={runFallbackIPLocation}
+                                className="w-full py-2.5 rounded-xl bg-[#6367FF] text-white font-bold hover:bg-[#6367FF]/90 transition-colors"
+                            >
+                                Use Approximate Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="flex flex-col items-start justify-between gap-4 w-full mb-4">
                 <div className="flex justify-between items-center w-full">
                     <h2 className="text-md font-semibold">Password :</h2>
@@ -127,9 +330,7 @@ export default function Security() {
                             className="text-xs bg-transparent outline-none w-full placeholder-black/40"
                         />
                         <button
-                            onClick={() => {
-                                setShowPassword(!showPassword);
-                            }}
+                            onClick={() => setShowPassword(!showPassword)}
                             className="text-gray-400 hover:text-[#6367FF] transition-colors"
                         >
                             {showPassword ? (
@@ -153,9 +354,9 @@ export default function Security() {
                                 className="text-xs bg-transparent outline-none w-full placeholder-black/40"
                             />
                             <button
-                                onClick={() => {
-                                    setShowNewPassword(!showNewPassword);
-                                }}
+                                onClick={() =>
+                                    setShowNewPassword(!showNewPassword)
+                                }
                                 className="text-gray-400 hover:text-[#6367FF] transition-colors"
                             >
                                 {showNewPassword ? (
@@ -168,13 +369,7 @@ export default function Security() {
                         <div className="flex flex-col gap-1 px-1">
                             {newPassword && (
                                 <p
-                                    className={`text-xs font-medium h-4 transition-colors duration-300 ${
-                                        score <= 2
-                                            ? "text-red-500"
-                                            : score <= 4
-                                              ? "text-orange-500"
-                                              : "text-green-500"
-                                    }`}
+                                    className={`text-xs font-medium h-4 transition-colors duration-300 ${score <= 2 ? "text-red-500" : score <= 4 ? "text-orange-500" : "text-green-500"}`}
                                 >
                                     {getStrengthText()}
                                 </p>
@@ -211,11 +406,9 @@ export default function Security() {
                                 className="text-xs bg-transparent outline-none w-full placeholder-black/40"
                             />
                             <button
-                                onClick={() => {
-                                    setShowConfirmPassword(
-                                        !showConfirmPassword,
-                                    );
-                                }}
+                                onClick={() =>
+                                    setShowConfirmPassword(!showConfirmPassword)
+                                }
                                 className="text-gray-400 hover:text-[#6367FF] transition-colors"
                             >
                                 {showConfirmPassword ? (
@@ -254,53 +447,156 @@ export default function Security() {
                         }
                         className={`bg-[#6367FF] text-white px-8 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#6367FF]/20 transition-all ${isUpdating || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || score < 3 ? "opacity-50 cursor-not-allowed" : "hover:bg-[#555DFF] active:scale-95 cursor-pointer"}`}
                     >
-                        {isUpdating ? (
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 border-2 border-white/30 border-b-white rounded-full animate-spin" />
-                                Updating...
-                            </div>
-                        ) : (
-                            "Update Password"
-                        )}
+                        {isUpdating ? "Updating..." : "Update Password"}
                     </button>
                 </div>
-                <hr className="w-[98%] mx-auto border-[#AEB0FF] mt-2" />
-                <div className="flex flex-col items-start gap-4 w-full lg:w-1/2 mb-4">
-                    <h2 className="text-md font-semibold">Localisation :</h2>
-                    <div className="w-full flex gap-2 flex-col">
-                        <p className="pl-3 text-sm">Location access :</p>
-                        <div className="w-full flex flex-col gap-4">
-                            <div className="w-full h-[150px] bg-[url('/map-image.png')] rounded-2xl bg-cover bg-center border border-[#6367FF]" />
-                            <div className="w-full flex flex-row gap-5">
+
+                <hr className="w-[98%] mx-auto border-[#AEB0FF] mt-4" />
+
+                <div className="flex flex-col items-start gap-4 w-full mb-10">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-md font-semibold">
+                            Localisation :
+                        </h2>
+                        <p className="text-[10px] text-gray-500">
+                            Update your current location for better matches
+                        </p>
+                    </div>
+
+                    <div className="w-full flex flex-col lg:flex-row gap-6">
+                        <div className="w-full lg:w-1/2 flex flex-col gap-4">
+                            <div className="w-full h-[150px] bg-[url('/map-image.png')] rounded-2xl bg-cover bg-center border border-[#6367FF] relative overflow-hidden group"></div>
+
+                            <div className="flex flex-row gap-4">
                                 <button
-                                    onClick={() => setLocationAccess(true)}
-                                    className={`flex-1 rounded-xl flex items-center justify-center p-2 border border-[#6367FF] transition-colors duration-300 ${
-                                        locationAccess === true
-                                            ? "bg-[#6367FF] text-white cursor-pointer"
-                                            : "bg-[#E2DCFF] cursor-pointer text-black"
-                                    }`}
+                                    onClick={handleApprove}
+                                    disabled={
+                                        isLoadingLocation || showSettingsPrompt
+                                    }
+                                    className={`flex-1 rounded-xl flex items-center justify-center gap-2 p-2.5 border-2 transition-all duration-300 ${locationAccess === true ? "bg-[#6367FF] border-[#6367FF] text-white" : "bg-white border-[#E2DCFF] text-gray-600 hover:border-[#6367FF]"}`}
                                 >
-                                    <p className="font-semibold text-sm">
-                                        Approve
-                                    </p>
+                                    <Navigation size={16} />
+                                    <span className="font-bold text-xs">
+                                        {isLoadingLocation &&
+                                        locationAccess !== false
+                                            ? "Locating..."
+                                            : "Auto Precise"}
+                                    </span>
                                 </button>
                                 <button
-                                    onClick={() => setLocationAccess(false)}
-                                    className={`flex-1 rounded-xl flex items-center justify-center p-2 border border-[#6367FF] transition-colors duration-300 ${
-                                        locationAccess === false
-                                            ? "bg-[#6367FF] text-white cursor-pointer"
-                                            : "bg-[#E2DCFF] cursor-pointer text-black"
-                                    }`}
+                                    onClick={handleDecline}
+                                    disabled={
+                                        isLoadingLocation || showSettingsPrompt
+                                    }
+                                    className={`flex-1 rounded-xl flex items-center justify-center gap-2 p-2.5 border-2 transition-all duration-300 ${locationAccess === false ? "bg-[#6367FF] border-[#6367FF] text-white" : "bg-white border-[#E2DCFF] text-gray-600 hover:border-[#6367FF]"}`}
                                 >
-                                    <p className="font-semibold text-sm">
-                                        Decline
-                                    </p>
+                                    <Globe size={16} />
+                                    <span className="font-bold text-xs">
+                                        Manual Entry
+                                    </span>
                                 </button>
                             </div>
                         </div>
+
+                        {(locationAccess === false ||
+                            (locationAccess === true && coordinates)) && (
+                            <div className="w-full lg:w-1/2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-[#DFD8FF] border border-[#555EFF] rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500 h-fit">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-[#555EFF] uppercase tracking-wider pl-1">
+                                        City
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={
+                                                locationAccess === false
+                                                    ? manualCity
+                                                    : coordinates?.city || ""
+                                            }
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setManualCity(val);
+                                                if (locationAccess === false) {
+                                                    onUpdate({
+                                                        city: val,
+                                                        country: manualCountry,
+                                                        latitude: null,
+                                                        longitude: null,
+                                                        is_location_approved: false,
+                                                    });
+                                                }
+                                            }}
+                                            readOnly={locationAccess === true}
+                                            className={`w-full p-2.5 bg-gray-50 border border-[#555EFF] rounded-xl text-xs transition-all ${locationAccess === true ? "opacity-70 cursor-not-allowed" : "focus:bg-white focus:border-[#6367FF]"}`}
+                                            placeholder="Enter city..."
+                                        />
+                                        {locationAccess === true && (
+                                            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-[#555EFF] uppercase tracking-wider pl-1">
+                                        Country
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={
+                                                locationAccess === false
+                                                    ? manualCountry
+                                                    : coordinates?.country || ""
+                                            }
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setManualCountry(val);
+                                                if (locationAccess === false) {
+                                                    onUpdate({
+                                                        city: manualCity,
+                                                        country: val,
+                                                        latitude: null,
+                                                        longitude: null,
+                                                        is_location_approved: false,
+                                                    });
+                                                }
+                                            }}
+                                            readOnly={locationAccess === true}
+                                            className={`w-full p-2.5 bg-gray-50 border border-[#555EFF] rounded-xl text-xs transition-all ${locationAccess === true ? "opacity-70 cursor-not-allowed" : "focus:bg-white focus:border-[#6367FF]"}`}
+                                            placeholder="Enter country..."
+                                        />
+                                        {locationAccess === true && (
+                                            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+const Navigation = ({
+    size,
+    className,
+}: {
+    size?: number;
+    className?: string;
+}) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size || 24}
+        height={size || 24}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <polygon points="3 11 22 2 13 21 11 13 3 11" />
+    </svg>
+);

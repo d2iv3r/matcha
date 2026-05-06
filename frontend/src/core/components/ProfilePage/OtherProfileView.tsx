@@ -137,6 +137,7 @@ export default function OtherProfileView({
                             alt="Profile"
                             fill
                             unoptimized
+                            priority
                             className="rounded-[24px] object-cover shadow-lg"
                         />
                         {profileData.is_online && (

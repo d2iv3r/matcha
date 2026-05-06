@@ -133,7 +133,9 @@ export const AdvanceSearchFilters = ({
                                     <input
                                         type="text"
                                         value={ageMin}
-                                        onChange={(e) => setAgeMin(e.target.value)}
+                                        onChange={(e) =>
+                                            setAgeMin(e.target.value)
+                                        }
                                         className="w-full bg-transparent outline-none text-sm placeholder:text-[#999999] text-gray-800"
                                         placeholder="Min"
                                     />
@@ -142,7 +144,9 @@ export const AdvanceSearchFilters = ({
                                     <input
                                         type="text"
                                         value={ageMax}
-                                        onChange={(e) => setAgeMax(e.target.value)}
+                                        onChange={(e) =>
+                                            setAgeMax(e.target.value)
+                                        }
                                         className="w-full bg-transparent outline-none text-sm placeholder:text-[#999999] text-gray-800"
                                         placeholder="Max"
                                     />
@@ -156,7 +160,9 @@ export const AdvanceSearchFilters = ({
                             <span className="ml-2 text-sm">Fame rating</span>
                             <div
                                 className="bg-[#E9E8FF] w-full p-2 px-4 rounded-xl flex items-center justify-between cursor-pointer"
-                                onClick={() => setShowFameDropdown(!showFameDropdown)}
+                                onClick={() =>
+                                    setShowFameDropdown(!showFameDropdown)
+                                }
                             >
                                 <span
                                     className={`text-sm ${fameRatings.length > 0 ? "text-gray-800 font-medium" : "text-[#999999]"}`}
@@ -173,15 +179,26 @@ export const AdvanceSearchFilters = ({
                             {showFameDropdown && (
                                 <div className="absolute top-full left-0 mt-3 p-2 bg-white w-48 max-h-60 overflow-y-auto rounded-xl shadow-xl z-50 border border-gray-100 flex flex-col gap-1">
                                     {rating.map((ratingObj, index: number) => {
-                                        const isSelected = fameRatings.includes(ratingObj.name);
+                                        const isSelected = fameRatings.includes(
+                                            ratingObj.name,
+                                        );
                                         return (
                                             <button
                                                 key={`${ratingObj.name}-${index}`}
                                                 onClick={() => {
                                                     setFameRatings((prev) =>
-                                                        prev.includes(ratingObj.name)
-                                                            ? prev.filter((r) => r !== ratingObj.name)
-                                                            : [...prev, ratingObj.name],
+                                                        prev.includes(
+                                                            ratingObj.name,
+                                                        )
+                                                            ? prev.filter(
+                                                                  (r) =>
+                                                                      r !==
+                                                                      ratingObj.name,
+                                                              )
+                                                            : [
+                                                                  ...prev,
+                                                                  ratingObj.name,
+                                                              ],
                                                     );
                                                 }}
                                                 className={`flex flex-row items-center justify-between px-3 py-2 hover:bg-[#F5F3FF] hover:text-[#6367FF] rounded-lg transition-colors cursor-pointer text-left ${isSelected ? "bg-[#F5F3FF] text-[#6367FF]" : "text-[#4B4B4B]"}`}
@@ -190,7 +207,8 @@ export const AdvanceSearchFilters = ({
                                                     <div
                                                         className="w-2 h-2 rounded-full shadow-sm"
                                                         style={{
-                                                            backgroundColor: ratingObj.color,
+                                                            backgroundColor:
+                                                                ratingObj.color,
                                                         }}
                                                     ></div>
                                                     <span className="font-semibold text-xs">
@@ -211,7 +229,9 @@ export const AdvanceSearchFilters = ({
                             <span className="ml-2 text-sm">Sorting</span>
                             <div
                                 className="bg-[#E9E8FF] w-full p-2 px-4 rounded-xl flex items-center justify-between cursor-pointer"
-                                onClick={() => setShowSortingDropdown(!showSortingDropdown)}
+                                onClick={() =>
+                                    setShowSortingDropdown(!showSortingDropdown)
+                                }
                             >
                                 <span
                                     className={`text-sm ${sorting ? "text-gray-800 font-medium" : "text-[#999999]"}`}
@@ -225,23 +245,28 @@ export const AdvanceSearchFilters = ({
                             </div>
                             {showSortingDropdown && (
                                 <div className="absolute top-full left-0 mt-3 p-2 bg-white w-48 max-h-60 overflow-y-auto rounded-xl shadow-xl z-50 border border-gray-100 flex flex-col gap-1">
-                                    {["Ascending", "Descending"].map((sortOption, index: number) => {
-                                        const isSelected = sorting === sortOption;
-                                        return (
-                                            <button
-                                                key={`${sortOption}-${index}`}
-                                                onClick={() => {
-                                                    setSorting(sortOption);
-                                                    setShowSortingDropdown(false);
-                                                }}
-                                                className={`flex flex-row items-center justify-between px-3 py-2 hover:bg-[#F5F3FF] hover:text-[#6367FF] rounded-lg transition-colors cursor-pointer text-left ${isSelected ? "bg-[#F5F3FF] text-[#6367FF]" : "text-[#4B4B4B]"}`}
-                                            >
-                                                <span className="font-semibold text-xs">
-                                                    {sortOption}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
+                                    {["Age", "Interests", "Rating", "Distance"].map(
+                                        (sortOption, index: number) => {
+                                            const isSelected =
+                                                sorting === sortOption;
+                                            return (
+                                                <button
+                                                    key={`${sortOption}-${index}`}
+                                                    onClick={() => {
+                                                        setSorting(sortOption);
+                                                        setShowSortingDropdown(
+                                                            false,
+                                                        );
+                                                    }}
+                                                    className={`flex flex-row items-center justify-between px-3 py-2 hover:bg-[#F5F3FF] hover:text-[#6367FF] rounded-lg transition-colors cursor-pointer text-left ${isSelected ? "bg-[#F5F3FF] text-[#6367FF]" : "text-[#4B4B4B]"}`}
+                                                >
+                                                    <span className="font-semibold text-xs">
+                                                        {sortOption}
+                                                    </span>
+                                                </button>
+                                            );
+                                        },
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -249,13 +274,17 @@ export const AdvanceSearchFilters = ({
                     <div className="flex flex-col gap-3">
                         <div className="flex flex-row gap-4 items-center justify-between">
                             <div className="flex-1 flex flex-col gap-1">
-                                <span className="ml-2 text-sm">Interest tags</span>
+                                <span className="ml-2 text-sm">
+                                    Interest tags
+                                </span>
                                 <div
                                     className="bg-[#E9E8FF] w-full p-2 px-3 rounded-xl flex items-center flex-wrap gap-2 text-gray-800 relative"
                                     ref={dropdownRef}
                                 >
                                     {tags.map((tag, index: number) => {
-                                        const interest = INTERESTS.find((i) => i.label === tag);
+                                        const interest = INTERESTS.find(
+                                            (i) => i.label === tag,
+                                        );
                                         return (
                                             <span
                                                 key={`${tag}-${index}`}
@@ -266,7 +295,9 @@ export const AdvanceSearchFilters = ({
                                                 <X
                                                     size={14}
                                                     className="cursor-pointer hover:text-red-500 transition-colors ml-1"
-                                                    onClick={() => removeTag(tag)}
+                                                    onClick={() =>
+                                                        removeTag(tag)
+                                                    }
                                                 />
                                             </span>
                                         );
@@ -275,27 +306,38 @@ export const AdvanceSearchFilters = ({
                                         <input
                                             type="text"
                                             value={tagInput}
-                                            onChange={(e) => setTagInput(e.target.value)}
-                                            onFocus={() => setShowTagDropdown(true)}
+                                            onChange={(e) =>
+                                                setTagInput(e.target.value)
+                                            }
+                                            onFocus={() =>
+                                                setShowTagDropdown(true)
+                                            }
                                             className="w-full bg-transparent outline-none text-sm placeholder:text-[#999999] py-1"
                                             placeholder="Add interest tags..."
                                         />
-                                        {showTagDropdown && availableTags.length > 0 && (
-                                            <div className="absolute top-full left-0 mt-3 bg-white w-64 max-h-60 overflow-y-auto rounded-xl shadow-xl border border-gray-100 z-50 flex flex-col p-2">
-                                                {availableTags.map((t, index: number) => (
-                                                    <button
-                                                        key={`${t.id}-${index}`}
-                                                        onClick={() => addTag(t.label)}
-                                                        className="flex items-center gap-3 px-3 py-2 hover:bg-[#F5F3FF] text-[#4B4B4B] hover:text-[#6367FF] rounded-lg transition-colors text-left"
-                                                    >
-                                                        {t.icon}
-                                                        <span className="text-sm font-medium">
-                                                            {t.label}
-                                                        </span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
+                                        {showTagDropdown &&
+                                            availableTags.length > 0 && (
+                                                <div className="absolute top-full left-0 mt-3 bg-white w-64 max-h-60 overflow-y-auto rounded-xl shadow-xl border border-gray-100 z-50 flex flex-col p-2">
+                                                    {availableTags.map(
+                                                        (t, index: number) => (
+                                                            <button
+                                                                key={`${t.id}-${index}`}
+                                                                onClick={() =>
+                                                                    addTag(
+                                                                        t.label,
+                                                                    )
+                                                                }
+                                                                className="flex items-center gap-3 px-3 py-2 hover:bg-[#F5F3FF] text-[#4B4B4B] hover:text-[#6367FF] rounded-lg transition-colors text-left"
+                                                            >
+                                                                {t.icon}
+                                                                <span className="text-sm font-medium">
+                                                                    {t.label}
+                                                                </span>
+                                                            </button>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
                             </div>

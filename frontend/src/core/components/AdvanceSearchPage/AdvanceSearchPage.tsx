@@ -106,7 +106,11 @@ export const AdvanceSearchPage = () => {
             if (city.trim()) params.append("city", city.trim());
             if (ageMin) params.append("min_age", ageMin);
             if (ageMax) params.append("max_age", ageMax);
-            if (sorting) params.append("sorting", sorting.toLowerCase());
+            if (sorting) {
+                const sortField =
+                    sorting === "Interests" ? "tags" : sorting.toLowerCase();
+                params.append("sort_by", sortField);
+            }
 
             fameRatings.forEach((r) => {
                 const ratingName = r.split(" ").pop();
@@ -129,6 +133,7 @@ export const AdvanceSearchPage = () => {
             if (!res.ok) throw new Error("Search failed");
 
             const json = await res.json();
+            console.log(json.data?.profiles);
             setSearchResults(json.data?.profiles || []);
             setAdvanceSearch(false);
         } catch (error) {

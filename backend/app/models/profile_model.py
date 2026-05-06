@@ -44,6 +44,7 @@ class ProfileModel(BaseModel):
     avatar: str | None = None
     pictures: Any | None = None
     rating: str | None = None
+    is_location_approved: bool = False
 
 
     def create(self) -> Optional["ProfileModel"]:
@@ -64,6 +65,7 @@ class ProfileModel(BaseModel):
                     self.interests,
                     self.avatar,
                     self.pictures,
+                    self.is_location_approved,
                 ),
             )
         if row is None:
@@ -96,6 +98,7 @@ class ProfileModel(BaseModel):
             "avatar": getattr(self, "avatar", None),
             "pictures": getattr(self, "pictures", []),
             "rating": getattr(self, "rating", None),
+            "is_location_approved": getattr(self, "is_location_approved", False),
         }
 
     @classmethod
@@ -134,6 +137,7 @@ class ProfileModel(BaseModel):
         country: str | None = None,
         latitude: float | None = None,
         longitude: float | None = None,
+        is_location_approved: bool | None = None,
     ) -> Optional["ProfileModel"]:
         row = cls.db_manager().execute_returning(
             UPDATE_PROFILE_BY_USER_ID,
@@ -148,6 +152,7 @@ class ProfileModel(BaseModel):
                 country,
                 latitude,
                 longitude,
+                is_location_approved,
                 user_id,
             ),
         )
@@ -238,7 +243,7 @@ class ProfileModel(BaseModel):
         # Handle Sorting
         sort_field = "distance_km"
         if sort_by == "age":
-            sort_field = "p.age"
+            sort_field = "age"
         elif sort_by == "rating":
             sort_field = """
                 CASE rating

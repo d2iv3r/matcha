@@ -418,7 +418,7 @@ export default function Gallery({ profileData, onUpdate }: GalleryProps) {
                                         "grayscale",
                                         "sepia",
                                         "invert",
-                                    ].map((f,index) => (
+                                    ].map((f,index:number) => (
                                         <button
                                             key={`${f}-${index}`}
                                             onClick={() => setFilter(f)}
