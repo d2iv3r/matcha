@@ -13,7 +13,7 @@ jwt = JWTManager()
 limiter = Limiter(key_func=get_remote_address)
 cache = Cache()
 cors = CORS()
-socketio = SocketIO(logger=True, engineio_logger=True)
+socketio = SocketIO()
 oauth = OAuth()
 
 def register_extensions(app:Flask) -> None:

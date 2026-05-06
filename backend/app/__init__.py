@@ -1,7 +1,6 @@
 """Flask application factory."""
 
 import atexit
-import logging
 import os
 
 from flask import Flask
@@ -19,9 +18,6 @@ from app.routes import (
 )
 
 
-logger = logging.getLogger(__name__)
-
-
 def create_app(config_class: BaseConfig=DevConfig) -> Flask:
     """
     Application factory pattern.
@@ -31,7 +27,6 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
     Returns:
         Configured Flask application
     """
-    logger.info("[APP] Creating Flask application...")
 
     try:
         static_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
@@ -41,34 +36,23 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
 
         # Extensions registration
         register_extensions(app)
-        logger.info("[APP] Extensions registered successfully.")
-
+        # realtime registration
         register_realtime(socketio)
-        logger.info("[APP] Realtime module registered successfully.")
-
         # Initialize database connection pool
         init_db(app)
-
+        # middleware registration
         register_middleware(app)
-        logger.info("[APP] Middleware registered successfully.")
-
+        # error handlers registration
         register_error_handlers(app)
-        logger.info("[APP] Error handlers registered successfully.")
-
         # Register CLI commands
         from app.commands import register_commands
         register_commands(app)
-        logger.info("[APP] CLI commands registered successfully.")
-        
         # Setup database manager cleanup on exit
-        # Note: Database initialization moved to 'flask db init' CLI command
         def cleanup_db():
             db_manager = getattr(app, "db_manager", None)
             if db_manager is not None:
                 db_manager.disconnect()
-        
         atexit.register(cleanup_db)
-        
         # Register blueprints
         app.register_blueprint(api_bp)
         app.register_blueprint(docs_bp)
@@ -76,11 +60,7 @@ def create_app(config_class: BaseConfig=DevConfig) -> Flask:
         app.register_blueprint(accounts_bp)
         app.register_blueprint(profile_bp)
         app.register_blueprint(notifications_bp)
-        app.register_blueprint(chat_bp)
-        
-        logger.info("[APP] App created successfully!")
+        app.register_blueprint(chat_bp)        
     except Exception as e:
-        logger.error(f"[APP] Failed to create app: {str(e)}")
         raise RuntimeError(f"Failed to create app: {str(e)}") from e
-
     return app

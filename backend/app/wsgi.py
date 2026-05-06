@@ -5,7 +5,6 @@ import sys
 import logging
 
 
-# Configure logging - reduce verbosity from noisy libraries
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
