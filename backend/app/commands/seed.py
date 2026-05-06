@@ -303,7 +303,10 @@ class DataSeeder:
             gender  = u["gender"]
             bracket = _bracket_for_age(age)
             avatar  = self._pick_avatar(gender, bracket)
-            gender_preference = "female" if gender == "male" else "male"
+            if gender == "male":
+                gender_preference = random.choices(["female", "male", "all"], weights=[0.80, 0.10, 0.10], k=1)[0]
+            else:
+                gender_preference = random.choices(["male", "female", "all"], weights=[0.80, 0.10, 0.10], k=1)[0]
 
             city    = u["location"]["city"]
             country = u["location"]["country"]
