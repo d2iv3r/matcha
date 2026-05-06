@@ -41,7 +41,7 @@ export const SettingsPage = () => {
                 "country",
                 "latitude",
                 "longitude",
-                "is_location_approved"
+                "is_location_approved",
             ];
 
             const hasProfileChanges = profileFields.some(
@@ -92,7 +92,9 @@ export const SettingsPage = () => {
                 );
                 if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}));
-                    throw new Error(errorData.message || "Failed to update location");
+                    throw new Error(
+                        errorData.message || "Failed to update location",
+                    );
                 }
             }
 
@@ -135,7 +137,7 @@ export const SettingsPage = () => {
             setPendingChanges({});
             await refetchProfile();
         } catch (error: any) {
-            console.error("Save error:", error);
+            // console.error("Save error:", error);
             setSaveMessage({
                 text:
                     error.message ||
