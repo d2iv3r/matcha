@@ -25,14 +25,16 @@ class ProfileViewsService:
             "avatar": actor_profile.avatar if actor_profile else None
         }
 
-        NotificationsService.send_notification(
-            user_id=profile_user_id,
-            notification_type="VIEW",
-            actor_id=viewer_user_id,
-            message=f"{actor_data['username']} viewed your profile",
-            data=actor_data,
-            entity_id=viewer_user_id
-        )
+        from app.models.notification_model import NotificationModel
+        if not NotificationModel.has_unread_notification(user_id=profile_user_id, actor_id=viewer_user_id, notification_type="VIEW"):
+            NotificationsService.send_notification(
+                user_id=profile_user_id,
+                notification_type="VIEW",
+                actor_id=viewer_user_id,
+                message=f"{actor_data['username']} viewed your profile",
+                data=actor_data,
+                entity_id=viewer_user_id
+            )
 
         from app.services.profile_service import ProfileService
         ProfileService.update_profile_rating(profile_user_id)

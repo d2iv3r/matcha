@@ -38,7 +38,7 @@ class ChatService:
         from app.models.profile_model import ProfileModel
         from app.models.notification_model import NotificationModel
         
-        if not NotificationModel.has_unread_message_notification(user_id=receiver_id, actor_id=sender_id):
+        if not NotificationModel.has_unread_notification(user_id=receiver_id, actor_id=sender_id, notification_type="MESSAGE"):
             sender_profile = ProfileModel.get_my_profile_by_user_id(sender_id)
             sender_name = sender_profile.username if sender_profile else "Someone"
             

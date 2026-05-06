@@ -10,7 +10,7 @@ from app.db.queries.notifications_queries import (
     GET_USER_NOTIFICATIONS,
     MARK_NOTIFICATION_READ,
     MARK_ALL_NOTIFICATIONS_READ,
-    CHECK_UNREAD_MESSAGE_NOTIFICATION,
+    CHECK_EXISTING_NOTIFICATION,
 )
 from app.models.base_model import BaseModel
 
@@ -80,10 +80,10 @@ class NotificationModel(BaseModel):
         )
 
     @classmethod
-    def has_unread_message_notification(cls, user_id: int, actor_id: int) -> bool:
+    def has_unread_notification(cls, user_id: int, actor_id: int, notification_type: str) -> bool:
         row = cls.db_manager().fetch_one(
-            CHECK_UNREAD_MESSAGE_NOTIFICATION,
-            (user_id, actor_id)
+            CHECK_EXISTING_NOTIFICATION,
+            (user_id, actor_id, notification_type)
         )
         return row is not None
 

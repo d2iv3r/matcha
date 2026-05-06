@@ -28,8 +28,8 @@ SET is_read = TRUE
 WHERE user_id = %s AND is_read = FALSE;
 """
 
-CHECK_UNREAD_MESSAGE_NOTIFICATION = """
+CHECK_EXISTING_NOTIFICATION = """
 SELECT id FROM notifications
-WHERE user_id = %s AND actor_id = %s AND type = 'MESSAGE' AND is_read = FALSE
+WHERE user_id = %s AND actor_id = %s AND type = %s AND is_read = FALSE
 LIMIT 1;
 """

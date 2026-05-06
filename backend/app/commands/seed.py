@@ -288,6 +288,7 @@ class DataSeeder:
         seen_usernames = set()
         seen_emails = set()
         rows: list[tuple] = []
+
         for u in users:
             username = u["login"]["username"]
             email = u["email"]
@@ -302,7 +303,10 @@ class DataSeeder:
             gender  = u["gender"]
             bracket = _bracket_for_age(age)
             avatar  = self._pick_avatar(gender, bracket)
-            gender_preference = "female" if gender == "male" else "male"    
+            gender_preference = "female" if gender == "male" else "male"
+
+            city    = u["location"]["city"]
+            country = u["location"]["country"]
 
             rows.append((
                 u["login"]["username"],
@@ -316,8 +320,8 @@ class DataSeeder:
                 age,
                 u["dob"]["date"],
                 gender_preference,
-                u["location"]["city"],
-                u["location"]["country"],
+                city,
+                country,
                 None,   # ip_address (unknown at seed time)
                 u["location"]["coordinates"]["latitude"],
                 u["location"]["coordinates"]["longitude"],
