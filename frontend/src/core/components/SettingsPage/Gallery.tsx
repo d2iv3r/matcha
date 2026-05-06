@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import {
     Camera,
-    Plus,
     Trash2,
     Upload,
     RotateCcw,
@@ -302,8 +301,9 @@ export default function Gallery({ profileData, onUpdate }: GalleryProps) {
 
             {/* Image Editor Modal */}
             {editingImage && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+                <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="min-h-full flex items-center justify-center p-4 md:p-6">
+                        <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl my-8">
                         {/* Preview Area */}
                         <div className="flex-1 bg-black/5 flex flex-col items-center justify-center p-8 min-h-[450px]">
                             <div
@@ -418,7 +418,7 @@ export default function Gallery({ profileData, onUpdate }: GalleryProps) {
                                         "grayscale",
                                         "sepia",
                                         "invert",
-                                    ].map((f,index:number) => (
+                                    ].map((f, index: number) => (
                                         <button
                                             key={`${f}-${index}`}
                                             onClick={() => setFilter(f)}
@@ -449,6 +449,7 @@ export default function Gallery({ profileData, onUpdate }: GalleryProps) {
                                 >
                                     <Check size={14} /> Save Profile
                                 </button>
+                            </div>
                             </div>
                         </div>
                     </div>
