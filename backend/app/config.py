@@ -13,10 +13,10 @@ class BaseConfig:
     JWT_TOKEN_LOCATION = ["cookies", "headers"]
     JWT_HEADER_NAME = "Authorization"
     JWT_HEADER_TYPE = "Bearer"
-    JWT_COOKIE_SECURE = os.environ.get("JWT_COOKIE_SECURE", "false")
+    JWT_COOKIE_SECURE = os.environ.get("JWT_COOKIE_SECURE", "false").lower() == "true"
     JWT_COOKIE_HTTPONLY = True
     JWT_COOKIE_SAMESITE = os.environ.get("JWT_COOKIE_SAMESITE", "Lax")
-    JWT_COOKIE_CSRF_PROTECT = os.environ.get("JWT_COOKIE_CSRF_PROTECT", "false")
+    JWT_COOKIE_CSRF_PROTECT = os.environ.get("JWT_COOKIE_CSRF_PROTECT", "false").lower() == "true"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.environ.get("JWT_ACCESS_TOKEN_MINUTES", 120)))
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.environ.get("JWT_REFRESH_TOKEN_DAYS", 30)))
     JWT_ACCESS_COOKIE_NAME = "access_token_cookie"
