@@ -2,8 +2,6 @@
 Initialize the database schema and apply migrations.
 """
 
-from venv import logger
-
 import click
 from flask import current_app
 
@@ -35,5 +33,4 @@ def init_db():
         raise SystemExit(1)
     except Exception as e:
         click.secho(f"Database initialization failed: {str(e)}", fg="red")
-        logger.exception("[CLI] Database init error:")
         raise SystemExit(1)

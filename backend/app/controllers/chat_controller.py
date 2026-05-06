@@ -4,6 +4,9 @@ from flask import request
 from flask_jwt_extended import get_jwt_identity
 from app.services.chat_service import ChatService
 from app.utils.response import success
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ChatController:
     """Controller for chat operations."""
@@ -44,7 +47,7 @@ class ChatController:
             socketio.emit("new_message", payload, room=f"user_{receiver_id}")
             socketio.emit("new_message", payload, room=f"conversation_{payload['conversation_id']}")
         except Exception as e:
-            print(f"Failed to emit socket event: {e}")
+            logger.error(f"Failed to emit socket event: {e}")
 
         return success(
             data=payload,
@@ -69,7 +72,7 @@ class ChatController:
                 other_id = conv.user2_id if conv.user1_id == user_id else conv.user1_id
                 socketio.emit("messages_read", {"conversation_id": conversation_id, "reader_id": user_id}, room=f"user_{other_id}")
         except Exception as e:
-            print(f"Failed to emit messages_read event: {e}")
+            logger.error(f"Failed to emit messages_read event: {e}")
 
         return success(message="Messages marked as read")
 

@@ -51,9 +51,7 @@ def register_event_handlers(socketio_instance) -> None:
 
     @socketio_instance.on("connect")
     def _connect(auth: Optional[Dict[str, Any]] = None):
-        logger.info("[Realtime] Connect attempt sid=%s", request.sid)
         token = _get_token_from_request(auth)
-        print(f"token ==> {token}")
         if not token:
             logger.info("[Realtime] Connection rejected sid=%s reason=missing_token", request.sid)
             raise ConnectionRefusedError("Authentication required")
@@ -66,7 +64,6 @@ def register_event_handlers(socketio_instance) -> None:
 
         user_id = decoded.get("sub")
         session["user_id"] = user_id
-        print(f"REALTIME: User connected: {user_id}")
         session["jwt_claims"] = decoded
         join_room(f"user_{user_id}")
         
@@ -110,11 +107,8 @@ def register_event_handlers(socketio_instance) -> None:
         sender_id = session.get("user_id")
         if not sender_id:
             return {"error": "Unauthorized"}
-        print(f"data ==> {data}")
         receiver_id = data.get("receiver_id")
         content = data.get("content")
-        print(f"content ==> {content}")
-        print(f"receiver_id ==> {receiver_id}")
         if not receiver_id or not content:
             return {"error": "Missing receiver_id or content"}
             
