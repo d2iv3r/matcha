@@ -55,7 +55,6 @@ class NotificationModel(BaseModel):
         data: Any | None = None,
         entity_id: int | None = None,
     ) -> "NotificationModel" | None:
-        # Manually serialize data to JSON string to avoid psycopg2 adaptation issues
         json_data = json.dumps(data) if data is not None else None
         
         row = cls.db_manager().execute_returning(
@@ -89,7 +88,6 @@ class NotificationModel(BaseModel):
         return row is not None
 
     def to_dict(self) -> Dict[str, Any]:
-        # Ensure data is a dict (in case it was returned as a JSON string)
         data_payload = self.data
         if isinstance(data_payload, str):
             try:

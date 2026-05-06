@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.models.email_verification_token_model import EmailVerificationTokenModel
@@ -75,21 +75,17 @@ class AuthService:
         token_hash = hash_token(token)
         record = EmailVerificationTokenModel.get_by_token_hash(token_hash)
 
-        logger.info("Verifying email token if is in database")
         if not record:
             raise BadRequestError("Invalid verification token")
 
-        logger.info("Checking if token is expired")
         expires_at = record.expires_at
         if expires_at and expires_at < datetime.now(timezone.utc):
             raise BadRequestError("Verification token has expired")
 
-        logger.info("Fetching user associated with token")
         user = UserModel.get_user_by_id(int(record.user_id))
         if not user:
             raise BadRequestError("User not found")
 
-        logger.info("Activating user account")
         if not UserModel.activate_user_by_id(int(user.id)):
             raise BadRequestError("Failed to activate user account")
 
@@ -183,28 +179,22 @@ class AuthService:
         email = user_data.get("email")
         username = user_data.get("username")
 
-        # 1. Try to find user by OAuth account
         user = UserModel.get_user_by_oauth(provider, provider_id)
         if user:
             if not user.is_active:
                 UserModel.activate_user_by_id(int(user.id))
             return user
 
-        # 2. Try to find user by email
         if email:
             user = UserModel.get_user_by_email(email)
             if user:
-                # Link existing user to this OAuth provider
                 UserModel.link_oauth_account(int(user.id), provider, provider_id)
-                # Mark as active since they authenticated via OAuth
                 if not user.is_active:
                     UserModel.activate_user_by_id(int(user.id))
                 return user
 
-        # 3. Create new user if not found
         placeholder_password = hash_password(generate_token(16))
-        
-        # Ensure username is unique
+
         base_username = username or email.split("@")[0] if email else "user"
         unique_username = base_username
         counter = 1
@@ -216,7 +206,7 @@ class AuthService:
             username=unique_username,
             email=email,
             password_hash=placeholder_password,
-            is_active=True, # OAuth users are pre-verified
+            is_active=True,
             first_name=user_data.get("first_name"),
             last_name=user_data.get("last_name"),
         ).create_user()
@@ -224,11 +214,8 @@ class AuthService:
         if not new_user:
             raise BadRequestError("Failed to create user from OAuth")
 
-        # Link the new user to the OAuth account
         UserModel.link_oauth_account(int(new_user.id), provider, provider_id)
-        
         return new_user
-
 
 
     @staticmethod
@@ -269,62 +256,3 @@ class AuthService:
         if isinstance(user, UserModel):
             return create_refresh_token(identity=str(user.id))
         return create_refresh_token(identity=str(user.get('id')))
-
-    # @staticmethod
-    # def _email_verification_token_hash(token: str) -> str:
-    #     return hashlib.sha256(token.encode("utf-8")).hexdigest()
-
-
-    # @staticmethod
-    # def generate_password_reset_token(user: UserSchema | UserModel | Dict[str, Any]) -> str:
-    #     token = generate_token(48)
-    #     expires_at = datetime.now(timezone.utc) + timedelta(
-    #         seconds=int(current_app.config.get("PASSWORD_RESET_TOKEN_MAX_AGE", 3600))
-    #     )
-    #     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    #     user_id = user.id if isinstance(user, (UserSchema, UserModel)) else user.get("id")
-    #     PasswordResetTokenModel.store_token(int(user_id), token_hash, expires_at)
-    #     return token
-
-    # @staticmethod
-    # def verify_password_reset_token(token: str) -> Dict[str, Any]:
-    #     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    #     record = PasswordResetTokenModel.get_by_token_hash(token_hash)
-
-    #     if not record:
-    #         return {"success": False, "error": "Invalid reset token"}
-
-    #     if record.used_at is not None:
-    #         return {"success": False, "error": "Reset token has already been used"}
-
-    #     expires_at = record.expires_at
-    #     if expires_at and expires_at < datetime.now(timezone.utc):
-    #         return {"success": False, "error": "Reset token has expired"}
-
-    #     return {"success": True, "payload": {"user_id": record.user_id}, "record_id": record.id}
-                  
-    
-    # @staticmethod
-    # def verify_token(token: str) -> VerifyTokenResultSchema:
-    #     """
-    #     Verify an authentication token.
-        
-    #     Args:
-    #         token: Authentication token
-            
-    #     Returns:
-    #         Dict with success status and user data or error
-    #     """
-    #     try:
-    #         decoded = decode_token(token)
-    #         identity = decoded.get('sub')
-    #         if identity is None:
-    #             return VerifyTokenResultSchema(success=False, error='Invalid token payload')
-
-    #         user = UserService.get_user_by_id(int(identity))
-    #         if not user:
-    #             return VerifyTokenResultSchema(success=False, error='User not found')
-
-    #         return VerifyTokenResultSchema(success=True, user=AuthService.serialize_user(user), claims=decoded)
-    #     except Exception as e:
-    #         return VerifyTokenResultSchema(success=False, error=f'Token verification failed: {str(e)}')

@@ -1,6 +1,6 @@
 """Profile business logic."""
 
-from __future__ import annotations
+# from __future__ import annotations
 
 from app.models.profile_model import ProfileModel
 from app.models.user_model import UserModel
@@ -14,17 +14,7 @@ class ProfileService:
 
     @staticmethod
     def complete_profile(profile_data: dict) -> ProfileModel:
-        """
-        complete a user's profile with the provided data. This includes validating the user, processing profile pictures, calculating age, and saving the profile information.
-        Args:
-            profile_data: Dict containing the profile information to update
-        Returns:
-            The updated ProfileModel instance after saving the profile information
-        Raises:
-            NotFoundError: If the user associated with the profile data is not found
-            ForbiddenError: If the user is not active and therefore cannot complete their profile
-            BadRequestError: If the avatar is missing or if saving the profile information fails
-        """
+        """Complete profile."""
         user = UserModel.get_user_by_id(profile_data.get("user_id"))
         if not user:
             raise NotFoundError("User", profile_data.get("user_id"))
@@ -38,15 +28,7 @@ class ProfileService:
     
     @staticmethod
     def get_my_profile_by_user_id(user_id: int) -> ProfileModel:
-        """
-        get the profile information for the currently authenticated user by their user ID. This retrieves the profile data associated with the user and returns it.
-        Args:
-            user_id: The ID of the user whose profile information is being retrieved
-        Returns:
-            The ProfileModel instance containing the profile information for the specified user ID
-        Raises:
-            NotFoundError: If no profile is found for the specified user ID
-        """
+        """Get my profile."""
         my_profile = ProfileModel.get_my_profile_by_user_id(user_id)
         if not my_profile:
             raise NotFoundError("User", user_id)
@@ -54,17 +36,7 @@ class ProfileService:
 
     @staticmethod
     def get_profile_by_user_id(user_id: int, requester_id: int | None = None) -> ProfileModel:
-        """
-        get the profile information for a user by their user ID.
-        Args:
-            user_id: The ID of the user whose profile information is being retrieved
-            requester_id: The ID of the user requesting the profile
-        Returns:
-            The ProfileModel instance containing the profile information
-        Raises:
-            NotFoundError: If no profile is found
-            ForbiddenError: If there is a block
-        """
+        """Get profile by user id."""
         profile = ProfileModel.get_my_profile_by_user_id(user_id)
         if not profile:
             raise NotFoundError("User", user_id)
@@ -78,17 +50,7 @@ class ProfileService:
 
     @staticmethod
     def get_profile_by_username(username: str, requester_id: int | None = None) -> ProfileModel:
-        """
-        get the profile information for a user by their username. This retrieves the profile data associated with the specified username and returns it.
-        Args:
-            username: The username of the user whose profile information is being retrieved
-            requester_id: The ID of the user requesting the profile
-        Returns:
-            The ProfileModel instance containing the profile information for the specified username
-        Raises:
-            NotFoundError: If no profile is found for the specified username
-            ForbiddenError: If there is a block between the users
-        """
+        """Get profile by username."""
         profile = ProfileModel.get_profile_by_username(username)
         if not profile:
             raise NotFoundError("User", username)
@@ -102,18 +64,7 @@ class ProfileService:
 
     @staticmethod
     def get_profiles_list(user_id: int, limit: int = 20, offset: int = 0) -> list[ProfileModel]:
-        """
-        Return a list of profiles filtered by the opposite gender of the caller and ordered
-        by geographical proximity using latitude/longitude.
-        Args:
-            user_id: The ID of the currently authenticated user (the getter)
-            limit:   Maximum number of profiles to return
-            offset:  Pagination offset
-        Returns:
-            List of ProfileModel instances sorted by ascending distance
-        Raises:
-            NotFoundError: If the caller has no profile (cannot determine gender/location)
-        """
+        """Get suggested profiles list."""
         caller_profile = ProfileModel.get_my_profile_by_user_id(user_id)
         if not caller_profile:
             raise NotFoundError("Profile", user_id)
@@ -125,7 +76,8 @@ class ProfileService:
 
         return ProfileModel.get_profiles_list(
             user_id=user_id,
-            gender=gender_preference,
+            caller_gender=caller_profile.gender or "other",
+            gender_preference=gender_preference,
             latitude=latitude,
             longitude=longitude,
             interests=interests,
@@ -135,6 +87,7 @@ class ProfileService:
 
     @staticmethod
     def update_profile_fields(user_id: int, profile_data: dict) -> ProfileModel:
+        """update profile fields."""
         profile = ProfileModel.update_profile_by_user_id(
             user_id=user_id,
             gender=profile_data.get("gender"),
@@ -155,6 +108,7 @@ class ProfileService:
 
     @staticmethod
     def search_profiles(user_id: int, filters: dict) -> list[ProfileModel]:
+        """search profiles."""
         caller_profile = ProfileModel.get_my_profile_by_user_id(user_id)
         if not caller_profile:
             raise NotFoundError("Profile", user_id)
@@ -165,7 +119,8 @@ class ProfileService:
 
         return ProfileModel.search_profiles(
             user_id=user_id,
-            gender=gender_preference,
+            caller_gender=caller_profile.gender or "other",
+            gender_preference=gender_preference,
             latitude=latitude,
             longitude=longitude,
             viewer_interests=caller_profile.interests or [],
@@ -182,8 +137,6 @@ class ProfileService:
             limit=filters.get("limit", 20),
             offset=filters.get("offset", 0),
         )
-
-
 
     @staticmethod
     def _normalize_rating(score: int) -> str:
@@ -206,21 +159,8 @@ class ProfileService:
 
         likes_count = ProfileLikesService.get_profile_like_count(user_id)
         views_count = ProfileViewsService.get_profile_view_count(user_id)
-        # Weight likes more than views? The user didn't specify, 
-        # but usually likes are more significant. 
-        # For now, let's keep it simple as sum.
         score = likes_count + views_count
 
         new_rating = ProfileService._normalize_rating(score)
         ProfileModel.update_rating(user_id, new_rating)
         return new_rating
-
-    # @staticmethod
-    # def _resolve_avatar_url(user_id: int, avatar, resolved_pictures: list[str]) -> str:
-    #     if avatar is not None and getattr(avatar, "filename", ""):
-    #         return save_profile_picture(avatar, user_id=user_id, picture_type="avatar")
-
-    #     if resolved_pictures:
-    #         return resolved_pictures[0]
-
-    #     raise BadRequestError("avatar is required")

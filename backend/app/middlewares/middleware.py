@@ -2,7 +2,6 @@
 
 from flask import Flask, jsonify, g, request, make_response
 from flask_jwt_extended import decode_token, create_access_token
-from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)

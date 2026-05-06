@@ -9,7 +9,6 @@ from flask import Flask
 from psycopg2.extras import RealDictCursor, execute_values
 from psycopg2.pool import SimpleConnectionPool
 
-from app.db.migrations import migrate_database
 
 logger = logging.getLogger(__name__)
 

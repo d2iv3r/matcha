@@ -1,5 +1,6 @@
 """Service for handling user blocking logic."""
 
+from app.utils.app_error import BadRequestError, NotFoundError
 import logging
 from typing import Any, Dict, List, Optional
 from flask import current_app
@@ -10,7 +11,7 @@ from app.db.queries.block_queries import (
     GET_MY_BLOCKED_USERS,
     GET_BLOCKED_USERS_IDS
 )
-from app.db.queries.users_queries import GET_USER_BY_ID, GET_USER_BY_USERNAME
+from app.db.queries.users_queries import GET_USER_BY_USERNAME
 
 logger = logging.getLogger(__name__)
 
@@ -18,20 +19,15 @@ class BlockService:
     @staticmethod
     def block_user_by_username(blocker_id: int, blocked_username: str) -> Optional[Dict[str, Any]]:
         """Block a user by username."""
-        # Get blocked user ID
         user = current_app.db_manager.fetch_one(GET_USER_BY_USERNAME, (blocked_username,))
         if not user:
-            return None
+            raise NotFoundError("User not found")
         
         blocked_id = user['id']
         
         if blocker_id == blocked_id:
-            raise ValueError("You cannot block yourself")
-
-        # Perform block
+            raise BadRequestError("You cannot block yourself")
         result = current_app.db_manager.execute_returning(BLOCK_USER, (blocker_id, blocked_id))
-        
-        # Automatically unmatch (remove likes in both directions)
         from app.services.profile_likes_service import ProfileLikesService
         ProfileLikesService.remove_mutual_likes(blocker_id, blocked_id)
         
@@ -42,10 +38,13 @@ class BlockService:
         """Unblock a user by username."""
         user = current_app.db_manager.fetch_one(GET_USER_BY_USERNAME, (blocked_username,))
         if not user:
-            return 0
+            raise NotFoundError("User not found")
             
         blocked_id = user['id']
-        return current_app.db_manager.execute(UNBLOCK_USER, (blocker_id, blocked_id))
+        result = current_app.db_manager.execute(UNBLOCK_USER, (blocker_id, blocked_id))
+        if result == 0:
+            raise NotFoundError("Block not found")
+        return result
 
     @staticmethod
     def is_blocked(user1_id: int, user2_id: int) -> bool:

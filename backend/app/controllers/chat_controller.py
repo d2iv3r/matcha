@@ -61,11 +61,8 @@ class ChatController:
         
         try:
             from app.extensions import socketio
-            # Notify the reader (current user) to sync other tabs
             socketio.emit("messages_read", {"conversation_id": conversation_id, "reader_id": user_id}, room=f"user_{user_id}")
             
-            # We also need to notify the OTHER user in the conversation so they can update their "seen" status
-            # First find out who the other user is. We can get this from the conversation.
             from app.models.chat_model import ConversationModel
             conv = ConversationModel.get_by_id(conversation_id)
             if conv:

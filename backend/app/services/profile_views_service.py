@@ -1,7 +1,5 @@
 """Profile views business logic."""
 
-from __future__ import annotations
-
 from app.models.profile_views_model import ProfileViewsModel
 
 
@@ -21,7 +19,6 @@ class ProfileViewsService:
         from app.services.notifications_service import NotificationsService
         from app.models.profile_model import ProfileModel
         
-        # Fetch actor info
         actor_profile = ProfileModel.get_my_profile_by_user_id(viewer_user_id)
         actor_data = {
             "username": actor_profile.username if actor_profile else "Unknown",

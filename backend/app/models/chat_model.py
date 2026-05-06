@@ -1,7 +1,7 @@
 """Chat and conversation data access models."""
 
 from __future__ import annotations
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from app.models.base_model import BaseModel
 from app.db.queries.chat_queries import (
     CREATE_CONVERSATION,
@@ -22,7 +22,6 @@ class ConversationModel(BaseModel):
     user2_id: int | None = None
     created_at: Any | None = None
     
-    # Extra fields from joins
     user1_username: str | None = None
     user2_username: str | None = None
     user1_avatar: str | None = None
@@ -37,13 +36,10 @@ class ConversationModel(BaseModel):
 
     @classmethod
     def get_or_create(cls, user1_id: int, user2_id: int) -> ConversationModel | None:
-        # Sort IDs to maintain consistency if we had used user1 < user2 constraint
-        # but since we didn't, we check both ways in the query
         row = cls.db_manager().fetch_one(GET_CONVERSATION, (user1_id, user2_id, user2_id, user1_id))
         if row:
             return cls.from_row(row)
         
-        # Ensure user1_id < user2_id for consistent ordering if possible
         u1, u2 = (user1_id, user2_id) if user1_id < user2_id else (user2_id, user1_id)
         row = cls.db_manager().execute_returning(CREATE_CONVERSATION, (u1, u2))
         return cls.from_row(row)

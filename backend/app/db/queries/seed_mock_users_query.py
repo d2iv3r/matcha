@@ -34,7 +34,7 @@ SEED_MOCK_USERS_AND_PROFILES = """
         user_id, gender, age, date_of_birth, gender_preference,
         city, country, ip_address,
         latitude, longitude, bio,
-        interests, avatar, pictures, rating
+        interests, avatar, pictures, rating, is_location_approved
     )
     SELECT 
         u.id,
@@ -51,7 +51,8 @@ SEED_MOCK_USERS_AND_PROFILES = """
         i.interests::text[],
         i.avatar,
         i.pictures::text[],
-        i.rating
+        i.rating,
+        TRUE
     FROM inserted_users u
     JOIN input_data i ON u.username = i.username
     ON CONFLICT (user_id) DO NOTHING

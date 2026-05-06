@@ -14,9 +14,6 @@ class ChatService:
 
     @staticmethod
     def get_conversation_messages(user_id: int, conversation_id: int, limit: int = 20, offset: int = 0) -> list[MessageModel]:
-        # Basic validation: does the user belong to this conversation?
-        # In a real app we'd check this in the query or here
-        # For simplicity we'll just fetch, but we should ideally verify access
         return MessageModel.get_by_conversation(conversation_id, limit, offset)
 
     @staticmethod
@@ -28,21 +25,16 @@ class ChatService:
         if BlockService.is_blocked(sender_id, receiver_id):
             raise ForbiddenError("You cannot message a blocked user or a user who has blocked you")
 
-        # 1. Validate match
         if not MessageModel.is_match(sender_id, receiver_id):
             raise ForbiddenError("You can only message users you have a mutual match with")
 
-        # 2. Get or create conversation
         conversation = ConversationModel.get_or_create(sender_id, receiver_id)
         if not conversation:
             raise BadRequestError("Could not create conversation")
-
-        # 3. Store message
         message = MessageModel.create(conversation.id, sender_id, content)
         if not message:
             raise BadRequestError("Could not store message")
 
-        # 4. Trigger notification only if there is no existing unread message notification
         from app.models.profile_model import ProfileModel
         from app.models.notification_model import NotificationModel
         

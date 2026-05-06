@@ -1,10 +1,7 @@
 """Profile table data access model."""
 
-from __future__ import annotations
+from typing import Any, Optional
 
-from typing import Any, Dict, Optional
-
-from psycopg2.extras import Json
 
 from app.db.queries import (
     CREATE_PROFILE,
@@ -13,7 +10,7 @@ from app.db.queries import (
     GET_PROFILES_LIST,
     UPDATE_PROFILE_BY_USER_ID,
     UPDATE_PROFILE_RATING,
-    # GET_PROFILES_WITH_USERS,
+    SEARCH_PROFILES,
 )
 from app.models.base_model import BaseModel
 
@@ -46,8 +43,8 @@ class ProfileModel(BaseModel):
     rating: str | None = None
     is_location_approved: bool = False
 
-
     def create(self) -> Optional["ProfileModel"]:
+        """Create a new profile"""
         row = self.db_manager().execute_returning(
                 CREATE_PROFILE,
                 (
@@ -77,6 +74,7 @@ class ProfileModel(BaseModel):
         return cls.from_row(cls.db_manager().fetch_one(GET_MY_PROFILE_BY_USER_ID, (user_id,)))
 
     def to_dict(self) -> dict:
+        """Convert the profile to a dictionary"""
         return {
             "user_id": getattr(self, "user_id", None),
             "username": getattr(self, "username", None),
@@ -109,17 +107,18 @@ class ProfileModel(BaseModel):
     def get_profiles_list(
         cls,
         user_id: int,
-        gender: str,
+        caller_gender: str,
+        gender_preference: str,
         latitude: float,
         longitude: float,
         interests: list[str],
         limit: int = 20,
         offset: int = 0,
     ) -> list["ProfileModel"]:
-        """Return profiles of `gender` ordered by distance, tags, rating."""
+        """Return profiles ordered by distance, tags, rating with mutual preference check."""
         rows = cls.db_manager().fetch_all(
             GET_PROFILES_LIST,
-            (latitude, longitude, latitude, interests, user_id, gender, gender, user_id, user_id, limit, offset),
+            (latitude, longitude, latitude, interests, user_id, gender_preference, gender_preference, caller_gender, user_id, user_id, limit, offset),
         )
         return cls.from_rows(rows)
 
@@ -167,7 +166,8 @@ class ProfileModel(BaseModel):
     def search_profiles(
         cls,
         user_id: int,
-        gender: str,
+        caller_gender: str,
+        gender_preference: str,
         latitude: float,
         longitude: float,
         viewer_interests: list[str],
@@ -184,35 +184,8 @@ class ProfileModel(BaseModel):
         limit: int = 20,
         offset: int = 0,
     ) -> list["ProfileModel"]:
-        query = """
-            SELECT
-                u.username, u.first_name, u.last_name, u.is_online, u.last_connection,
-                p.user_id, p.gender, p.age, p.date_of_birth, p.city, p.country,
-                p.bio, p.interests, p.avatar, p.pictures, p.rating, p.latitude, p.longitude,
-                (6371 * acos(
-                    GREATEST(-1, LEAST(1,
-                        cos(radians(%s)) * cos(radians(p.latitude)) *
-                        cos(radians(p.longitude) - radians(%s)) +
-                        sin(radians(%s)) * sin(radians(p.latitude))
-                    ))
-                )) AS distance_km,
-                (
-                    SELECT count(*)
-                    FROM unnest(p.interests) AS i
-                    JOIN unnest(%s::TEXT[]) AS j ON i = j
-                ) AS shared_tags_count
-            FROM users u
-            JOIN profiles p ON p.user_id = u.id
-            WHERE u.id != %s
-                AND (
-                    (%s = 'all') OR (p.gender = %s)
-                )
-                AND p.latitude IS NOT NULL
-                AND p.longitude IS NOT NULL
-                AND u.id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)
-                AND u.id NOT IN (SELECT blocker_id FROM blocks WHERE blocked_id = %s)
-        """
-        params = [latitude, longitude, latitude, viewer_interests, user_id, gender, gender, user_id, user_id]
+        query = SEARCH_PROFILES
+        params = [latitude, longitude, latitude, viewer_interests, user_id, gender_preference, gender_preference, caller_gender, user_id, user_id]
 
         if first_name:
             query += " AND u.first_name ILIKE %s"
@@ -236,11 +209,9 @@ class ProfileModel(BaseModel):
             query += " AND p.interests && %s::TEXT[]"
             params.append(interests)
         if max_distance is not None:
-            # We wrap the query in a subquery to filter by distance_km
             query = f"SELECT * FROM ({query}) AS search_results WHERE distance_km <= %s"
             params.append(max_distance)
 
-        # Handle Sorting
         sort_field = "distance_km"
         if sort_by == "age":
             sort_field = "age"
@@ -261,7 +232,6 @@ class ProfileModel(BaseModel):
         direction = "ASC"
         if sort_order and sort_order.lower() == "desc":
             direction = "DESC"
-        # If sorting by tags or rating, default to DESC unless specified
         elif sort_by in ["tags", "rating"] and not sort_order:
             direction = "DESC"
 

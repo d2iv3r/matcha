@@ -1,6 +1,7 @@
 """Controller for profile-related operations."""
 
-from flask import request, g
+from app.utils.app_error import ForbiddenError, NotFoundError, BadRequestError
+from flask import request
 from flask_jwt_extended import get_jwt_identity
 
 from app.schemas.profile_schemas import CreateProfileSchema
@@ -21,10 +22,9 @@ class ProfileController:
 
         user_id = int(get_jwt_identity())
 
-        # Check if user is verified
         user = UserService.get_user_by_id(user_id)
         if not user or not user.is_active:
-             return {"status": "error", "message": "Only verified users can complete profile."}, 403
+            raise BadRequestError("Only verified users can complete profile.")
 
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
@@ -39,8 +39,7 @@ class ProfileController:
         data = payload.model_dump()
         profile = ProfileService.complete_profile(data)
         if not profile:
-            return {"status": "error", "message": "Profile already exists or could not be created."}, 400
-
+            raise BadRequestError("Profile already exists or could not be created.")
         data = profile.to_dict()
         return success(
             message="Profile Completed successfully",
@@ -49,29 +48,13 @@ class ProfileController:
 
     @staticmethod
     def get_my_profile():
-        if hasattr(g, 'current_user') and g.current_user:
-            user_id = g.current_user['id']
-        else:
-            user_id = int(get_jwt_identity())
-
+        """ Get my profile """
+        user_id = int(get_jwt_identity())
         profile = ProfileService.get_my_profile_by_user_id(user_id)
-        # view_count = ProfileViewsService.get_profile_view_count(user_id)
-        # recent_viewers = ProfileViewsService.get_profile_viewers(user_id, limit=5)
+        if not profile:
+            raise NotFoundError("Profile not found")
         data = {}
         data['profile'] = profile.to_dict()
-        # payload["profile_views"] = {
-        #     "total_views": view_count,
-        #     "recent_viewers": [viewer.model_dump(exclude_none=True) if hasattr(viewer, "model_dump") else viewer for viewer in recent_viewers],
-        # }
-
-        # like_count = ProfileLikesService.get_profile_like_count(user_id)
-        # recent_likers = ProfileLikesService.get_profile_likers(user_id, limit=5)
-
-        # payload["profile_likes"] = {
-        #     "total_likes": like_count,
-        #     "recent_likers": [liker.model_dump(exclude_none=True) if hasattr(liker, "model_dump") else liker for liker in recent_likers],
-        # }
-
         return success(data=data)
 
     @staticmethod
@@ -79,10 +62,10 @@ class ProfileController:
         """Get a specific user's profile by username and record the view."""
         viewer_id = int(get_jwt_identity())
         profile = ProfileService.get_profile_by_username(username, requester_id=viewer_id)
-        is_match = False
-        if viewer_id != profile.user_id:
-            ProfileViewsService.record_profile_view(profile.user_id, viewer_id)
-            is_match = ProfileLikesService.is_mutual_like(viewer_id, profile.user_id)
+        if viewer_id == profile.user_id:
+            return success({"profile": profile.to_dict(), "is_match": False, "is_liked": False})
+        ProfileViewsService.record_profile_view(profile.user_id, viewer_id)
+        is_match = ProfileLikesService.is_mutual_like(viewer_id, profile.user_id)
         data = {}
         data["profile"] = profile.to_dict()
         data["is_match"] = is_match
@@ -90,25 +73,25 @@ class ProfileController:
 
         return success(data)
 
-    @staticmethod
-    def get_profile_by_user_id(user_id: int):
-        """Get a specific user's profile and record the view."""
-        viewer_id = int(get_jwt_identity())
-        if viewer_id != user_id:
-            ProfileViewsService.record_profile_view(user_id, viewer_id)
+    # @staticmethod
+    # def get_profile_by_user_id(user_id: int):
+    #     """Get a specific user's profile and record the view."""
+    #     viewer_id = int(get_jwt_identity())
+    #     if viewer_id != user_id:
+    #         ProfileViewsService.record_profile_view(user_id, viewer_id)
 
-        payload = ProfileService.get_profile_by_user_id(user_id, requester_id=viewer_id)
-        if isinstance(payload, dict):
-            base_profile = payload.get("profile") or payload.get("user") or {}
-        else:
-            base_profile = payload.profile.model_dump(exclude_none=True)
-        response_payload = {
-            "user": base_profile,
-            "profile": base_profile,
-            "is_match": viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id),
-            "is_liked": ProfileLikesService.has_liked_profile(user_id, viewer_id)
-        }
-        return success(response_payload, 200)
+    #     payload = ProfileService.get_profile_by_user_id(user_id, requester_id=viewer_id)
+    #     if isinstance(payload, dict):
+    #         base_profile = payload.get("profile") or payload.get("user") or {}
+    #     else:
+    #         base_profile = payload.profile.model_dump(exclude_none=True)
+    #     response_payload = {
+    #         "user": base_profile,
+    #         "profile": base_profile,
+    #         "is_match": viewer_id != user_id and ProfileLikesService.is_mutual_like(viewer_id, user_id),
+    #         "is_liked": ProfileLikesService.has_liked_profile(user_id, viewer_id)
+    #     }
+    #     return success(response_payload, 200)
 
     @staticmethod
     def get_profiles_list():
@@ -138,12 +121,11 @@ class ProfileController:
 
     @staticmethod
     def update_my_profile():
+        """update my profile fields."""
         user_id = int(get_jwt_identity())
-
-        # Check if user is verified
         user = UserService.get_user_by_id(user_id)
         if not user or not user.is_active:
-             return {"status": "error", "message": "Only verified users can update profile."}, 403
+            raise ForbiddenError("Only verified users can update profile.")
 
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
@@ -158,7 +140,6 @@ class ProfileController:
 
         payload = UpdateAccountProfileSchema.model_validate(raw_payload)
         data = payload.model_dump(exclude_none=True)
-        print(f"-->> data after validation == {data}")
 
         user_fields = {}
         for key in ("first_name", "last_name", "email"):
@@ -174,6 +155,7 @@ class ProfileController:
 
     @staticmethod
     def update_profile_media():
+        """update my profile media."""
         user_id = int(get_jwt_identity())
 
         raw_payload = {}
@@ -188,7 +170,6 @@ class ProfileController:
 
         payload = UpdateProfileMediaSchema.model_validate(raw_payload)
         data = payload.model_dump(exclude_none=True)
-        print(f"-->> media data after validation == {data}")
 
         if data:
             ProfileService.update_profile_fields(user_id, data)
@@ -196,6 +177,7 @@ class ProfileController:
 
     @staticmethod
     def update_security_settings():
+        """update security settings."""
         user_id = int(get_jwt_identity())
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:
@@ -213,6 +195,7 @@ class ProfileController:
 
     @staticmethod
     def update_location():
+        """update my location."""
         user_id = int(get_jwt_identity())
         raw_payload = request.get_json(silent=True)
         if raw_payload is None:

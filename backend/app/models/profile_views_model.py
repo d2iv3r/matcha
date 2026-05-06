@@ -1,8 +1,6 @@
 """Profile views table data access model."""
 
-from __future__ import annotations
-
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from app.db.queries.profile_views_queries import (
     RECORD_PROFILE_VIEW,

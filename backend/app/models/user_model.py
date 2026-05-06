@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from app.db.queries import (
     IS_EMAIL_EXISTING,
@@ -65,18 +65,8 @@ class UserModel(BaseModel):
     def is_username_existing(username: str) -> bool:
         return UserModel.db_manager().fetch_one(IS_USERNAME_EXISTING, (username,)) is not None
 
-    @classmethod
-    def _from_row(cls, row: Optional[Dict[str, Any]]) -> Optional["UserModel"]:
-        if not row:
-            return None
-        return cls(**row)
-
-    @classmethod
-    def _from_rows(cls, rows: List[Dict[str, Any]]) -> List["UserModel"]:
-        return [cls(**row) for row in rows]
-
     def create_user(self) -> Optional["UserModel"]:
-        return self.__class__._from_row(
+        return self.__class__.from_row(
             self.db_manager().execute_returning(
                 CREATE_USER,
                 (
@@ -92,7 +82,7 @@ class UserModel(BaseModel):
 
     @classmethod
     def get_user_by_oauth(cls, provider: str, oauth_id: str) -> Optional["UserModel"]:
-        return cls._from_row(cls.db_manager().fetch_one(GET_USER_BY_OAUTH, (provider, oauth_id)))
+        return cls.from_row(cls.db_manager().fetch_one(GET_USER_BY_OAUTH, (provider, oauth_id)))
 
     @classmethod
     def link_oauth_account(cls, user_id: int, provider: str, oauth_id: str) -> bool:
@@ -101,19 +91,19 @@ class UserModel(BaseModel):
     
     @classmethod
     def get_user_by_email(cls, email: str) -> Optional["UserModel"]:
-        return cls._from_row(cls.db_manager().fetch_one(GET_USER_BY_EMAIL, (email,)))
+        return cls.from_row(cls.db_manager().fetch_one(GET_USER_BY_EMAIL, (email,)))
 
     @classmethod
     def get_user_by_username(cls, username: str) -> Optional["UserModel"]:
-        return cls._from_row(cls.db_manager().fetch_one(GET_USER_BY_USERNAME, (username,)))
+        return cls.from_row(cls.db_manager().fetch_one(GET_USER_BY_USERNAME, (username,)))
 
     @classmethod
     def get_user_by_id(cls, user_id: int) -> Optional["UserModel"]:
-        return cls._from_row(cls.db_manager().fetch_one(GET_USER_BY_ID, (user_id,)))
+        return cls.from_row(cls.db_manager().fetch_one(GET_USER_BY_ID, (user_id,)))
 
     @classmethod
     def activate_user_by_id(cls, user_id: int) -> Optional["UserModel"]:
-        return cls._from_row(cls.db_manager().execute_returning(ACTIVATE_USER_BY_ID, (user_id,)))
+        return cls.from_row(cls.db_manager().execute_returning(ACTIVATE_USER_BY_ID, (user_id,)))
 
     @classmethod
     def mark_profile_complete(cls, user_id: int) -> bool:
@@ -133,7 +123,7 @@ class UserModel(BaseModel):
         last_name: str | None = None,
         email: str | None = None,
     ) -> Optional["UserModel"]:
-        return cls._from_row(
+        return cls.from_row(
             cls.db_manager().execute_returning(
                 UPDATE_USER_BY_ID,
                 (first_name, last_name, email, user_id),

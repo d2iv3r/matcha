@@ -1,9 +1,8 @@
 """Controller for authentication-related operations."""
 
-from operator import is_
-
-from flask import make_response, request
+from flask import make_response, request, current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, set_refresh_cookies, set_access_cookies, unset_jwt_cookies
+import urllib.parse
 
 from app.schemas.auth_requests_schemas import (
     LoginSchema,
@@ -15,7 +14,7 @@ from app.utils.app_error import BadRequestError
 from app.services.auth_service import AuthService
 from app.utils.mail import MailService
 from app.extensions import oauth
-from app.utils.response import created, error, success
+from app.utils.response import created, success
 
 
 class AuthController:
@@ -102,16 +101,13 @@ class AuthController:
     def reset_password():
         """Reset the user's password using a valid reset token."""
         data = PasswordResetConfirmSchema.model_validate(request.get_json())
-        print(f"Received password reset request with token: {data.token}")
         AuthService.reset_password(data.token, data.new_password)
         return success(message="Password reset successful", data={})
 
     @staticmethod
     def oauth_42_login():
         """Redirect to 42 Intra for authentication."""
-        from flask import current_app
         redirect_uri = request.args.get("redirect_uri") or current_app.config["INTRA42_REDIRECT_URI"]
-        # Store redirect_uri in session if needed, but here we'll just use the default or one from config
         return oauth.intra42.authorize_redirect(redirect_uri)
 
     @staticmethod
@@ -129,8 +125,6 @@ class AuthController:
             if isinstance(e, BadRequestError):
                 raise e
             raise BadRequestError(f"Error during OAuth callback: {str(e)}")
-
-        # Normalize user data
         normalized_data = {
             "email": user_info.get("email"),
             "username": user_info.get("login"),
@@ -140,17 +134,11 @@ class AuthController:
             "provider_id": user_info.get("id"),
         }
         user = AuthService.handle_oauth_login("intra42", normalized_data)
-
-        # Issue JWT
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
-
-        # Determine redirect target based on profile completeness
-        from flask import current_app
-        import urllib.parse
+        
         base_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
         if not user.is_profile_complete:
-            # Pass OAuth info to onboarding to skip avatar etc.
             params = {
                 "oauth": "intra42",
                 "username": normalized_data["username"] or "",
@@ -165,39 +153,7 @@ class AuthController:
             
         response = make_response("", 302)
         response.headers["Location"] = frontend_url
-
         set_refresh_cookies(response, refresh_token)
         set_access_cookies(response, access_token)
 
         return response
-
-    # @staticmethod
-    # @jwt_required()
-    # def me():
-    #     """Get details of the currently authenticated user."""
-    #     user_id = get_jwt_identity()
-    #     user = AuthService.get_user_by_identity(user_id)
-    #     if not user:
-    #         return error("User not found", 404)
-    #     return success({"user": AuthService.serialize_user(user)}, 200)
-
-    # @staticmethod
-    # @jwt_required(refresh=True)
-    # def refresh():
-    #     """Issue a new access token from a valid refresh token."""
-    #     user_id = get_jwt_identity()
-    #     user = AuthService.get_user_by_identity(user_id)
-    #     if not user:
-    #         return error("User not found", 404)
-
-    #     access_token = AuthService.issue_access_token(user)
-    #     response, status = success({"message": "Token refreshed successfully"}, 200)
-    #     response.set_cookie(
-    #         key="access_token_cookie",
-    #         value=access_token,
-    #         httponly=True,
-    #         secure=request.environ.get("wsgi.url_scheme") == "https",
-    #         samesite="Lax",
-    #         path="/",
-    #     )
-    #     return response, status

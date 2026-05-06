@@ -47,7 +47,6 @@ class NotificationsService:
                 return None
 
             payload = notification.to_dict()
-            # Emit via socketio matching test expectations
             socketio.emit(
                 "notification",
                 payload,

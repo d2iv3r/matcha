@@ -285,8 +285,19 @@ class DataSeeder:
         users = self._select_users_from_buckets(buckets)
         logger.info(f"[SEED] Assembling {len(users)} user records …")
 
+        seen_usernames = set()
+        seen_emails = set()
         rows: list[tuple] = []
         for u in users:
+            username = u["login"]["username"]
+            email = u["email"]
+
+            if username in seen_usernames or email in seen_emails:
+                continue
+            
+            seen_usernames.add(username)
+            seen_emails.add(email)
+
             age     = u["dob"]["age"]
             gender  = u["gender"]
             bracket = _bracket_for_age(age)

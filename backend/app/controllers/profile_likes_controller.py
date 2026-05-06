@@ -13,8 +13,6 @@ from app.utils.response import success
 class ProfileLikesController:
     """Controller for profile likes endpoints."""
 
-    INVALID_PROFILE_USER_ID_ERROR = "Invalid profile_user_id"
-
     @staticmethod
     def record_profile_like(username: str | None = None):
         """Record a like for a user's profile."""

@@ -22,14 +22,14 @@ def seed_db(count):
     from app.commands.seed import DataSeeder
 
     try:
-        if count <= 0:
+        if count < 0:
             raise click.BadParameter("count must be greater than 0", param_hint="--count")
 
         result = current_app.db_manager.fetch_one(COUNT_USERS)
-        if result and result['count'] > 0:
-            click.secho(f"Database already contains {result['count']} users.", fg="yellow")
+        if result and result['count'] >= 500:
+            click.secho(f"Database already has more than 500 users.", fg="yellow")
             exit(0)
-
+        count = 500 - result['count']
         click.echo(f"Seeding database with {count} mock users ({count // 2} male / {count // 2} female) …")
         password_hash = hash_password(current_app.config["MOCK_USERS_PASS"])
         seeder = DataSeeder(
