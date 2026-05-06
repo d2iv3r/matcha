@@ -195,6 +195,7 @@ class UpdateLocationSchema(BaseModel):
     country: str = Field(..., min_length=1, max_length=255)
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    is_location_approved: Optional[bool] = None
 
     @model_validator(mode="after")
     def validate_location(self) -> "UpdateLocationSchema":

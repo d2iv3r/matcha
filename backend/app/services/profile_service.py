@@ -147,6 +147,7 @@ class ProfileService:
             country=profile_data.get("country"),
             latitude=profile_data.get("latitude"),
             longitude=profile_data.get("longitude"),
+            is_location_approved=profile_data.get("is_location_approved"),
         )
         if not profile:
             raise NotFoundError("Profile", user_id)

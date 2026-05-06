@@ -133,6 +133,7 @@ export const AdvanceSearchPage = () => {
             if (!res.ok) throw new Error("Search failed");
 
             const json = await res.json();
+            console.log(json.data?.profiles);
             setSearchResults(json.data?.profiles || []);
             setAdvanceSearch(false);
         } catch (error) {

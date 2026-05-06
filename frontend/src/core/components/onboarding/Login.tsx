@@ -14,7 +14,6 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-        setErrorMsg("");
         if (!username || !password) {
             setErrorMsg("Username and password are required.");
             return;

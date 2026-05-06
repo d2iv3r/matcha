@@ -119,6 +119,8 @@ export default function Navbar() {
                                 alt="Logo Mini"
                                 width={45}
                                 height={45}
+                                priority
+                                className="w-auto h-6"
                             />
                         ) : (
                             <Image
@@ -126,6 +128,8 @@ export default function Navbar() {
                                 alt="Logo"
                                 width={180}
                                 height={180}
+                                priority
+                                className="w-auto h-7"
                             />
                         )}
                     </div>
@@ -136,6 +140,7 @@ export default function Navbar() {
                             alt="Logo"
                             width={140}
                             height={140}
+                            priority
                             className="max-w-[140px]"
                         />
                     </div>
@@ -168,12 +173,15 @@ export default function Navbar() {
                         {isLoading ? (
                             <div className="w-[50px] h-[50px] rounded-full bg-gray-200 animate-pulse" />
                         ) : (
-                            <div
-                                className="w-[50px] h-[50px] rounded-full bg-cover bg-center border border-gray-200"
-                                style={{
-                                    backgroundImage: `url(${profile?.profile?.avatar})`,
-                                }}
+                        <div className="relative w-[50px] h-[50px] rounded-full overflow-hidden border border-gray-200 shrink-0">
+                            <Image 
+                                src={profile?.profile?.avatar || girl}
+                                alt="Profile"
+                                fill
+                                className="object-cover"
+                                unoptimized
                             />
+                        </div>
                         )}
                         <div className="flex flex-col">
                             {isLoading ? (
@@ -253,12 +261,16 @@ export default function Navbar() {
                         </>
                     ) : (
                         <>
-                            <div
-                                className="w-[140px] h-[140px] rounded-[32px] border-4 border-white shadow-sm bg-cover bg-center shrink-0"
-                                style={{
-                                    backgroundImage: `url(${profile?.profile?.avatar || girl.src})`,
-                                }}
-                            />
+                            <div className="relative w-[140px] h-[140px] rounded-[32px] border-4 border-white shadow-sm overflow-hidden shrink-0">
+                                <Image 
+                                    src={profile?.profile?.avatar || girl}
+                                    alt="Profile"
+                                    fill
+                                    priority
+                                    className="object-cover"
+                                    unoptimized
+                                />
+                            </div>
                             <div className="flex flex-col gap-1 items-center max-w-full px-2">
                                 <h2 className="text-lg font-bold text-center truncate w-full">
                                     {profile?.profile?.username}

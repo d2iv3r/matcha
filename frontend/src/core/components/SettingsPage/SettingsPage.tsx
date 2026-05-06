@@ -36,7 +36,18 @@ export const SettingsPage = () => {
                 "gender_preference",
                 "interests",
             ];
+            const locationFields = [
+                "city",
+                "country",
+                "latitude",
+                "longitude",
+                "is_location_approved"
+            ];
+
             const hasProfileChanges = profileFields.some(
+                (key) => key in pendingChanges,
+            );
+            const hasLocationChanges = locationFields.some(
                 (key) => key in pendingChanges,
             );
             const hasMediaChanges =
@@ -60,6 +71,29 @@ export const SettingsPage = () => {
                     },
                 );
                 if (!res.ok) throw new Error("Failed to update profile info");
+            }
+
+            if (hasLocationChanges) {
+                const locationDataToSave = Object.fromEntries(
+                    Object.entries(pendingChanges).filter(([key]) =>
+                        locationFields.includes(key),
+                    ),
+                );
+                const res = await fetch(
+                    "http://localhost:5001/api/v1/accounts/profile/location",
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(locationDataToSave),
+                        credentials: "include",
+                    },
+                );
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.message || "Failed to update location");
+                }
             }
 
             if (hasMediaChanges) {
@@ -124,62 +158,56 @@ export const SettingsPage = () => {
 
     return (
         <div className="w-full h-full flex flex-col p-4 relative">
-            {/* High-Visibility floating Toast */}
-            {saveMessage.text && (
-                <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[9999] animate-in slide-in-from-top-4 duration-300">
-                    <div
-                        className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-2 ${
-                            saveMessage.type === "success"
-                                ? "bg-[#10B981] border-[#34D399] text-white"
-                                : "bg-[#EF4444] border-[#F87171] text-white"
-                        }`}
-                    >
-                        <div className="bg-white/20 p-1.5 rounded-full ring-2 ring-white/30">
-                            {saveMessage.type === "success" ? (
-                                <svg
-                                    className="w-6 h-6"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="3"
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
-                            ) : (
-                                <svg
-                                    className="w-6 h-6"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="3"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            )}
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-base leading-tight">
-                                {saveMessage.type === "success"
-                                    ? "Success!"
-                                    : "Error"}
-                            </span>
-                            <span className="text-xs font-medium opacity-90">
-                                {saveMessage.text}
-                            </span>
+            <div className="relative w-full h-full flex flex-col gap-3 bg-[#F5F3FF] rounded-4xl shadow-xl p-4 min-h-0">
+                {/* High-Visibility absolute Toast inside container - TOP RIGHT */}
+                {saveMessage.text && (
+                    <div className="absolute top-4 right-4 z-9999 animate-in slide-in-from-right-4 duration-300 w-fit max-w-[70%]">
+                        <div
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg border-2 ${
+                                saveMessage.type === "success"
+                                    ? "bg-[#10B981] border-[#34D399] text-white"
+                                    : "bg-[#EF4444] border-[#F87171] text-white"
+                            }`}
+                        >
+                            <div className="bg-white/20 p-1 rounded-full shrink-0">
+                                {saveMessage.type === "success" ? (
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="3"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                ) : (
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="3"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">
+                                    {saveMessage.text}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            <div className="relative w-full h-full flex flex-col gap-3 bg-[#F5F3FF] rounded-4xl shadow-xl p-4 min-h-0">
+                )}
                 <div className="flex justify-between items-center px-4 py-2">
                     <h1 className="font-semibold text-xl">Settings</h1>
                 </div>
