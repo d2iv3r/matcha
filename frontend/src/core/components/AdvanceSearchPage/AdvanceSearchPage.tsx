@@ -118,6 +118,10 @@ export const AdvanceSearchPage = () => {
             });
 
             tags.forEach((t) => params.append("interests", t));
+            
+            // Set an extremely high limit to essentially fetch "all" profiles
+            params.append("limit", "1000000");
+
 
             const res = await fetch(
                 `http://localhost:5001/api/v1/accounts/profiles/search?${params.toString()}`,
@@ -133,7 +137,6 @@ export const AdvanceSearchPage = () => {
             if (!res.ok) throw new Error("Search failed");
 
             const json = await res.json();
-            console.log(json.data?.profiles);
             setSearchResults(json.data?.profiles || []);
             setAdvanceSearch(false);
         } catch (error) {
