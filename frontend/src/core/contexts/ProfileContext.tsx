@@ -22,6 +22,7 @@ interface ProfileData {
         username: string;
         gender_preference: string;
         is_location_approved: boolean;
+        is_profile_complete?: boolean;
     };
 }
 
@@ -66,9 +67,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
             const jsonResponse = await res.json();
             const data = jsonResponse.data;
-            // console.log("data: ", data);
 
-            // Helpers
             const formatUrl = (url: string | null) => {
                 if (!url) return url;
                 if (url.startsWith("http")) return url;
@@ -107,6 +106,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
                 data.profile.interests = parsePostgresArray(
                     data.profile.interests,
                 );
+                
+                data.profile.is_profile_complete = true;
+                localStorage.setItem("is_profile_complete", "true");
             }
 
             setProfile(data);

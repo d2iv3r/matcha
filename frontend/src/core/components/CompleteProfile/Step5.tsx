@@ -63,7 +63,10 @@ export default function Step5() {
             if (existingData.gender)
                 formData.append("gender", existingData.gender);
             if (existingData.gender_preference)
-                formData.append("gender_preference", existingData.gender_preference);
+                formData.append(
+                    "gender_preference",
+                    existingData.gender_preference,
+                );
             if (existingData.date_of_birth)
                 formData.append("date_of_birth", existingData.date_of_birth);
             if (existingData.bio) formData.append("bio", existingData.bio);
@@ -79,7 +82,10 @@ export default function Step5() {
             if (existingData.longitude !== undefined)
                 formData.append("longitude", String(existingData.longitude));
             if (existingData.is_location_approved !== undefined)
-                formData.append("is_location_approved", String(existingData.is_location_approved));
+                formData.append(
+                    "is_location_approved",
+                    String(existingData.is_location_approved),
+                );
 
             if (
                 existingData.interests &&
@@ -276,10 +282,12 @@ export default function Step5() {
 
                     {/* Secondary files grid */}
                     <div className="w-full flex flex-col md:flex-row gap-3 mt-1 h-[300px] md:h-[150px]">
-                        {[1, 2, 3, 4].map((slotIndex,index) => {
+                        {[1, 2, 3, 4].map((slotIndex, index) => {
                             // If we have an oauthAvatar, images[0] is the first secondary picture (slotIndex 1)
                             // If we don't have an oauthAvatar, images[1] is the first secondary picture (slotIndex 1)
-                            const imageIndex = oauthAvatar ? slotIndex - 1 : slotIndex;
+                            const imageIndex = oauthAvatar
+                                ? slotIndex - 1
+                                : slotIndex;
                             const image = images[imageIndex];
                             if (image) {
                                 return (

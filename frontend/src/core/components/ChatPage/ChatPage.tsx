@@ -79,7 +79,6 @@ export const ChatPage = () => {
             });
             if (res.ok) {
                 const json = await res.json();
-                // console.log("Conversations data:", json.data);
                 const convs = json.data || [];
                 setConversations(convs);
                 // Update navbar unread badge immediately from conversation data

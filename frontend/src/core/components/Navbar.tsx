@@ -68,6 +68,9 @@ export default function Navbar() {
         } finally {
             localStorage.removeItem("access_token");
             localStorage.removeItem("profile_data");
+            localStorage.removeItem("is_profile_complete");
+            localStorage.removeItem("refresh_token_cookie");
+            localStorage.removeItem("username");
             setIsMobileMenuOpen(false);
             router.push("/login");
         }

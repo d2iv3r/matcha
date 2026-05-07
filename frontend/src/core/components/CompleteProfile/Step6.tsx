@@ -10,7 +10,6 @@ export default function Step6() {
 
     useEffect(() => {
         const storedUsername = localStorage.getItem("username");
-        console.log("storedUsername", storedUsername);
         if (storedUsername) {
             setUsername(storedUsername);
         }

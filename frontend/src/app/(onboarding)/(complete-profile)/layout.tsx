@@ -1,23 +1,22 @@
-
-
 import { ReactNode } from "react";
 import Image from "next/image";
 import logo from "@/public/logomatchvibe.svg";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import ClientRedirect from "@/core/components/ClientRedirect";
 
 export default async function Layout({ children }: { children: ReactNode }) {
+    const cookieStore = await cookies();
+    const hasAccess = cookieStore.has("access_token_cookie");
+    const hasRefresh = cookieStore.has("refresh_token_cookie");
 
-        const cookieStore = await cookies();
-        const hasAccess = cookieStore.has("access_token_cookie");
-        const hasRefresh = cookieStore.has("refresh_token_cookie");
-    
-        if (!hasAccess && !hasRefresh) {
-            redirect("/login");
-        }
+    if (!hasAccess && !hasRefresh) {
+        redirect("/login");
+    }
 
     return (
         <div className="w-full min-h-screen flex flex-col gap-4 items-center justify-center p-3 bg-[url('/image-pending-profile.png')] bg-cover bg-center relative">
+            <ClientRedirect requireComplete={false} />
             <Image
                 src={logo}
                 alt="Logo"

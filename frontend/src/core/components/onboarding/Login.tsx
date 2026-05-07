@@ -39,6 +39,12 @@ export default function Login() {
             if (data.data && data.data.username) {
                 localStorage.setItem("username", data.data.username);
             }
+            if (data.data) {
+                localStorage.setItem(
+                    "is_profile_complete",
+                    data.data.is_profile_complete,
+                );
+            }
             if (!data.data.is_profile_complete) {
                 router.push("/step1");
             } else {
