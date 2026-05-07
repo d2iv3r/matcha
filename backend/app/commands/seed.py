@@ -17,7 +17,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 fake = Faker()
 
-# Age brackets: (label, min_age, max_age or None)
 AGE_BRACKETS = [
     ("18-25",  18, 25),
     ("26-35",  26, 35),
@@ -25,7 +24,7 @@ AGE_BRACKETS = [
     ("46plus", 46, None),
 ]
 
-# Pexels search descriptors per bracket
+
 BRACKET_LABEL = {
     "18-25":  "young adult",
     "26-35":  "adult",
@@ -36,7 +35,6 @@ BRACKET_LABEL = {
 # How many avatar photos to fetch per pool group
 POOL_SIZE = 80
 
-# Max users fetched from randomuser.me per gender (API max is 5000)
 RANDOMUSER_FETCH_MAX = 500
 
 
@@ -51,21 +49,7 @@ def _bracket_for_age(age: int) -> str:
 
 
 class DataSeeder:
-    """Seed mock users into the database.
-
-    Strategy
-    --------
-    1. Fetch up to RANDOMUSER_FETCH_MAX users per gender from randomuser.me
-       (two concurrent requests).
-    2. Bucket the raw results by age bracket (18-25 / 26-35 / 36-45 / 46+).
-    3. Concurrently fetch avatar pools from Pexels — one request per
-       (gender × age_bracket) combination = 8 requests total.
-    4. Pick exactly the required number of users from each bucket,
-       distributed evenly across all 8 groups.
-    5. Assign avatars round-robin from the matching pool.
-
-    This reduces Pexels API calls from N (one per user) to 8 (one per group).
-    """
+    """Seed mock users into the database."""
 
     INTERESTS = [
         "Food & Cooking", "Coffee", "Moroccan Tea", "Nightlife", "Gaming",
@@ -84,12 +68,6 @@ class DataSeeder:
         users_password: str = None,
         pexels_api_key: str = None,
     ):
-        """
-        Args:
-            count: Total users to seed (split 50 % male / 50 % female).
-            users_password: Pre-hashed password shared by all mock users.
-            pexels_api_key: Pexels API key.
-        """
         if users_password is None:
             raise ValueError("users_password is required")
         if pexels_api_key is None:
@@ -99,23 +77,13 @@ class DataSeeder:
         self.users_password = users_password
         self.pexels_api_key = pexels_api_key
 
-        # Populated during get_mock_users()
-        # avatar_pools[(gender, bracket)] = [url, ...]
         self._avatar_pools: dict[tuple[str, str], list[str]] = {}
         self._pool_cursors: dict[tuple[str, str], int] = {}
-
-    # ------------------------------------------------------------------
-    # Internal HTTP helper
-    # ------------------------------------------------------------------
 
     def _http_get(self, url: str, headers: dict) -> dict:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=15) as resp:
             return json.loads(resp.read().decode())
-
-    # ------------------------------------------------------------------
-    # Step 1 – Fetch raw user data from randomuser.me
-    # ------------------------------------------------------------------
 
     def _fetch_raw_users(self, gender: str) -> list[dict]:
         """Fetch up to RANDOMUSER_FETCH_MAX users of *gender* in one call."""
@@ -133,16 +101,6 @@ class DataSeeder:
             return []
 
     def _fetch_all_raw_users(self) -> dict[str, dict[str, list[dict]]]:
-        """
-        Fetch male + female users concurrently, then bucket by age bracket.
-
-        Returns
-        -------
-        {
-            "male":   {"18-25": [...], "26-35": [...], ...},
-            "female": {"18-25": [...], "26-35": [...], ...},
-        }
-        """
         with ThreadPoolExecutor(max_workers=2) as ex:
             male_fut   = ex.submit(self._fetch_raw_users, "male")
             female_fut = ex.submit(self._fetch_raw_users, "female")
@@ -159,10 +117,6 @@ class DataSeeder:
             buckets["female"][_bracket_for_age(user["dob"]["age"])].append(user)
 
         return buckets
-
-    # ------------------------------------------------------------------
-    # Step 2 – Fetch avatar pools from Pexels
-    # ------------------------------------------------------------------
 
     def _fetch_avatar_pool(self, gender: str, bracket: str) -> tuple[tuple, list[str]]:
         """Fetch POOL_SIZE portrait photos for (gender, bracket) from Pexels."""
@@ -221,21 +175,12 @@ class DataSeeder:
 
         return pool.pop()
 
-    # ------------------------------------------------------------------
-    # Step 3 – Assemble final user tuples
-    # ------------------------------------------------------------------
-
     def _select_users_from_buckets(
         self,
         buckets: dict[str, dict[str, list[dict]]],
     ) -> list[dict]:
-        """
-        Pick *count/2* users per gender, distributed evenly across the
-        4 age brackets.  If a bucket is short, remaining slots are filled
-        from the next bucket.
-        """
         per_gender    = self.count // 2
-        per_bracket   = per_gender // len(AGE_BRACKETS)  # ideal per bracket
+        per_bracket   = per_gender // len(AGE_BRACKETS)
 
         selected: list[dict] = []
 
@@ -246,7 +191,6 @@ class DataSeeder:
             for i, bracket in enumerate(bracket_labels):
                 pool = buckets[gender][bracket]
                 random.shuffle(pool)
-                # Last bracket takes whatever is left
                 need = remaining if i == len(bracket_labels) - 1 else per_bracket
                 need = min(need, len(pool))
                 selected.extend(pool[:need])
@@ -255,10 +199,6 @@ class DataSeeder:
                     break
 
         return selected
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def get_mock_users(self) -> list[tuple]:
         """
@@ -325,7 +265,7 @@ class DataSeeder:
                 gender_preference,
                 city,
                 country,
-                None,   # ip_address (unknown at seed time)
+                None,
                 u["location"]["coordinates"]["latitude"],
                 u["location"]["coordinates"]["longitude"],
                 fake.text(max_nb_chars=200),

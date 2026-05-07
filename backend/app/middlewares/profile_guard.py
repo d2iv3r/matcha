@@ -43,4 +43,4 @@ def profile_completion_required(view_func: F) -> F:
 
         return view_func(*args, **kwargs)
 
-    return wrapper  # type: ignore[return-value]
+    return wrapper

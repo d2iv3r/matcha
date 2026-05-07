@@ -18,8 +18,7 @@ def init_db():
         from app.db.database import DatabaseManager, init_db
         from app.db.migrations import migrate_database
         
-        # At this point, current_app.db_manager is already created 
-        # by init_db(app) during app creation in __init__.py
+
         manager = current_app.db_manager
         
         if not manager:
